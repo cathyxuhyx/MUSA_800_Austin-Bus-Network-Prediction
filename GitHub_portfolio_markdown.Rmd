@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## A Project Portfolio with GitHub Pages
 
 This markdown is about making a simple MUSA 800 Practicum project on GitHub using Markdown and Rstudio. Requirements for this are a GitHub account, Git command line tool installed on your computer, Rstudio, and some knowledge of markdown and perhaps HTML. Aside from some preliminary setup, your work will be about editing an `README.md` document and, if you choose, committing you project work to GitHub. We will walk through all of these steps. 
-
+hello
 ## GitHub
 
 GitHub is a platform for code version control and collaboration. The `Git` in `GitHub` refers to a versioning protocol that allows a user or team to keep track of who changes what files, when and where. It is a very powerful protocol and GitHub harnesses that power into an easy to use cloud platform. Fortunately, GitHub makes a lot of the complex Git actions (e.g. Push, Pull, Commit, etc...) simple and intuitive. Combines with RStudio, the basics of Git version control are nearly as simple as pushing a button.
