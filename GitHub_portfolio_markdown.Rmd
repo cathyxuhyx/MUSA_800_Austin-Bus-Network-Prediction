@@ -826,7 +826,7 @@ plot.S1.29 <-
       geom_point() +
       plotTheme() +
       facet_wrap(~STOP_ID, scales="free", ncol=5) +
-      ylim(0,50) +
+      ylim(0,250) +
       labs(title="Average Daily Ridership by Stop in Austin IDS1",
            subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
       geom_vline(xintercept = 6, color = "blue")
@@ -842,7 +842,7 @@ plot.S1.30 <-
       geom_point() +
       plotTheme() +
       facet_wrap(~STOP_ID, scales="free", ncol=5) +
-      ylim(0,50) +
+      ylim(0,100) +
       labs(title="Average Daily Ridership by Stop in Austin IDS1",
            subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
       geom_vline(xintercept = 6, color = "blue")
@@ -962,7 +962,7 @@ ggplot()+
   scale_color_manual(values=palette5,
                      labels=qBr(data.y.18.6.sf,"AVERAGE_ON"),
                      name="Quintile\nBreaks")+
-  labs(title="Ridership in May, Austin")+
+  labs(title="Ridership in June, Austin")+
   mapTheme()
 ```
 
