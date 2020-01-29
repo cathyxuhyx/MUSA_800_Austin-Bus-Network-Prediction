@@ -1,0 +1,128 @@
+---
+title: "Train Occupancy Prediction in Belgium"
+author: "Hanyong Xu, Jia Yuan, Yibing Zheng"
+date: "12/2019"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: true
+    #code_folding: hide
+    prettydoc::html_pretty:
+    theme: cosmo
+    highlight: tango
+---
+<style>
+.superbigimage{
+overflow-x:scroll;
+white-space: nowrap;
+}
+.superbigimage img{
+max-width: none;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	message = FALSE,
+	warning = FALSE,
+	cache = FALSE,
+	results = FALSE
+)
+options(scipen=99)
+```
+
+## 1. Introduction
+
+
+```{r}
+library(tidyverse)
+library(sf)
+library(QuantPsyc)
+library(RSocrata)
+library(viridis)
+library(caret)
+library(spatstat)
+library(spdep)
+library(FNN)
+library(grid)
+library(gridExtra)
+library(knitr)
+library(kableExtra)
+library(tidycensus)
+library(nnet)
+library(reshape2)
+library(class)
+library(MASS)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(plotly)
+library(ggmap)
+library(data.table)
+library(gganimate)
+```
+
+```{r}
+mapTheme <- function(base_size = 10) {
+  theme(
+    text = element_text(color = "black"),
+    plot.title = element_text(size = 12,colour = "black"),
+    plot.subtitle=element_text(face="italic"),
+    plot.caption=element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    axis.title = element_blank(),
+    strip.background = element_rect(fill = "white", color = "white"),
+    strip.text.x = element_text(size = 8),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+}
+
+plotTheme <- theme(
+  plot.title =element_text(size=12),
+  plot.subtitle = element_text(size=8),
+  plot.caption = element_text(size = 6),
+  axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+  axis.text.y = element_text(size = 10),
+  axis.title.y = element_text(size = 10),
+  # Set the entire chart region to blank
+  panel.background=element_blank(),
+  plot.background=element_blank(),
+  axis.ticks=element_blank())
+q5 <- function(variable) {as.factor(ntile(variable, 5))}
+qBr <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]],0),
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]]), digits = 3),
+                          c(.01,.2,.4,.6,.8), na.rm=T)
+  }
+}
+
+nn_function <- function(measureFrom,measureTo,k) {
+  
+  nn <-   
+    FNN::get.knnx(measureTo, measureFrom, k)$nn.dist
+  
+  output <-
+    as.data.frame(nn) %>%
+    rownames_to_column(var = "thisPoint") %>%
+    gather(points, point_distance, V1:ncol(.)) %>%
+    arrange(as.numeric(thisPoint)) %>%
+    group_by(thisPoint) %>%
+    summarize(pointDistance = mean(point_distance)) %>%
+    arrange(as.numeric(thisPoint)) %>% 
+    dplyr::select(-thisPoint)
+  
+  return(output)  
+}
+```
+
+
+
