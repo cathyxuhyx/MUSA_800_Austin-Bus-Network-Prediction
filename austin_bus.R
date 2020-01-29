@@ -1,4 +1,82 @@
-
+#load packages
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+library(sf)
+library(gridExtra)
 # change the directory in order to load the data
-agg = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
-disagg = read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
+agg <- read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
+disagg <- read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
+austin <- st_read('https://data.austintexas.gov/api/geospatial/3pzb-6mbr?method=export&format=GeoJSON')
+
+austin <- austin%>%
+  st_transform(32140)
+
+
+
+#scatterplot
+Before_scatter <- ggplot()+
+                  geom_point(data = agg_before_sf, aes(x=avg_trips, y=avg_on, color = STOP_ID))+
+                  labs(title = "Ridership vs. Number of Trips",
+                       subtitle = "Before CapRemap",
+                       xlab = "Average Ridership",
+                       ylab = "Average Trips")
+After_scatter <-  ggplot()+
+                  geom_point(data = agg_after_sf, aes(x=avg_trips, y=avg_on, color = STOP_ID))+
+                  labs(title = "Ridership vs. Number of Trips",
+                  subtitle = "After CapRemap",
+                  xlab = "Average Ridership",
+                  ylab = "Average Trips")
+    
+Scatterplots <- grid.arrange(Before_scatter,After_scatter,ncol = 2)
+
+#mapping the stops by ridership
+quantile(agg_before_sf$ratio)
+quantile(agg_after_sf$ratio)
+
+ggplot()+
+  geom_sf(mapping = aes(), data = austin)+
+  geom_sf(mapping = aes(color = ratio), data = agg_before_sf)+
+  scale_colour_gradient(low = "light blue", high = "steelblue")
+
+Low_before <- ggplot(data=austin)+
+                geom_sf(fill = "light grey")+
+                geom_sf(data = subset(agg_before_sf, ratio<0.06505824), color = "darkblue")+
+                labs(title = "Austin Bus Stops Ridership",
+                subtitle = "Low ridership stops before CapRemap")
+Low_after <- ggplot(data=austin)+
+             geom_sf(fill = "light grey")+
+              geom_sf(data = subset(agg_after_sf, ratio<0.03767514), color = "darkblue")+
+              labs(title = "Austin Bus Stops Ridership",
+              subtitle = "Low ridership stops after CapRemap")
+
+Low_Compare <- grid.arrange(Low_before, Low_after, ncol = 2)
+
+
+High_before <- ggplot(data=austin)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_before_sf, ratio>0.43755896), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Low ridership stops before CapRemap")
+
+High_after <- ggplot(data=austin)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_after_sf, ratio>0.41095547), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Low ridership stops after CapRemap")
+
+High_Compare <- grid.arrange(High_before, High_after, ncol = 2)
+
+Zero_before <- ggplot(data=austin)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_before_sf, ratio==0), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Stops without Any Ridership before CapRemap")
+
+Zero_after <- ggplot(data=austin)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_after_sf, ratio==0), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Stops without Any Ridership before CapRemap")
+  
+Zero_Compare <- grid.arrange(Zero_before, Zero_after, ncol = 2)
