@@ -1,7 +1,7 @@
 ---
-title: "GitHub for Practicum"
-author: "Matthew Harris"
-date: "01/23/2019"
+title: "Austin Bus Markdown"
+author: "Grace"
+date: "01/28/2019"
 output:
   html_document:
     toc: true
@@ -12,6 +12,960 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r}
+library(corrplot)
+library(caret) 
+library(viridis)
+library(stargazer)
+library(tidyverse)
+library(sf)
+library(FNN)
+library(tigris)
+library(spdep)
+library(ckanr)
+library(grid)
+library(gridExtra)
+```
+
+## Exploratory Analysis
+### Charts about stop-level ridership change before and after CapRemap
+```{r}
+data <- read.xlsx("C:/Upenn/Practicum/Data/OneDrive_1_1-16-2020/MUSA Data - Stop Ridership Aggregated.xlsx")
+
+table(data$YEAR_ID)
+data.y18 <- data %>%
+  subset(data$YEAR_ID == "2018")
+
+max(data.y18$AVERAGE_ON)
+```
+```{r}
+plotTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=12),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=10),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic"),
+    legend.text = element_text(colour = "black", face = "italic"),
+    strip.text.x = element_text(size = 14)
+  )
+}
+```
+
+
+```{r}
+as.numeric(data$STOP_ID)
+
+data.y18$MONTH_ID <- factor( data.y18$MONTH_ID, levels = c( "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12") )
+data.y.1 <- data.y18 %>%
+  subset(data.y18$STOP_ID <= 1050 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y18.2$AVERAGE_ON)
+
+plot1 <- data.y.1 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot1
+```
+```{r}
+data.y.2 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1050 &data.y18$STOP_ID <= 1074 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.2$AVERAGE_ON)
+
+plot2 <- data.y.2 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,20) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot2
+```
+```{r}
+data.y.3 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1074 &data.y18$STOP_ID <= 1099 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.3$AVERAGE_ON)
+
+plot3 <- data.y.3 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,26) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot3
+
+```
+
+```{r}
+data.y.4 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1099 &data.y18$STOP_ID <= 1128 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.4$AVERAGE_ON)
+
+plot4 <- data.y.4 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,20) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot4
+```
+```{r}
+data.y.5 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1128 &data.y18$STOP_ID <= 1160 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.5$AVERAGE_ON)
+
+plot5 <- data.y.5 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot5
+```
+```{r}
+data.y.6 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1160 &data.y18$STOP_ID <= 1205 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.6$AVERAGE_ON)
+
+plot6 <- data.y.6 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot6
+```
+```{r}
+data.y.6.sf <-
+  data.y.6 %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+ggplot()+
+  geom_sf(data=TrusteeDist,fill="grey20")+
+  geom_sf(data=data.y.6.sf,aes(colour=q5(AVERAGE_ON)),show.legend = "point",size = .75)+
+  scale_color_manual(values=palette5,
+                     labels=qBr(data.y.6.sf,"AVERAGE_ON"),
+                     name="Quintile\nBreaks")+
+  labs(title="Ridership at stops 1161-1204, Austin")+
+  mapTheme()
+```
+```{r}
+data.y.7 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1205 &data.y18$STOP_ID <= 1255 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.7$AVERAGE_ON)
+
+plot7 <- data.y.7 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot7
+```
+```{r}
+data.y.8 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1255 &data.y18$STOP_ID <= 1283 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.8$AVERAGE_ON)
+
+plot8 <- data.y.8 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot8
+```
+```{r}
+data.y.9 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1283 &data.y18$STOP_ID <= 1326 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.9$AVERAGE_ON)
+
+plot9 <- data.y.9 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot9
+```
+```{r}
+data.y.10 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1326 &data.y18$STOP_ID <= 1364 & data.y18$AVERAGE_ON <= 30)
+
+summary(data.y.10$AVERAGE_ON)
+
+plot10 <- data.y.10 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot10
+```
+```{r}
+data.y.11 <- data.y18 %>%
+  subset(data.y18$STOP_ID > 1364 &data.y18$STOP_ID <= 1377)
+
+summary(data.y.11$AVERAGE_ON)
+
+plot11 <- data.y.11 %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,387) +
+      labs(title="Average Daily Ridership by Stop in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot11
+```
+```{r}
+SanFrancisco.sf<-
+  SanFran%>%
+  st_join(dplyr::select(base,nbrhood))
+```
+
+##Maps about stops and ridership
+Import School District shapefile
+```{r}
+TrusteeDist <- 
+  st_read("C:/Upenn/Practicum/Data/Trustee_Boundaries/Trustee.shp")%>%
+  st_transform(2278) 
+
+ggplot()+
+  geom_sf(data = TrusteeDist)
+
+```
+Join stops and school districts
+```{r}
+data.sf <-
+  data %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+Austin.sf<-
+  data.sf%>%
+  st_join(dplyr::select(TrusteeDist,TRUSTEE))
+
+data.y.Trustee18 <- Austin.sf %>%
+  subset(Austin.sf$YEAR_ID == "2018")
+
+```
+
+```{r}
+data.y.Trustee18$MONTH_ID <- factor(data.y.Trustee18$MONTH_ID, levels = c( "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12") )
+
+plot.Trustees <- 
+  as.data.frame(data.y.Trustee18) %>%
+  group_by(TRUSTEE, MONTH_ID) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON)) %>%
+    ggplot(aes(MONTH_ID,BOARD_Count)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~TRUSTEE, scales="free", ncol=3) +
+      ylim(0,32000) +
+      labs(title="Average Daily Ridership by Independent School District in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in the District")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.Trustees
+```
+
+Making charts for Stops in TrusteeDistrict 1
+```{r}
+data.y.18.S1 <- data.y.Trustee18 %>%
+  subset(data.y.Trustee18$TRUSTEE == "1")
+summary(data.y.18.S1$AVERAGE_ON)
+
+
+plot.S1.1 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID <= 1099) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.1
+
+```
+```{r}
+plot.S1.2 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1099 & STOP_ID <= 1123) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,20) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.2
+```
+```{r}
+plot.S1.3 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1123 & STOP_ID <= 1141) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.3
+```
+```{r}
+plot.S1.4 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1141 & STOP_ID <= 1324) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,200) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.4
+```
+```{r}
+plot.S1.5 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1324 & STOP_ID <= 1339) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,101) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.5
+```
+```{r}
+plot.S1.6 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1339 & STOP_ID <= 1396) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,135) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.6
+```
+```{r}
+plot.S1.7 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1396 & STOP_ID <= 1579) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,135) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.7
+```
+```{r}
+plot.S1.8 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1579 & STOP_ID <= 1598) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,110) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.8
+```
+```{r}
+plot.S1.9 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1598 & STOP_ID <= 1621) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,355) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.9
+```
+```{r}
+plot.S1.10 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1621 & STOP_ID <= 1643) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,90) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.10
+```
+```{r}
+plot.S1.11 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 1643 & STOP_ID <= 2024) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,60) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.11
+```
+```{r}
+plot.S1.12 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 2024 & STOP_ID <= 2065) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,25) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.12
+```
+```{r}
+plot.S1.13 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 2065 & STOP_ID <= 2296) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,60) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.13
+```
+```{r}
+plot.S1.14 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 2296 & STOP_ID <= 2396) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.14
+```
+```{r}
+plot.S1.15 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 2396 & STOP_ID <= 2456) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,50) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.15
+```
+```{r}
+plot.S1.16 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 2456 & STOP_ID <= 2886) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.16
+```
+```{r}
+plot.S1.17 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 2886 & STOP_ID <= 3296) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.17
+```
+```{r}
+plot.S1.18 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 3296 & STOP_ID <= 3731) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.18
+```
+```{r}
+plot.S1.19 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 3731 & STOP_ID <= 4192) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.19
+```
+```{r}
+plot.S1.3931 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID == 3931) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,1500) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.3931
+```
+```{r}
+plot.S1.20 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 4192 & STOP_ID <= 4613) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.20
+```
+```{r}
+plot.S1.21 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 4613 & STOP_ID <= 4723) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,200) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.21
+```
+```{r}
+plot.S1.22 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 4723 & STOP_ID <= 4933) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.22
+```
+```{r}
+plot.S1.23 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 4933 & STOP_ID <= 5131) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,120) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.23
+```
+```{r}
+plot.S1.24 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 5131 & STOP_ID <= 5404) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,75) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.24
+```
+```{r}
+plot.S1.25 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 5404 & STOP_ID <= 5506) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,75) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.25
+```
+```{r}
+plot.S1.26 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 5506 & STOP_ID <= 5617) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.26
+```
+```{r}
+plot.S1.27 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 5617 & STOP_ID <= 5782) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,120) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.27
+```
+```{r}
+plot.S1.28 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 5782 & STOP_ID <= 5915) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,100) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.28
+```
+```{r}
+plot.S1.29 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 5915 & STOP_ID <= 6296) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,50) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.29
+```
+```{r}
+plot.S1.30 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 6296 & STOP_ID <= 657) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,50) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.30
+```
+```{r}
+plot.S1.31 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 657 & STOP_ID <= 673) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,50) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.31
+```
+```{r}
+plot.S1.32 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 673 & STOP_ID <= 898) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,50) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.32
+```
+```{r}
+plot.S1.33 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 898 & STOP_ID <= 913) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,50) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.33
+```
+
+Mapping ridership in May
+```{r}
+q5 <- function(variable) {as.factor(ntile(variable, 5))}
+
+qBr <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]],0),
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]]), digits = 3),
+                 c(.01,.2,.4,.6,.8), na.rm=T)
+  }
+}
+
+palette5 <- c("#FA7800","#C48C04","#8FA108","#5AB60C","#25CB10")
+
+mapTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle=element_text(face="italic"),
+    plot.caption=element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2)
+  )
+}
+data.y.18.5 <- data.y18 %>%
+  subset(data.y18$MONTH_ID == 5)
+
+data.y.18.5.sf <-
+  data.y.18.5 %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+ggplot()+
+  geom_sf(data=TrusteeDist,fill="grey20")+
+  geom_sf(data=data.y.18.5.sf,aes(colour=q5(AVERAGE_ON)),show.legend = "point",size = .75)+
+  scale_color_manual(values=palette5,
+                     labels=qBr(data.y.18.5.sf,"AVERAGE_ON"),
+                     name="Quintile\nBreaks")+
+  labs(title="Ridership in May, Austin")+
+  mapTheme()
+```
+Mapping ridership in June
+```{r}
+data.y.18.6 <- data.y18 %>%
+  subset(data.y18$MONTH_ID == 6)
+
+data.y.18.6.sf <-
+  data.y.18.6 %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+ggplot()+
+  geom_sf(data=TrusteeDist,fill="grey20")+
+  geom_sf(data=data.y.18.6.sf,aes(colour=q5(AVERAGE_ON)),show.legend = "point",size = .75)+
+  scale_color_manual(values=palette5,
+                     labels=qBr(data.y.18.6.sf,"AVERAGE_ON"),
+                     name="Quintile\nBreaks")+
+  labs(title="Ridership in May, Austin")+
+  mapTheme()
+```
+
 ## A Project Portfolio with GitHub Pages
 
 This markdown is about making a simple MUSA 800 Practicum project on GitHub using Markdown and Rstudio. Requirements for this are a GitHub account, Git command line tool installed on your computer, Rstudio, and some knowledge of markdown and perhaps HTML. Aside from some preliminary setup, your work will be about editing an `README.md` document and, if you choose, committing you project work to GitHub. We will walk through all of these steps. 
