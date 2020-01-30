@@ -1,5 +1,5 @@
 ---
-title: "Train Occupancy Prediction in Belgium"
+title: "Bus Ridership Prediction in Austin, TX"
 author: "Hanyong Xu, Jia Yuan, Yibing Zheng"
 date: "12/2019"
 output:
