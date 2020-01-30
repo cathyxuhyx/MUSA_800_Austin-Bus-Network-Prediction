@@ -33,8 +33,22 @@ knitr::opts_chunk$set(
 options(scipen=99)
 ```
 
-## 1. Introduction
+# 1. Introduction
 
+## Background
+
+Cap Remap comes from a 10-year transit plan: Connections 2025. It aims to adjust the transit network according to internal analysis about what works the best and community outreach. It also aims to improve the east-west connection. 
+
+Passengers can buy their passes on the CapMetro app directly. The new network will cause more transfers to passengers but overall less waiting time. A single ride pass is \$1.25. For a Day-Pass, it is \$2.5 which allows a passenger to ride for unlimited times in 24 hours. They also have options for 7-day passes or monthly pass.
+
+## Overview
+
+- More frequent, more reliable and better connected
+- Triple the number of bus routes that operate every 15min
+- Make sure the frequency meets the need on weekends
+- Link to [High-Frequency Service Map](https://capmetro.org/uploadedFiles/New2016/Plan_Your_Trip/Schedules_and_Maps/high-frequency-system-map.pdf): shows the routes operate every 15min
+
+# Exploratory Analysis
 
 ```{r}
 library(tidyverse)
@@ -66,6 +80,7 @@ library(corrplot)
 library(stargazer)
 library(tigris)
 library(ckanr)
+library(ggplot2)
 ```
 
 ```{r}
@@ -98,6 +113,7 @@ plotTheme <- theme(
   panel.background=element_blank(),
   plot.background=element_blank(),
   axis.ticks=element_blank())
+
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
 qBr <- function(df, variable, rnd) {
   if (missing(rnd)) {
@@ -108,6 +124,7 @@ qBr <- function(df, variable, rnd) {
                           c(.01,.2,.4,.6,.8), na.rm=T)
   }
 }
+
 plotTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
@@ -118,7 +135,7 @@ plotTheme <- function(base_size = 12) {
     panel.background = element_blank(),
     panel.grid.major = element_line("grey80", size = 0.1),
     panel.grid.minor = element_blank(),
-    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    #panel.border = element_rect(colour = "black", fill=NA, size=2),
     strip.background = element_rect(fill = "grey80", color = "white"),
     strip.text = element_text(size=12),
     axis.title = element_text(size=12),
@@ -149,7 +166,7 @@ nn_function <- function(measureFrom,measureTo,k) {
 }
 ```
 
-### Aggregate Data Analysis
+## Ridership Overall Trend Using the Aggregate Data
 
 Charts about stop-level ridership change before and after CapRemap
 ```{r}
@@ -175,7 +192,6 @@ data.y.1 <- data.y18 %>%
 summary(data.y18$AVERAGE_ON)
 ```
 
-##Maps about stops and ridership
 Import School District shapefile
 ```{r}
 TrusteeDist <- 
@@ -186,6 +202,7 @@ ggplot()+
   geom_sf(data = TrusteeDist)
 
 ```
+
 Join stops and school districts
 ```{r}
 data.sf <-
@@ -228,9 +245,27 @@ data.y.18.S1 <- data.y.Trustee18 %>%
 summary(data.y.18.S1$AVERAGE_ON)
 
 
+plot.S1.0 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID <= 667) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.0
+
+```
+
+```{r}
 plot.S1.1 <- 
   as.data.frame(data.y.18.S1) %>% 
-  filter(STOP_ID <= 1099) %>%
+  filter(STOP_ID > 667 &STOP_ID <= 898) %>%
   group_by(STOP_ID) %>% 
     ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
       geom_point() +
@@ -244,10 +279,32 @@ plot.S1.1 <-
 plot.S1.1
 
 ```
+
+
+```{r}
+plot.S1.1.1 <- 
+  as.data.frame(data.y.18.S1) %>% 
+  filter(STOP_ID > 898 &STOP_ID <= 1094) %>%
+  group_by(STOP_ID) %>% 
+    ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
+      geom_point() +
+      plotTheme() +
+      facet_wrap(~STOP_ID, scales="free", ncol=5) +
+      ylim(0,30) +
+      labs(title="Average Daily Ridership by Stop in Austin IDS1",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 6, color = "blue")
+
+plot.S1.1.1
+
+```
+
+
+
 ```{r}
 plot.S1.2 <- 
   as.data.frame(data.y.18.S1) %>% 
-  filter(STOP_ID > 1099 & STOP_ID <= 1123) %>%
+  filter(STOP_ID > 1094 & STOP_ID <= 1123) %>%
   group_by(STOP_ID) %>% 
     ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
       geom_point() +
@@ -711,7 +768,7 @@ plot.S1.29
 ```{r}
 plot.S1.30 <- 
   as.data.frame(data.y.18.S1) %>% 
-  filter(STOP_ID > 6296 & STOP_ID <= 657) %>%
+  filter(STOP_ID > 6296 | STOP_ID <= 657) %>%
   group_by(STOP_ID) %>% 
     ggplot(aes(x= MONTH_ID, y=AVERAGE_ON, group = 1)) + 
       geom_point() +
@@ -773,6 +830,133 @@ plot.S1.33 <-
 plot.S1.33
 ```
 
+## Correlation Between Variables Using Aggregate Data
+
+```{r}
+agg <- read.csv('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/MUSA Data - Stop Ridership Aggregated.csv')
+disagg <- read.csv('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
+austin <- st_read('https://data.austintexas.gov/api/geospatial/3pzb-6mbr?method=export&format=GeoJSON')
+
+agg = agg %>% 
+  rename(STOP_ID = ï..STOP_ID,)
+disagg = disagg %>% 
+  rename(LOAD_NUM = ï..LOAD_NUM,)
+```
+
+```{r}
+austin <- austin%>%
+  st_transform(32140)
+
+#turn dataframe into spacitial object
+agg_sf <- agg%>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
+  st_transform(32140)
+```
+
+divide agg_sf data into before and after capremap
+```{r}
+agg_before_sf <- agg_sf%>%
+  filter(YEAR_ID == 2017 | (YEAR_ID == 2018 & MONTH_ID < 6))%>%
+  group_by(STOP_ID)%>%
+  summarise(avg_on = mean(AVERAGE_ON),
+            avg_trips = mean(TRIPS))%>%
+  mutate(ratio = avg_on / avg_trips)
+```
+
+```{r}
+agg_after_sf <- agg_sf%>%
+  filter(YEAR_ID == 2019 | (YEAR_ID == 2018 & MONTH_ID > 5))%>%
+  group_by(STOP_ID)%>%
+  summarise(avg_on = mean(AVERAGE_ON),
+            avg_trips = mean(TRIPS))%>%
+  mutate(ratio = avg_on / avg_trips)
+```
+
+scatterplot of ridership vs. number of trips per weekday
+```{r}
+Before_scatter <- ggplot()+
+  geom_point(data = agg_before_sf, aes(x=avg_trips, y=avg_on, color = STOP_ID))+
+  labs(title = "Ridership vs. Number of Trips",
+       subtitle = "Before CapRemap",
+       xlab = "Average Ridership",
+       ylab = "Average Trips")
+
+```
+```{r}
+After_scatter <-  ggplot()+
+  geom_point(data = agg_after_sf, aes(x=avg_trips, y=avg_on, color = STOP_ID))+
+  labs(title = "Ridership vs. Number of Trips",
+       subtitle = "After CapRemap",
+       xlab = "Average Ridership",
+       ylab = "Average Trips")
+
+Scatterplots <- grid.arrange(Before_scatter,After_scatter,ncol = 2)
+```
+
+## Mapping the Stops by Ridership Using the Aggregate Data
+
+doesn't show clear patterns when plotting all the stops
+```{r}
+ggplot()+
+  geom_sf(data=TrusteeDist)+
+  #geom_sf(mapping = aes(), data = austin)+
+  geom_sf(mapping = aes(color = ratio), data = agg_before_sf, size = 1)+
+  scale_colour_gradient(low = "light blue", high = "darkblue")
+```
+
+below 25% as low ridership whereas higher than 75% as high ridership
+```{r}
+quantile(agg_before_sf$ratio)
+quantile(agg_after_sf$ratio)
+
+Low_before <- ggplot(data=TrusteeDist)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_before_sf, ratio<0.06505824), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Low ridership stops before CapRemap")
+Low_after <- ggplot(data=TrusteeDist)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_after_sf, ratio<0.03767514), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Low ridership stops after CapRemap")
+
+Low_Compare <- grid.arrange(Low_before, Low_after, ncol = 2)
+```
+
+```{r}
+High_before <- ggplot(data=TrusteeDist)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_before_sf, ratio>0.43755896), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Low ridership stops before CapRemap")
+
+High_after <- ggplot(data=TrusteeDist)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_after_sf, ratio>0.41095547), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Low ridership stops after CapRemap")
+
+High_Compare <- grid.arrange(High_before, High_after, ncol = 2)
+
+```
+
+```{r}
+Zero_before <- ggplot(data=TrusteeDist)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_before_sf, ratio==0), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Stops without Any Ridership before CapRemap")
+
+Zero_after <- ggplot(data=TrusteeDist)+
+  geom_sf(fill = "light grey")+
+  geom_sf(data = subset(agg_after_sf, ratio==0), color = "darkblue")+
+  labs(title = "Austin Bus Stops Ridership",
+       subtitle = "Stops without Any Ridership before CapRemap")
+
+Zero_Compare <- grid.arrange(Zero_before, Zero_after, ncol = 2)
+
+```
+
 Mapping ridership in May
 ```{r}
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
@@ -821,6 +1005,7 @@ ggplot()+
   labs(title="Ridership in May, Austin")+
   mapTheme()
 ```
+
 Mapping ridership in June
 ```{r}
 data.y.18.6 <- data.y18 %>%
@@ -840,4 +1025,239 @@ ggplot()+
   labs(title="Ridership in June, Austin")+
   mapTheme()
 ```
+
+## Finding the Hotlines and Coldlines Using Disaggregate Data
+
+```{r}
+nhood = st_read('https://data.austintexas.gov/resource/nz5f-3t2e.geojson')
+```
+
+overall: 
+find the hot lines by max passenger load
+```{r}
+hotlines_x = disagg %>%
+  group_by(ROUTE) %>%
+  summarise(max_load = max(PSGR_LOAD)) %>%
+  arrange(desc(max_load)) %>%
+  top_n(5) %>%
+  select(ROUTE)
+```
+
+find the hot lines by mean passenger load (did not use this for plotting)
+```{r}
+disagg %>%
+  group_by(ROUTE) %>%
+  summarise(mean_load = mean(PSGR_LOAD)) %>%
+  arrange(desc(mean_load)) %>%
+  top_n(5) %>%
+  select(ROUTE)
+```
+
+plot it 
+```{r}
+disagg %>%
+  filter(ROUTE %in% hotlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  summarise(mean_stop_load = mean(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf( size = 0.8, aes(color = mean_stop_load))+
+  labs(title="Five Most Popular Bus Routes (Hot Lines) in Austin")
+
+```
+
+```{r}
+disagg %>%
+  filter(ROUTE %in% hotlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  filter(PSGR_LOAD == max(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf(aes(color = factor(ROUTE), size = PSGR_LOAD, alpha = 0.1), show.legend = "point") +
+  scale_size(range = c(0.5, 2.5)) +
+  labs(title="Five Most Popular Bus Routes with respect to Passenger Load")
+```
+
+passenger miles traveled
+```{r}
+disagg %>%
+  filter(ROUTE %in% hotlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  filter(PSGR_LOAD == max(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf(aes(color = factor(ROUTE), size = PSGR_MILES, alpha = 0.1), show.legend = "point") +
+  scale_size(range = c(0.5, 5)) +
+  labs(title="Five Most Popular Bus Routes in Austin with respect to PMT")
+```
+
+use passenger hours to represent durations
+```{r}
+disagg %>%
+  filter(ROUTE %in% hotlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  filter(PSGR_LOAD == max(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf(aes(color = factor(ROUTE), size = PSGR_HOURS, alpha = 0.1), show.legend = "point") +
+  scale_size(range = c(0.5, 5)) +
+  labs(title="Five Most Popular Bus Routes in Austin with respect to PHT")
+```
+
+find the cold lines by max passenger load
+```{r}
+coldlines_x = disagg %>%
+  group_by(ROUTE) %>%
+  summarise(max_load = max(PSGR_LOAD)) %>%
+  arrange(max_load) %>%
+  top_n(-4) %>%
+  select(ROUTE)
+```
+
+find the cold lines by mean passenger load
+```{r}
+disagg %>%
+  group_by(ROUTE) %>%
+  summarise(mean_load = mean(PSGR_LOAD)) %>%
+  arrange(mean_load) %>%
+  top_n(-5) %>%
+  select(ROUTE)
+```
+
+plot it 
+```{r}
+disagg %>%
+  filter(ROUTE %in% coldlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  summarise(mean_stop_load = mean(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf(size = 0.8, aes(color = mean_stop_load)) +
+  labs(title="Five least Popular Bus Routes (Cold Lines) in Austin")
+```
+
+```{r}
+disagg %>%
+  filter(ROUTE %in% coldlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  filter(PSGR_LOAD == max(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf(aes(color = factor(ROUTE), size = PSGR_LOAD, alpha = 0.1), show.legend = "point") +
+  scale_size(range = c(0.5, 2.5)) +
+  labs(title="Four least Popular Bus Routes (Cold Lines) in Austin")
+
+```
+
+passenger miles traveled
+```{r}
+disagg %>%
+  filter(ROUTE %in% coldlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  filter(PSGR_LOAD == max(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf(aes(color = factor(ROUTE), size = PSGR_MILES, alpha = 0.1), show.legend = "point") +
+  scale_size(range = c(0.5, 5)) +
+  labs(title="Four least Popular Bus Routes (Cold Lines) in Austin")
+```
+
+use passenger hours to represent durations
+```{r}
+disagg %>%
+  filter(ROUTE %in% coldlines_x$ROUTE) %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278) %>%
+  group_by(STOP_ID) %>%
+  filter(PSGR_LOAD == max(PSGR_LOAD)) %>%
+  ggplot() +
+  geom_sf(data = nhood) +
+  geom_sf(aes(color = factor(ROUTE), size = PSGR_HOURS, alpha = 0.1), show.legend = "point") +
+  scale_size(range = c(0.5, 5)) +
+  labs(title="Four least Popular Bus Routes (Cold Lines) in Austin")
+```
+
+## Find Operation Pattern Using Disaggregate Data
+
+check the highest frequency for hot lines
+```{r}
+disagg %>%
+  group_by(ROUTE) %>%
+  summarise(freq = n_distinct(TRIP)) %>%
+  arrange(desc(freq))%>%
+  top_n(15) %>%
+  ggplot() +
+  geom_bar(aes(x= factor(ROUTE), y= freq, fill=factor(ROUTE), alpha = 0.5),stat="identity") +
+  labs(title="Weekly Bus Routes with High Frequency in Austin")
+```
+
+```{r eval=FALSE, include=FALSE}
+disagg %>%
+  group_by(ROUTE) %>%
+  summarise(freq = n_distinct(TRIP), max_load = max(PSGR_LOAD)) %>%
+  arrange(freq)%>%
+  top_n(15) %>%
+  ggplot() +
+  geom_bar(aes(x= factor(ROUTE), y= freq, fill=factor(ROUTE), alpha = 0.3),stat="identity") +
+  geom_bar(aes(x= factor(ROUTE), y= max_load, alpha = 0.3),stat="identity") +
+  labs(title="Bus Routes with High Frequency in Austin")
+```
+
+time of large load
+```{r}
+disagg_x = disagg %>%
+  mutate(datetime = parse_date_time(ACT_STOP_TIME, '%m/%d/%Y %H:%M'),
+         interval60 = floor_date(ymd_hms(datetime), unit = "hour"),
+         interval15 = floor_date(ymd_hms(datetime), unit = "15 mins"))
+```
+
+```{r eval=FALSE, include=FALSE}
+ggplot(disagg_x %>% 
+         mutate(hour = hour(datetime)) %>% 
+         filter(PSGR_LOAD < quantile(PSGR_LOAD, 0.062)), aes(hour, color = factor(ROUTE)))+
+  geom_freqpoly(binwidth = 1)+
+  labs(title="Hourly Bus Stop Count for Low Occupancy") +
+  plotTheme()
+```
+
+```{r}
+ggplot(disagg_x %>% 
+         mutate(hour = hour(datetime)) %>% 
+         filter(PSGR_LOAD > quantile(PSGR_LOAD, 0.997)), aes(hour, color = factor(ROUTE)))+
+  geom_freqpoly(binwidth = 1)+
+  labs(title="Hourly Bus Stop Count for High Occupancy") +
+  plotTheme()
+```
+
+```{r eval=FALSE, include=FALSE}
+ggplot(disagg_x %>% 
+         mutate(hour = hour(datetime)), aes(hour, color = factor(ROUTE)))+
+  geom_freqpoly(binwidth = 1)+
+  labs(title="Hourly Bus Stop Count for All Shifts") +
+  plotTheme()
+
+ggplot(disagg_x %>% 
+         mutate(minu = strftime(datetime, format="%H:%M")) %>% 
+         filter(PSGR_LOAD > quantile(PSGR_LOAD, 0.999)), aes(minu, PSGR_LOAD, colour = factor(ROUTE))) +
+  geom_line()
+```
+
+
+
+
+
 
