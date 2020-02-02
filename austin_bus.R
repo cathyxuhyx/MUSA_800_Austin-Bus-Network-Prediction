@@ -4,13 +4,46 @@ library(tidyverse)
 library(ggplot2)
 library(sf)
 library(gridExtra)
+library(RColorBrewer)
 # change the directory in order to load the data
 agg <- read.csv('D:/Spring20/Practicum/data/MUSA Data - Stop Ridership Aggregated.csv')
 #disagg <- read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
 austin <- st_read('https://data.austintexas.gov/api/geospatial/3pzb-6mbr?method=export&format=GeoJSON')
+counties <- st_read("https://opendata.arcgis.com/datasets/0c2b3b7224ea444d879f36bbabb4df57_0.geojson")
+cities <- st_read("https://opendata.arcgis.com/datasets/eed7edb94c364a30a8100f69e7c6a309_0.geojson")
+schoolDist <- st_read("https://opendata.arcgis.com/datasets/21bfd7ce11024bceac32c8d4ba3a1da0_0.geojson")
+NewRoutes <- st_read("D:/Spring20/Practicum/data/NewRoutes.shp")
+HighFreq <- st_read("D:/Spring20/Practicum/data/HighFrequency.shp")
+routes1801 <- st_read("D:/Spring20/Practicum/data/Jan2018/Routes.shp")
+replacd <- st_read("D:/Spring20/Practicum/data/EliminatedReplacement.shp")
+eliminated <- st_read("D:/Spring20/Practicum/data/Eliminated.shp")
+
+#new scale function
+new_scale <- function(new_aes) {
+  structure(ggplot2::standardise_aes_names(new_aes), class = "new_aes")
+}
 
 austin <- austin%>%
   st_transform(32140)
+
+counties <- counties%>%
+  st_transform(32614)
+
+cities <- cities%>%
+  st_transform(32614)
+
+schoolDist <- schoolDist%>%
+  st_transform(32614)%>%
+  st_contains(routes)%>%
+  st_geometry()
+
+schoolDist <- st_contains(routes)
+
+
+  
+counties <- subset(counties, COUNTY == "WILLIAMSON" | COUNTY == "TRAVIS")
+cities <- subset(cities, MUNI_NM == "AUSTIN" | MUNI_NM == "JONESTOWN"|MUNI_NM == "LAGO VISTA"|MUNI_NM =="LEANDER"|MUNI_NM =="MANOR"|
+                   MUNI_NM == "POINT VENTURE"|MUNI_NM =="SAN LEANNA"|MUNI_NM =="ROUND ROCK"|MUNI_NM =="VOLENTE")
 
 #turn dataframe into spacitial object
 agg_sf <- agg%>%
@@ -104,3 +137,20 @@ Zero_after <- ggplot(data=austin)+
        subtitle = "Stops without Any Ridership before CapRemap")
 
 Zero_Compare <- grid.arrange(Zero_before, Zero_after, ncol = 2)
+
+#Capital Metro Service Area
+serviceArea <- st_read("D:/Spring20/Practicum/data/Service_Area.shp")
+routes <- st_read("D:/Spring20/Practicum/data/Routes.shp")
+
+ggplot()+
+  #geom_sf(data = cities, aes(color = MUNI_NM), size = 0.8)+
+  #geom_sf(data = schoolDist, size = 0.8)+
+  geom_sf(data = serviceArea, aes(fill = NAME), size = 0.8, alpha = 0.5)+
+  #scale_color_discrete(name = "Jurisdictions")+
+  scale_fill_manual(name = "Jurisdictions", values = rev(brewer.pal(9,"BuPu")))+
+  geom_sf(data = routes1801, color = "grey90", alpha = 0.2)+
+  labs(name = "Routes 2018.01", guide = "legend")+
+  geom_sf(data = eliminated, color = "deeppink", size = 1)+
+  labs(name = "Eliminated", guide = "legend")+
+  labs(title = "Cap Remap Eliminated Routes")
+  
