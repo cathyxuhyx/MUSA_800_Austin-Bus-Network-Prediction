@@ -18,6 +18,14 @@ For planners to test the impact of a built environment and/or bus system change 
 
 # Exploratory Data Analysis:
 
+* Aggregate Data
+  * Ridership Temporal Trend Change
+  * Mapping Spatial Trend
+  * Finding Correlation 
+* Disaggregate Data
+  * Finding Hotlines and Coldlines 
+  * Ridership Daily and Weekly Operation Pattern
+
 # Web Visualization:
 
 # Model Development & Validation:
