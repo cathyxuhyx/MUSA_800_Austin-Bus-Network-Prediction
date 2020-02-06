@@ -1,0 +1,227 @@
+---
+title: "Untitled"
+author: "Yibing Zheng"
+date: "February 5, 2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploratory Analysis in Aggregated Data
+Install the library and load data
+```{r}
+library(corrplot)
+library(caret) 
+library(viridis)
+library(stargazer)
+library(tidyverse)
+library(sf)
+library(FNN)
+library(tigris)
+library(spdep)
+library(ckanr)
+library(grid)
+library(gridExtra)
+library(ggplot2)
+```
+
+```{r}
+data <- read.csv("C:/Upenn/Practicum/Data/OneDrive_1_1-16-2020/Stop Ridership Aggregated.csv")
+
+table(data$YEAR_ID)
+#Subset data in 2018 for further analysis
+data.y18 <- data %>%
+  subset(data$YEAR_ID == "2018")
+```
+
+```{r}
+plotTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=12),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=10),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic"),
+    legend.text = element_text(colour = "black", face = "italic"),
+    strip.text.x = element_text(size = 14)
+  )
+}
+```
+
+```{r}
+#Change June to 0 and make months before CapRemap become negative, after CapRemap become positive
+data.y18$MONTH_ID <- as.numeric(data.y18$MONTH_ID)
+
+data.y18$Month <- data.y18$MONTH_ID - 6
+#Make month column become factor
+#data.y18$Month <- factor( data.y18$Month, levels = c( "-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6") )
+
+data.y18$Before <- ifelse(data.y18$Month < 0, 1, 0)
+```
+### 1. City-wide Ridership change before and after CapRemap
+```{r}
+#Plot Average_on first
+plot.city<-
+  as.data.frame(data.y18) %>%
+  group_by(Month) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      ylim(70000,100000) +
+      labs(title="Ridership by stops on an average weekday among all the stops in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_discrete(name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+
+plot.city
+```
+### 2. School District Ridership Change
+```{r}
+#Load school district shp
+TrusteeDist <- 
+  st_read("C:/Upenn/Practicum/Data/Trustee_Boundaries/Trustee.shp")%>%
+  st_transform(2278) 
+
+ggplot()+
+  geom_sf(data = TrusteeDist)
+```
+```{r}
+#Transform ridership data into geo data
+data.y18.sf <-
+  data.y18 %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+```
+
+```{r}
+#Join school trustee districts and stops
+Austin18.sf<-
+  data.y18.sf%>%
+  st_join(dplyr::select(TrusteeDist,TRUSTEE))
+
+Austin18.sf[is.na(Austin18.sf)] <- "Outside Austin"
+sum(is.na(Austin18.sf))
+```
+Plot ridership in different school district
+```{r, fig.height=7, fig.width=10}
+plot.Trustees <- 
+  as.data.frame(Austin18.sf) %>%
+  group_by(TRUSTEE, Month) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(~TRUSTEE, scales="free", ncol=3) +
+      ylim(0,32000) +
+      labs(title="Average Daily Ridership by Independent School District in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in the District")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_discrete(name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+
+plot.Trustees
+```
+According to the chart above, the ridership change in independent school district 5 is similar to the overall change happened city-wide Austin. Meanwhile, other school districts didn't exprience significant change in ridership. Thus, School District 5 would be an important area to focus on in the future.
+### 3. Ridership Change in Neighborhoods
+```{r}
+#Load neighborhood geojson
+nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
+  st_set_crs(4326)%>%
+  st_transform(2278)
+
+ggplot()+
+  geom_sf(data = nhood)
+```
+```{r}
+#Join neighborhood and stops
+Austin18.2.sf<-
+  Austin18.sf%>%
+  st_join(dplyr::select(nhood,label))
+
+Austin18.2.sf[is.na(Austin18.2.sf)] <- NULL
+sum(is.na(Austin18.2.sf))
+
+Austin18.2.1.sf <- Austin18.2.sf %>%
+  subset(!is.na(Austin18.2.sf$label))
+
+sum(is.na(Austin18.2.1.sf))
+```
+Plot ridership in different neighborhood
+```{r,fig.height = 30, fig.width = 15}
+plot.nhood <- 
+  as.data.frame(Austin18.2.1.sf) %>%
+  group_by(label, Month) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(~label, scales="free", ncol=4) +
+      ylim(0,32000) +
+      labs(title="Average Daily Ridership by Neighborhoods in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in the Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_discrete(name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+
+plot.nhood
+
+```
+According to the charts above, we could see that for most of the neighborhood, the riderships are really stable before and after CapRemap. There are only several neighborhoods where ridership are normally high and ridership changed because of CapRemap: Downtown, North Austin Civic Association, Pleasant Valley, UT and West University.
+### 4. Ridership Change in Census Tract level
+```{r}
+#Load census tract data
+Tracts <- 
+  st_read("C:/Upenn/Practicum/Data/Census Tract/tl_2010_48453_tract10.shp")%>%
+  st_transform(2278) 
+
+ggplot()+
+  geom_sf(data = Tracts)
+```
+
+```{r}
+Austin18.3.sf<-
+  Austin18.2.sf%>%
+  st_join(dplyr::select(Tracts,TRACTCE10))
+
+sum(is.na(Austin18.3.sf$TRACTCE10))
+Austin18.3.1.sf <- Austin18.3.sf %>%
+  subset(!is.na(Austin18.3.sf$TRACTCE10))
+
+sum(is.na(Austin18.3.1.sf$TRACTCE10))
+```
+
+
+```{r,fig.height = 60, fig.width = 15}
+plot.tract <- 
+  as.data.frame(Austin18.3.1.sf) %>%
+  group_by(TRACTCE10, Month) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(~TRACTCE10, scales="free", ncol=4) +
+      ylim(0,10000) +
+      labs(title="Average Daily Ridership by Census Tracts in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in the Census Tracts")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_discrete(name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+
+plot.tract
+```
+On the census tract level, there are several tracts have high ridership and the ridership change is huge compared with other census tracts: 000401, 000601 and 001100. There are two census tracts stopped having any ridership data after CapRemap: 001714 and 001716. There are two census tracts began to have ridership data after CapRemap: 002425 and 002429.
+
+Based on the chart exploratory above, there are several levels of focusing areas: School District 5, Neighborhoods Downtown, North Austin Civic Association, Pleasant Valley, UT and West University, Census Tract 000401, 000601 , 001100. (These are the areas where ridership is high and change is big).
+
