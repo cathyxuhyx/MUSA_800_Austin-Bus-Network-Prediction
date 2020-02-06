@@ -225,3 +225,76 @@ On the census tract level, there are several tracts have high ridership and the 
 
 Based on the chart exploratory above, there are several levels of focusing areas: School District 5, Neighborhoods Downtown, North Austin Civic Association, Pleasant Valley, UT and West University, Census Tract 000401, 000601 , 001100. (These are the areas where ridership is high and change is big).
 
+### Where are the focus areas?
+
+```{r}
+#Add columns to the dataset so that it can be recongnized in the map
+Austin18.2.sf$SchDist <- ifelse(Austin18.2.sf$TRUSTEE == 5, "1", "0")
+Austin18.2.sf$Nhood <- ifelse(Austin18.2.sf$label == "Downtown" |Austin18.2.sf$label == "North Austin Civic Association" |Austin18.2.sf$label == "Pleasant Valley" |Austin18.2.sf$label == "UT"|Austin18.2.sf$label == "West University", "1", "0" )
+
+Austin18.3.sf$CenTract1 <- ifelse(Austin18.3.sf$TRACTCE10 == "000401"|Austin18.3.sf$TRACTCE10 == "000601"|Austin18.3.sf$TRACTCE10 == "001100" , "1", "0")
+Austin18.3.sf$CenTract2 <- ifelse(Austin18.3.sf$TRACTCE10 == "001714"|Austin18.3.sf$TRACTCE10 == "001716"|Austin18.3.sf$TRACTCE10 == "002425" | Austin18.3.sf$TRACTCE10 == "002429" , "1", "0")
+
+```
+
+```{r}
+mapTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle=element_text(face="italic"),
+    plot.caption=element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2)
+  )
+}
+```
+
+```{r, fig.width= 20, fig.height= 15}
+grid.arrange(
+  ggplot() +
+    geom_sf(data = TrusteeDist, fill = "grey40") +
+    geom_sf(data = Austin18.2.sf, aes(colour = SchDist), show.legend = "point", size = 1) +
+#    scale_colour_manual(values = palette5,
+#                        labels=qBr(Sanfrancisco.test,"SalePrice"),
+#                        name="Quintile\nBreaks") +
+    labs(title="School District 5") +
+    mapTheme(),
+  
+  ggplot() +
+    geom_sf(data = nhood, fill = "grey40") +
+    geom_sf(data = Austin18.2.sf, aes(colour = Nhood), show.legend = "point", size = 1) +
+#    scale_colour_manual(values = palette5,
+#                        labels=qBr(Sanfrancisco.test,"SalePrice.AbsError"),
+#                        name="Quintile\nBreaks") +
+    labs(title="Neighborhood") +
+    mapTheme(),
+  ncol = 2)
+```
+
+```{r, fig.width= 20, fig.height= 12}
+grid.arrange(
+  ggplot() +
+    geom_sf(data = Tracts, fill = "grey40") +
+    geom_sf(data = Austin18.3.sf, aes(colour = CenTract1), show.legend = "point", size = 1) +
+#    scale_colour_manual(values = palette5,
+#                        labels=qBr(Sanfrancisco.test,"SalePrice"),
+#                        name="Quintile\nBreaks") +
+    labs(title="Census tracts where riderships are high and received more influences from CapRemap") +
+    mapTheme(),
+  
+  ggplot() +
+    geom_sf(data = Tracts, fill = "grey40") +
+    geom_sf(data = Austin18.3.sf, aes(colour = CenTract2), show.legend = "point", size = 1) +
+#    scale_colour_manual(values = palette5,
+#                        labels=qBr(Sanfrancisco.test,"SalePrice.AbsError"),
+#                        name="Quintile\nBreaks") +
+    labs(title="Census Tracts stops/began to have bus service since CapRemap") +
+    mapTheme(),
+  ncol = 2)
+```
