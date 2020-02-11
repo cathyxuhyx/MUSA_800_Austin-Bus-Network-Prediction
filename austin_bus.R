@@ -17,6 +17,13 @@ HighFreq <- st_read("D:/Spring20/Practicum/data/HighFrequency.shp")
 routes1801 <- st_read("D:/Spring20/Practicum/data/Jan2018/Routes.shp")
 replacd <- st_read("D:/Spring20/Practicum/data/EliminatedReplacement.shp")
 eliminated <- st_read("D:/Spring20/Practicum/data/Eliminated.shp")
+routes2001 <- st_read("D:/Spring20/Practicum/data/Routes.shp")
+
+routes1801 <- routes1801%>%
+  mutate(capremap = "Before")
+
+routes2001 <- routes2001%>%
+  mutate(capremap = "After")
 
 #new scale function
 new_scale <- function(new_aes) {
@@ -24,7 +31,7 @@ new_scale <- function(new_aes) {
 }
 
 austin <- austin%>%
-  st_transform(32140)
+  st_transform(32614)
 
 counties <- counties%>%
   st_transform(32614)
@@ -142,15 +149,35 @@ Zero_Compare <- grid.arrange(Zero_before, Zero_after, ncol = 2)
 serviceArea <- st_read("D:/Spring20/Practicum/data/Service_Area.shp")
 routes <- st_read("D:/Spring20/Practicum/data/Routes.shp")
 
+
+
 ggplot()+
-  #geom_sf(data = cities, aes(color = MUNI_NM), size = 0.8)+
-  #geom_sf(data = schoolDist, size = 0.8)+
-  geom_sf(data = serviceArea, aes(fill = NAME), size = 0.8, alpha = 0.5)+
-  #scale_color_discrete(name = "Jurisdictions")+
-  scale_fill_manual(name = "Jurisdictions", values = rev(brewer.pal(9,"BuPu")))+
-  geom_sf(data = routes1801, color = "grey90", alpha = 0.2)+
-  labs(name = "Routes 2018.01", guide = "legend")+
-  geom_sf(data = eliminated, color = "deeppink", size = 1)+
-  labs(name = "Eliminated", guide = "legend")+
-  labs(title = "Cap Remap Eliminated Routes")
+  geom_sf(data = serviceArea, fill= "gray25",color= "gray25")+
+  geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"), show.legend = "polygon")+
+  scale_fill_manual(values = c("Austin" = "black"),
+                    guide = guide_legend("Jurisdiction", override.aes = list(fill = "black", shape = NA)))+
+  geom_sf(data = eliminated, color = "floralwhite", lwd = 0.4, show.legend = "line")+
+  geom_sf(data = HighFreq, aes(color = "High Frequency Routes"),  show.legend = "line")+
+  geom_sf(data = replacd, color = "ivory", lwd = 0.4, show.legend = "line")+
+  geom_sf(data = NewRoutes, aes(color = "New Routes"), show.legend = "line")+
+  scale_colour_manual(values = c("New Routes" = "darkorange", "High Frequency Routes" = "dodgerblue"), 
+                    guide = guide_legend("Routes",override.aes = list(linetype = "solid", fill = "white", color = "white")))+ 
+  labs(title = "Cap Remap Route Changes")
+
+
+#types of routes
+
+#Local
+ggplot()+
+  geom_sf(data = serviceArea, fill= "gray25",color= "gray25")+
+  geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"), show.legend = "polygon")+
+  scale_fill_manual(values = c("Austin" = "black"),
+                    guide = guide_legend("Jurisdiction", override.aes = list(fill = "black", shape = NA)))+
+  geom_sf(data = eliminated, color = "floralwhite", lwd = 0.4, show.legend = "line")+
+  geom_sf(data = HighFreq, aes(color = "High Frequency Routes"),  show.legend = "line")+
+  geom_sf(data = replacd, color = "ivory", lwd = 0.4, show.legend = "line")+
+  geom_sf(data = NewRoutes, aes(color = "New Routes"), show.legend = "line")+
+  scale_colour_manual(values = c("New Routes" = "darkorange", "High Frequency Routes" = "dodgerblue"), 
+                      guide = guide_legend("Routes",override.aes = list(linetype = "solid", fill = "white", color = "white")))+ 
+  labs(title = "Cap Remap Route Changes")
   
