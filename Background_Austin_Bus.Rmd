@@ -1,0 +1,174 @@
+---
+title: "Background_Austin_Bus"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library}
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+library(sf)
+library(gridExtra)
+```
+
+```{r load data}
+Routes1801 <- st_read("D:/Spring20/Practicum/data/Jan2018/Routes.shp")
+serviceArea <- st_read('D:/Spring20/Practicum/data/June2018/Service_Area.shp')
+NewRoutes <- st_read('D:/Spring20/Practicum/data/NewRoutes.shp')
+HighFreq <- st_read('D:/Spring20/Practicum/data/HighFrequency.shp')
+Replaced <- st_read('D:/Spring20/Practicum/data/EliminatedReplacement.shp')
+Eliminated <- st_read('D:/Spring20/Practicum/data/Eliminated.shp')
+Routes2001 <- st_read('D:/Spring20/Practicum/data/Routes.shp')
+```
+
+```{r processing}
+Routes1801 <- Routes1801%>%
+  mutate(capremap = "Before Cap Remap")
+
+Routes2001 <- Routes2001%>%
+  mutate(capremap = "After Cap Remap")
+```
+
+```{r overview map}
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = Eliminated, aes(color = "Eliminated Routes"), lwd = 0.3, show.legend = "line")+
+  geom_sf(data = Replaced, aes(color = "Eliminated but Replaced Routes"),lwd = 0.3, show.legend = "line")+
+  geom_sf(data = HighFreq, aes(color = "High Frequency Routes"), lwd = 0.8, show.legend = "line")+
+  geom_sf(data = NewRoutes, aes(color = "New Routes"),lwd = 0.8, show.legend = "line")+
+  scale_colour_manual(values = c("Eliminated Routes" = "darkorange", "Eliminated but Replaced Routes" = "gold", "High Frequency Routes" = "dodgerblue", "New Routes" = "deeppink"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid", "solid", "solid"), shape = c(NA, NA, NA, NA))))+
+  labs(title = "Cap Remap Route Changes",
+       subtitle = "City of Austin, June 2018")
+```
+
+```{r route types}
+#Local
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Local"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Local"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "lightblue2", "After Cap Remap" = "lightblue2"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Local Routes Before and After Cap Remap")
+
+#HighFrequency
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "High Frequency"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "High Frequency"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "dodgerblue", "After Cap Remap" = "dodgerblue"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "High Frequency Routes Before and After Cap Remap")
+
+#Crosstown
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Crosstown"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Crosstown"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "greenyellow", "After Cap Remap" = "greenyellow"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Crosstown Routes Before and After Cap Remap")
+
+#Feeder
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Feeder"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Feeder"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "lightcoral", "After Cap Remap" = "lightcoral"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Feeder Routes Before and After Cap Remap")
+
+
+#Flyer
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Flyer"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Flyer"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "magenta2", "After Cap Remap" = "magenta2"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Flyer Routes Before and After Cap Remap")
+
+#Express
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Express"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Express"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "red", "After Cap Remap" = "red"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Express Routes Before and After Cap Remap")
+
+#UT Shuttle
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "UT Shuttle"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "UT Shuttle"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "orange", "After Cap Remap" = "orange"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "UT Shuttle Before and After Cap Remap")
+
+#Special
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Special"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Special"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "seashell2", "After Cap Remap" = "seashell2"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Speical Routes Before and After Cap Remap")
+
+#Nigh Owl
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Night Owl"), aes(color = "Before Cap Remap"),lwd = 0.5,show.legend = "line")+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Night Owl"), aes(color = "After Cap Remap"),lwd = 0.5,show.legend = "line")+
+  scale_colour_manual(values = c("Before Cap Remap" = "slategray2", "After Cap Remap" = "slategray2"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Nigh Owl Routes Before and After Cap Remap")
+```
