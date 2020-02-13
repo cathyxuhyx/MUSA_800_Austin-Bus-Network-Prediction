@@ -646,7 +646,8 @@ kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluste
   pack_rows("After the CapRemap (June 11 - 15, 2018)", 4, 6)%>%
   row_spec(5, bold = T, color = "black", background = "#e7b800")
 ```
-![](MUSA_800_Austin-Bus-Network-Prediction/Rplot.png)
+
+![](Rplot.png)
 
 join data to the original dataset
 ```{r}
@@ -693,6 +694,7 @@ ggplot()+
             filter(ROUTE_ID == 20 | ROUTE_ID == 10), color='red')+
     labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803') ,ncol =2)
 ```
+
 
 ```{r}
 routeplot1 <- function(n,p,p1,d) {
@@ -808,11 +810,34 @@ routeplot1(801,39622, 38305,0)
 routeplot1(803,39626, 38309,0)
 ```
 
+In conclusion, hotlines have the following characteristics:
 
-# 3. Appendix
+- In terms of bus route types, Local, MetroRapid, and High Frequency routes have high ridership
+- In terms of geographical distribution:
+> - Go through Hubs (UT, DT, Pleasant Valley)
+> - Mostly North-South direction (Following the shape / geography of the city)
+> - Going across the a large portion of the city
+- In terms of temporal trend, we know that more Shifts were added in the day time and rush hours, which might increase ridership.
 
-## find the number of kmeans clusters for both before and after
-Before
+# 3. Conclusion from the Exploratory Analysis
+
+In our future analysis, we will be conducting feature engineering in terms of:
+
+- the built environment (amenities, building density, etc.)
+- the geographical units (neighborhoods, school districts, census tracts, etc.)
+- the route types (frequency, orientation, hotlines, etc.)
+
+
+
+# 4. Appendix
+
+## Kmeans Cluster Analysis
+
+Find the number of kmeans clusters for both before and after the CapRemap:
+
+Both the Elbow chart and the 26 indicies provided by the NbClust package are used to check how many clusters should be used in the Kmeans analysis.
+
+Before CapRemap:
 ```{r}
 wss <- (nrow(disagn1_km1)-1)*sum(apply(disagn1_km1,2,var))
 for (i in 2:20) wss[i] <- sum(kmeans(disagn1_km1,centers=i)$withinss)
@@ -829,7 +854,7 @@ barplot(table(nc$Best.n[1,]),
         main="Number of Clusters \nChosen by 26 Criteria")
 ```
 
-After
+After CapRemap:
 ```{r}
 wss <- (nrow(disagn2_km1)-1)*sum(apply(disagn2_km1,2,var))
 for (i in 2:20) wss[i] <- sum(kmeans(disagn2_km1, centers=i)$withinss)
@@ -846,4 +871,4 @@ barplot(table(nc$Best.n[1,]),
         main="Number of Clusters \nChosen by 26 Criteria")
 ```
 
-
+In either case, it is evident that the most optimal number for the Kmeans cluster analysis is 3. We then conduct Kmeans analysis with 3 clusters as mentioned above in the exploratory analysis section.
