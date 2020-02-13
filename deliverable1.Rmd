@@ -186,11 +186,11 @@ With the interests in how ridership is influenced by bus rerouting, we intend to
 setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 Routes1801 <- st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")
 serviceArea <- st_read('Data/Shapefiles_-_JUNE_2018/Service_Area.shp')
-NewRoutes <- st_read('D:/Spring20/Practicum/data/NewRoutes.shp')
-HighFreq <- st_read('D:/Spring20/Practicum/data/HighFrequency.shp')
-Replaced <- st_read('D:/Spring20/Practicum/data/EliminatedReplacement.shp')
-Eliminated <- st_read('D:/Spring20/Practicum/data/Eliminated.shp')
-Routes2001 <- st_read('D:/Spring20/Practicum/data/Routes.shp')
+NewRoutes <- st_read('Data/Jia/NewRoutes.shp')
+HighFreq <- st_read('Data/Jia/HighFrequency.shp')
+Replaced <- st_read('Data/Jia/EliminatedReplacement.shp')
+Eliminated <- st_read('Data/Jia/Eliminated.shp')
+Routes2001 <- st_read('Data/Jia/Routes2001.shp')
 ```
 
 ```{r processing}
@@ -216,6 +216,7 @@ ggplot()+
   labs(title = "Cap Remap Route Changes",
        subtitle = "City of Austin, June 2018")
 ```
+
 ## Changes on Route Types
 ### Major Changes
 
