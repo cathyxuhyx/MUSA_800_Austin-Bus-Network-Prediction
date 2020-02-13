@@ -536,7 +536,8 @@ Map.UT<-
 
 ```{r}
 print(plot.UT)
-print(Map.UT, vp=viewport(.85,.815,.35,.5))
+#print(Map.UT, vp=viewport(.85,.815,.35,.5))
+print(Map.UT, vp=viewport(.85,.72,.4,.42))
 ```
 The second neighborhood Govalle is the neighborhood that experiencnig unexpected ridership increase. After CapRemap, the ridership in Govalle nearly increased by 50% to 75%. As Govalle is closer to the outskirts of Austin, this ridership increase might reflects CapRemap'success in strengthening the east-west connection.
 ```{r}
@@ -622,7 +623,7 @@ disagn2 = read.delim('Data/June 2018 Detail 11 to 15.txt', header = FALSE, sep =
 colnames(disagn2) <- colnames(disagg)
 ```
 
-Kmeans Cluster Analysis was used to separate the disaggregated data into groups. Kmeans is an unsupervised learning algorithm that automatically group the dataset based on the distribution of each feature. We intend to use this algorithm to see if the resulting grouping identifies the hotlines, i.e. the routes that have higher ridership.
+Kmeans Cluster Analysis was used to separate the disaggregated data into groups. Kmeans is an unsupervised learning algorithm that automatically group the dataset based on the distribution of each feature. We intend to use this algorithm to see if the resulting grouping identifies the hotlines, i.e. the routes that have higher ridership. 
 
 First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route.
 ```{r}
@@ -667,20 +668,7 @@ summary_after = cbind(round(aggregate(disagn2_km1, by=list(cluster=fit.km$cluste
 disagn2_km$cluster = fit.km$cluster
 ```
 
-Here is the Kmeans analysis result we got for before and after the CapRemap. The numbers are average of each feature used in the Kmeans analysis. We can clearly see that cluster 2 for both before and after the remapping have the highest average ridership as well as run times. They also have the smallest size. We can conclude that these are the most popular routes and we then define these routes as 'hotlines'.
-```{r}
-rbind(summary_before,summary_after) %>%
-kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluster", col.names =c("Cluster", "Max Psg Load", "Mean Psg Load", "Psg Miles", "Psg Hours", "Total Run Length", "Total Run Time", "Cluster Size")) %>%
-  kable_styling("striped", full_width = F) %>%
-  pack_rows("Before the CapRemap (May 21 - 25, 2018)", 1, 3) %>%
-  row_spec(2, bold = T, color = "black", background = "#e7b800")%>%
-  pack_rows("After the CapRemap (June 11 - 15, 2018)", 4, 6)%>%
-  row_spec(5, bold = T, color = "black", background = "#e7b800")
-```
-
-![](Rplot.png)
-
-These clustering labels are joined to the original dataset.
+These clustering labels are joined to the original dataset. For more about the clustering result, please see appendix.
 ```{r}
 hotlines_pre = unique(disagn1_km[(disagn1_km$cluster == 2),]$ROUTE)
 hotlines_po = unique(disagn2_km[(disagn2_km$cluster == 2),]$ROUTE)
@@ -709,7 +697,7 @@ capmetro0 <-st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Da
   st_transform(2278)
 ```
 
-The hotlines before and after the remap are plotted below. Most of the hot routes are north-south direction. There are two new hotlines emerged after the CapRemap, line 10 and line 20, and they are colored in red.
+From the clustering analysis before, we get 4 lines labeled as hotlines before the remap, 6 lines labeled as hotlines after the remap. The hotlines before and after the remap are plotted below. Most of the hot routes are north-south direction. There are two new hotlines emerged after the CapRemap, line 10 and line 20, and they are colored in red.
 ```{r}
 grid.arrange(
 
@@ -906,3 +894,16 @@ barplot(table(nc$Best.n[1,]),
 ```
 
 In either case, it is evident that the most optimal number for the Kmeans cluster analysis is 3. We then conduct Kmeans analysis with 3 clusters as mentioned above in the exploratory analysis section.
+
+Here is the Kmeans analysis result we got for before and after the CapRemap. The numbers are average of each feature used in the Kmeans analysis. We can clearly see that cluster 2 for both before and after the remapping have the highest average ridership as well as run times. They also have the smallest size. We can conclude that these are the most popular routes and we then define these routes as 'hotlines'.
+```{r}
+rbind(summary_before,summary_after) %>%
+kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluster", col.names =c("Cluster", "Max Psg Load", "Mean Psg Load", "Psg Miles", "Psg Hours", "Total Run Length", "Total Run Time", "Cluster Size")) %>%
+  kable_styling("striped", full_width = F) %>%
+  pack_rows("Before the CapRemap (May 21 - 25, 2018)", 1, 3) %>%
+  row_spec(2, bold = T, color = "black", background = "#e7b800")%>%
+  pack_rows("After the CapRemap (June 11 - 15, 2018)", 4, 6)%>%
+  row_spec(5, bold = T, color = "black", background = "#e7b800")
+```
+
+![](Rplot.png)
