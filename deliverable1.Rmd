@@ -332,6 +332,7 @@ special <- ggplot()+
 
 grid.arrange(crosstown, feeder, flyer, express, ncol =2)
 ```
+
 ### No Change
 
 University of Texas Shuttle (UT Shuttle) services and Night Owl service didn't experience any changes.
@@ -376,7 +377,8 @@ grid.arrange(UTShuttle, special, nightowl, ncol = 2)
 ## How did ridership change before and after CapRemap (06/03, 2018)?
 
 ```{r}
-data <- read.csv("C:/Upenn/Practicum/Data/OneDrive_1_1-16-2020/Stop Ridership Aggregated.csv")
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+data = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
 
 table(data$YEAR_ID)
 #Subset data in 2018 for further analysis
@@ -451,12 +453,14 @@ ggplot()+
 
 ```{r}
 #Load the transformed dataset from long format-stop level to long format-neighborhood level
-Rider_nhood4 <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood4.csv")
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+Rider_nhood4 <- read.csv("Data/GRACE/Rider_nhood4.csv")
 Rider_nhood4$Before <- ifelse(Rider_nhood4$Month == -5 |Rider_nhood4$Month == -4 |Rider_nhood4$Month == -3|Rider_nhood4$Month == -2|Rider_nhood4$Month == -1, "1", "0")
 ```
 
 ```{r}
-Rider_nhood <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood.csv")
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+Rider_nhood <- read.csv("Data/GRACE/Rider_nhood.csv")
 Rider <- merge(Rider_nhood, nhood, by = "label")
 ```
 
@@ -600,7 +604,6 @@ print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
 
 ```{r}
 # change the directory in order to load the data
-agg = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
 disagg = read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
 nhood = st_read('https://data.austintexas.gov/resource/nz5f-3t2e.geojson')
 
