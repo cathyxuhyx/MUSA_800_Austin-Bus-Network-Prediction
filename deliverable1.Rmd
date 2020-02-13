@@ -622,16 +622,9 @@ disagn2 = read.delim('Data/June 2018 Detail 11 to 15.txt', header = FALSE, sep =
 colnames(disagn2) <- colnames(disagg)
 ```
 
-Kmeans Cluster Analysis Finding Hotlines
-```{r}
-# define a function that finds the mode
-Mode <- function(x) {
-  ux <- unique(x)
-  ux[which.max(tabulate(match(x, ux)))]
-}
-```
+Kmeans Cluster Analysis was used to separate the disaggregated data into groups. Kmeans is an unsupervised learning algorithm that automatically group the dataset based on the distribution of each feature. We intend to use this algorithm to see if the resulting grouping identifies the hotlines, i.e. the routes that have higher ridership.
 
-Before CapRemap
+First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data 
 ```{r}
 disagn1_km = disagn1 %>%
   group_by(ROUTE) %>%
