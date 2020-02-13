@@ -459,33 +459,26 @@ nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
 setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 Rider_nhood4 <- read.csv("Data/GRACE/Rider_nhood4.csv")
 Rider_nhood4$Before <- ifelse(Rider_nhood4$Month == -5 |Rider_nhood4$Month == -4 |Rider_nhood4$Month == -3|Rider_nhood4$Month == -2|Rider_nhood4$Month == -1, "1", "0")
+Rider_nhood <- read.csv("Data/GRACE/Rider_nhood.csv")
+Rider <- merge(Rider_nhood4, nhood, by = "label")
 ```
 
-```{r}
-<<<<<<< HEAD
-setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
-Rider_nhood <- read.csv("Data/GRACE/Rider_nhood.csv")
-Rider <- merge(Rider_nhood, nhood, by = "label")
-=======
-Rider_nhood <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood.csv")
-Rider <- merge(Rider_nhood4, nhood, by = "label")
->>>>>>> b0b1fbd2e8a966865db12fa36b7993d915d73460
-```
 After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. Neighborhoods in Austin are used here to show the spatial trend here. 
 
 As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
 
-```{r}
+```{r, eval=F, echo=T}
 ggplot() +
-#    geom_sf(data = nhoods, fill = "grey40") +
     geom_sf(data = Rider, aes(fill = q5(Dif))) +
     scale_fill_brewer(palette = "RdYlBu",
                       aesthetics = "fill",
-                        labels=qBr(Rider,"Dif"),
-                        name="Quintile\nBreaks") +
+                      labels=qBr(Rider,"Dif"),
+                      name="Quintile\nBreaks") +
     labs(title="Ridership Change in Neighborhoods") +
     mapTheme()
 ```
+![](plot1.png)
+
 The following charts are the ridership change in each neighborhood in 2018 ranked by the difference in ridership in June and September. There are 12 neighborhoods experienced ridership decrease from June to September. There are several neighborhoods experienced high ridership increase of more than 10,000 from June to September. Generally, most neighborhoods experienced ridership increase after CapRemap from June to September.
 
 ```{r,fig.height = 30, fig.width = 15}
@@ -615,7 +608,7 @@ print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
 ### Identify the Hotlines
 
 ```{r}
-# change the directory in order to load the data
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 disagg = read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
 nhood = st_read('https://data.austintexas.gov/resource/nz5f-3t2e.geojson')
 
@@ -627,7 +620,7 @@ colnames(disagn2) <- colnames(disagg)
 
 Kmeans Cluster Analysis was used to separate the disaggregated data into groups. Kmeans is an unsupervised learning algorithm that automatically group the dataset based on the distribution of each feature. We intend to use this algorithm to see if the resulting grouping identifies the hotlines, i.e. the routes that have higher ridership.
 
-First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data 
+First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route.
 ```{r}
 disagn1_km = disagn1 %>%
   group_by(ROUTE) %>%
@@ -641,7 +634,7 @@ exclude_x <- names(disagn1_km) %in% c("ROUTE")
 disagn1_km1 <- disagn1_km[!exclude_x]
 ```
 
-k means find the clusters, number determined through 26 criteria test, see appendix.
+Then, we apply Kmeans analysis. The number of clusters are determined by both the elbow chart and the 26 criteria provided by the NbClus package. For more information, see appendix.
 ```{r}
 fit.km <- kmeans(disagn1_km1, 3, nstart=25)
 
@@ -649,7 +642,7 @@ summary_before = cbind(round(aggregate(disagn1_km1, by=list(cluster=fit.km$clust
 disagn1_km$cluster = fit.km$cluster
 ```
 
-After Capremap
+We do the same analysis to the disaggregated dataset after the CapRemap.
 ```{r}
 disagn2_km = disagn2 %>%
   group_by(ROUTE) %>%
@@ -663,7 +656,6 @@ exclude_x <- names(disagn2_km) %in% c("ROUTE")
 disagn2_km1 <- disagn2_km[!exclude_x]
 ```
 
-k means find clusters, number determined through 26 criteria test, see appendix.
 ```{r}
 fit.km <- kmeans(disagn2_km1, 3, nstart=25)
 
@@ -671,7 +663,7 @@ summary_after = cbind(round(aggregate(disagn2_km1, by=list(cluster=fit.km$cluste
 disagn2_km$cluster = fit.km$cluster
 ```
 
-kmeans analysis result
+Here is the Kmeans analysis result we got for before and after the CapRemap. The numbers are average of each feature used in the Kmeans analysis. We can clearly see that cluster 2 for both before and after the remapping have the highest average ridership as well as run times. They also have the smallest size. We can conclude that these are the most popular routes and we then define these routes as 'hotlines'.
 ```{r}
 rbind(summary_before,summary_after) %>%
 kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluster", col.names =c("Cluster", "Max Psg Load", "Mean Psg Load", "Psg Miles", "Psg Hours", "Total Run Length", "Total Run Time", "Cluster Size")) %>%
@@ -684,7 +676,7 @@ kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluste
 
 ![](Rplot.png)
 
-join data to the original dataset
+These clustering labels are joined to the original dataset.
 ```{r}
 hotlines_pre = unique(disagn1_km[(disagn1_km$cluster == 2),]$ROUTE)
 hotlines_po = unique(disagn2_km[(disagn2_km$cluster == 2),]$ROUTE)
@@ -702,7 +694,8 @@ disagn2j = left_join(disagn2, disagn2_km)
 
 ### Hotlines' Characteristics
 
-load cap metro shapefile
+What are the characteristics of the hotlines? What can we learn from these successful routes? 
+First, load Capital Metro shapefile.
 ```{r}
 capmetro <- 
   st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Routes.shp")%>%
@@ -712,6 +705,7 @@ capmetro0 <-st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Da
   st_transform(2278)
 ```
 
+The hotlines before and after the remap are plotted below. Most of the hot routes are north-south direction. There are two new hotlines emerged after the CapRemap, line 10 and line 20, and they are colored in red.
 ```{r}
 grid.arrange(
 
@@ -730,7 +724,7 @@ ggplot()+
     labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803') ,ncol =2)
 ```
 
-
+To dive deeper into the characteristics of the hot bus lines, we map out the passenger load for each route at each stop for each direction. We also ploted the passenger load versus stop sequence ID as well as average boarding and alighting at each stop along each route. Note that the Austin bus system has different patterns for each route, and in order to make sure the plots to make sense, we only selected the most used pattern for each plot.
 ```{r}
 routeplot1 <- function(n,p,p1,d) {
   # line n before map
@@ -820,7 +814,6 @@ routeplot1 <- function(n,p,p1,d) {
 }
 ```
 
-select route patterns id that has the majority instances
 ```{r fig.height=9, fig.width=8}
 routeplot1(7,39614, 38294,0)
 ```
@@ -844,6 +837,9 @@ routeplot1(801,39622, 38305,0)
 ```{r fig.height=9, fig.width=8}
 routeplot1(803,39626, 38309,0)
 ```
+
+By mapping and plotting the average passenger number on bus as well as the average boarding and alighting at each stop, we can see better how specific location or neighborhood could potentially contribute to the ridership. These regions will be feature engineered in the following analysis. We also noticed that ridership tends to be higher in the middle portion of the trip, this means a lot of the passengers board from early stops to stops near the ends.
+
 
 In conclusion, hotlines have the following characteristics:
 
