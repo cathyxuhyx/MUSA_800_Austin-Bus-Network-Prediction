@@ -1,0 +1,277 @@
+---
+title: "Markdown_Presentation1"
+author: "Yibing Zheng"
+date: "February 12, 2020"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(corrplot)
+library(caret) 
+library(viridis)
+library(stargazer)
+library(tidyverse)
+library(sf)
+library(FNN)
+library(tigris)
+library(spdep)
+library(ckanr)
+library(grid)
+library(gridExtra)
+library(ggplot2)
+library(RColorBrewer)
+```
+
+
+```{r}
+data <- read.csv("C:/Upenn/Practicum/Data/OneDrive_1_1-16-2020/Stop Ridership Aggregated.csv")
+
+table(data$YEAR_ID)
+#Subset data in 2018 for further analysis
+data.y18 <- data %>%
+  subset(data$YEAR_ID == "2018")
+```
+
+```{r}
+#Change June to 0 and make months before CapRemap become negative, after CapRemap become positive
+data.y18$MONTH_ID <- as.numeric(data.y18$MONTH_ID)
+
+data.y18$Month <- data.y18$MONTH_ID - 6
+#Make month column become factor
+#data.y18$Month <- factor( data.y18$Month, levels = c( "-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6") )
+
+data.y18$Before <- ifelse(data.y18$Month < 0, 1, 0)
+
+data.y19 <- data %>%
+  subset(data$YEAR_ID == 2019)
+data.y19$Month <- data.y19$MONTH_ID - 6
+
+data.y19$Before <- ifelse(data.y19$Month < -5, 1, 0)
+
+data.y <- rbind(data.y18, data.y19)
+data.y$YEAR_ID <- as.factor(data.y$YEAR_ID)
+
+table(data$YEAR_ID, data$MONTH_ID)
+
+```
+
+
+```{r}
+#Plot Average_on first
+plot.city<-
+  as.data.frame(data.y) %>%
+  group_by(Month, YEAR_ID) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time, linetype = YEAR_ID)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      ylim(70000,100000) +
+      labs(title="Ridership by stops on an average weekday among all the stops in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#E7B800", "#0072B2"), name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))+
+     # scale_color_brewer(palette = "YlGnBu")
+      scale_linetype_manual(values=c("solid", "dotted"))
+
+plot.city
+```
+
+```{r}
+#Transform ridership data into geo data
+data.y18.sf <-
+  data.y18 %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+data.y.sf <-
+  data.y %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+#Load neighborhood geojson
+nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
+  st_set_crs(4326)%>%
+  st_transform(2278)
+
+ggplot()+
+  geom_sf(data = nhood)
+```
+
+```{r}
+#Load the transformed dataset from long format-stop level to long format-neighborhood level
+Rider_nhood4 <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood4.csv")
+Rider_nhood4$Before <- ifelse(Rider_nhood4$Month == -5 |Rider_nhood4$Month == -4 |Rider_nhood4$Month == -3|Rider_nhood4$Month == -2|Rider_nhood4$Month == -1, "1", "0")
+```
+
+```{r}
+Rider_nhood <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood.csv")
+Rider <- merge(Rider_nhood, nhood, by = "label")
+```
+
+
+```{r}
+ggplot() +
+#    geom_sf(data = nhoods, fill = "grey40") +
+    geom_sf(data = Rider, aes(fill = q5(Dif))) +
+    scale_fill_brewer(palette = "RdYlBu",
+                      aesthetics = "fill",
+                        labels=qBr(Rider,"Dif"),
+                        name="Quintile\nBreaks") +
+    labs(title="Ridership Change in Neighborhoods") +
+    mapTheme()
+```
+
+
+```{r,fig.height = 30, fig.width = 15}
+plot.nhood <- 
+  as.data.frame(Rider_nhood4) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership by Neighborhoods in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in the Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+
+plot.nhood
+```
+
+```{r}
+UT <- Rider_nhood4 %>%
+  subset(Rider_nhood4$label == "UT")
+
+plot.UT <- 
+  as.data.frame(UT) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership in UT Neighborhood",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in UT Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+```
+
+```{r}
+mapTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle=element_text(face="italic"),
+    plot.caption=element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2)
+  )
+}
+
+qBr <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]],0),
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]]), digits = 3),
+                 c(.01,.2,.4,.6,.8), na.rm=T)
+  }
+}
+
+q5 <- function(variable) {as.factor(ntile(variable, 5))}
+```
+
+```{r}
+nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
+  st_set_crs(4326)%>%
+  st_transform(2278)
+
+UT2 <- nhood%>%
+  subset(nhood$label == "UT")
+Map.UT<-
+  ggplot() +
+  geom_sf(data = nhood, fill = "grey30") +
+  geom_sf(data = UT2, fill = "#56B4E9") +
+  labs(title = "UT Neighborhoods") +
+  mapTheme() + theme(legend.position = "bottom")
+```
+Neighborhood with ridership increase as we expected
+```{r}
+print(plot.UT)
+print(Map.UT, vp=viewport(.85,.815,.35,.5))
+```
+
+```{r}
+Govalle <- Rider_nhood4 %>%
+  subset(Rider_nhood4$label == "Govalle")
+
+plot.Govalle <- 
+  as.data.frame(Govalle) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership in Govalle Neighborhood",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in Govalle Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+```
+
+```{r}
+Govalle2 <- nhood%>%
+  subset(nhood$label == "Govalle")
+Map.Govalle<-
+  ggplot() +
+  geom_sf(data = nhood, fill = "grey30") +
+  geom_sf(data = Govalle2, fill = "#56B4E9") +
+#  labs(title = "Govalle Neighborhoods") +
+  mapTheme() + theme(legend.position = "bottom")
+```
+Neighborhood with unexpected ridership increase
+```{r}
+print(plot.Govalle)
+print(Map.Govalle, vp=viewport(.85,.72,.4,.42))
+```
+Neighborhood with unexpected ridership decrease
+```{r}
+Zilker <- Rider_nhood4 %>%
+  subset(Rider_nhood4$label == "Zilker")
+
+plot.Zilker <- 
+  as.data.frame(Zilker) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership in Zilker Neighborhood",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in Zilker Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+```
+
+```{r}
+Zilker2 <- nhood%>%
+  subset(nhood$label == "Zilker")
+Map.Zilker<-
+  ggplot() +
+  geom_sf(data = nhood, fill = "grey30") +
+  geom_sf(data = Zilker2, fill = "#56B4E9") +
+#  labs(title = "Zilker Neighborhoods") +
+  mapTheme() + theme(legend.position = "bottom")
+```
+
+```{r}
+print(plot.Zilker)
+print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
+```
+
