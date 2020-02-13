@@ -452,8 +452,6 @@ nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
   st_set_crs(4326)%>%
   st_transform(2278)
 
-ggplot()+
-  geom_sf(data = nhood)
 ```
 
 ```{r}
@@ -464,9 +462,14 @@ Rider_nhood4$Before <- ifelse(Rider_nhood4$Month == -5 |Rider_nhood4$Month == -4
 ```
 
 ```{r}
+<<<<<<< HEAD
 setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 Rider_nhood <- read.csv("Data/GRACE/Rider_nhood.csv")
 Rider <- merge(Rider_nhood, nhood, by = "label")
+=======
+Rider_nhood <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood.csv")
+Rider <- merge(Rider_nhood4, nhood, by = "label")
+>>>>>>> b0b1fbd2e8a966865db12fa36b7993d915d73460
 ```
 After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. Neighborhoods in Austin are used here to show the spatial trend here. 
 
