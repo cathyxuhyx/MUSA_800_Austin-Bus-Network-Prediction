@@ -227,7 +227,7 @@ The two most common types of routes are Local and High Frequency.CapMetro's Loca
 
 To be more specific, Cap Remap has expanded a high frequency network that include multiple bus routes that run every 15 minutes from 6 a.m. to 8 p.m., 7 days a week.From the comparisons between changes on local routes and changes on high frequency routes, it is obvious that after Cap Remap, the number of local routes decreased whereas the coverage of high frequency routes expanded.
 
-```{r major change route types, fig.width = 25, fig.height= 15}
+```{r major change route types}
 local <- ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
@@ -378,6 +378,7 @@ grid.arrange(UTShuttle, special, nightowl, ncol = 2)
 
 ## How did ridership change before and after CapRemap (06/03, 2018)?
 
+### Citywide Ridership Change
 ```{r}
 setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 data = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
@@ -435,7 +436,8 @@ plot.city<-
 
 plot.city
 ```
-## Ridership Change in Different Neighborhoods in Austin in 2018
+
+### Ridership Change in Different Neighborhoods in Austin in 2018
 ```{r}
 #Transform ridership data into geo data
 data.y18.sf <-
@@ -847,9 +849,9 @@ In conclusion, hotlines have the following characteristics:
 
 - In terms of bus route types, Local, MetroRapid, and High Frequency routes have high ridership
 - In terms of geographical distribution:
-> - Go through Hubs (UT, DT, Pleasant Valley)
-> - Mostly North-South direction (Following the shape / geography of the city)
-> - Going across the a large portion of the city
+* Go through Hubs (UT, DT, Pleasant Valley)
+* Mostly North-South direction (Following the shape / geography of the city)
+* Going across the a large portion of the city
 - In terms of temporal trend, we know that more Shifts were added in the day time and rush hours, which might increase ridership.
 
 # 3. Conclusion from the Exploratory Analysis
