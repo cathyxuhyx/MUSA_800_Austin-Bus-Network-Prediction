@@ -335,11 +335,11 @@ shop_pt <- shop_pt%>%
   st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
   st_transform(32140)
 
-levels <- opq(bbox = 'Austin, Texas')%>%
-  add_osm_feature(key = 'building:levels') %>%
+university <- opq(bbox = 'Austin, Texas')%>%
+  add_osm_feature(key = 'amenity',value = 'university') %>%
   osmdata_sf ()
 
-levels <- levels$osm_points%>%
+university <- university$osm_polygons%>%
   select(geometry)%>%
   st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
   st_transform(32140)
