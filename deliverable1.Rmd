@@ -182,15 +182,16 @@ The following two maps provide a general overview on the bus network changes bef
 With the interests in how ridership is influenced by bus rerouting, we intend to design a tool for planners to test the impact of a built environment and/or bus system change scenario has on bus ridership in Austin and to plan bus routes and schedules accordingly.
 
 
+
 ```{r load data}
 setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 Routes1801 <- st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")
 serviceArea <- st_read('Data/Shapefiles_-_JUNE_2018/Service_Area.shp')
-NewRoutes <- st_read('D:/Spring20/Practicum/data/NewRoutes.shp')
-HighFreq <- st_read('D:/Spring20/Practicum/data/HighFrequency.shp')
-Replaced <- st_read('D:/Spring20/Practicum/data/EliminatedReplacement.shp')
-Eliminated <- st_read('D:/Spring20/Practicum/data/Eliminated.shp')
-Routes2001 <- st_read('D:/Spring20/Practicum/data/Routes.shp')
+NewRoutes <- st_read('Data/Jia/NewRoutes.shp')
+HighFreq <- st_read('Data/Jia/HighFrequency.shp')
+Replaced <- st_read('Data/Jia/EliminatedReplacement.shp')
+Eliminated <- st_read('Data/Jia/Eliminated.shp')
+Routes2001 <- st_read('Data/Jia/Routes2001.shp')
 ```
 
 ```{r processing}
@@ -216,6 +217,7 @@ ggplot()+
   labs(title = "Cap Remap Route Changes",
        subtitle = "City of Austin, June 2018")
 ```
+
 ## Changes on Route Types
 ### Major Changes
 
@@ -331,6 +333,7 @@ special <- ggplot()+
 
 grid.arrange(crosstown, feeder, flyer, express, ncol =2)
 ```
+
 ### No Change
 
 University of Texas Shuttle (UT Shuttle) services and Night Owl service didn't experience any changes.
@@ -375,7 +378,8 @@ grid.arrange(UTShuttle, special, nightowl, ncol = 2)
 ## How did ridership change before and after CapRemap (06/03, 2018)?
 
 ```{r}
-data <- read.csv("C:/Upenn/Practicum/Data/OneDrive_1_1-16-2020/Stop Ridership Aggregated.csv")
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+data = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
 
 table(data$YEAR_ID)
 #Subset data in 2018 for further analysis
@@ -405,7 +409,11 @@ data.y$YEAR_ID <- as.factor(data.y$YEAR_ID)
 table(data$YEAR_ID, data$MONTH_ID)
 
 ```
+Current available data from Capital Metro allows us to observe the trend in ridership change before and after Cap Remap. The first important part of exploratory analysis is to see the city-wide change in ridership brought by CapRemap. With the stop-level data from Janurary 2018 to June 2019, the aggregated city-wide ridership change is shown in the chart below.
 
+The x-axis represents month, and y-axis repredents the average daily ridership in the given month. The solid lines in the chart are 2018 riderships. The yellow solid line is ridership from Janurary to May in 2018 (before Cap Remap happened in June 2018) while the blue solid line is ridership from June to December in 2018 (after CapRemap). The dashed line is the ridership in 2019 from Janurary to June after CapRemap happend the year before. 
+
+From the trend in 2018, it is clear that ridership fluctuated between months. Cap Remap didn't bring a rapid increase in ridership after the implementation. On the contrary, the ridership decreased in June and July. In August, the ridership recovers to the previous level before CapRemap, Then in September the ridership almost exploded to 0.1 million. Then it gradually went down in winter but in 2019, the ridership is generally higher than the same month in 2018. This result shows the general positive impact CapRemap brought to ridership change. For the decrease in June and July and following increasing trend, people might need time to adjust to the new bus schedule and get used to it. And after they realize the convinience of the redesign, the ridership increased rapidly. Another explanation is related to university's opening and closing as the low ridership happened in summer break and high ridership happened in the beginning of the new semester.
 
 ```{r}
 #Plot Average_on first
@@ -426,7 +434,7 @@ plot.city<-
 
 plot.city
 ```
-
+## Ridership Change in Different Neighborhoods in Austin in 2018
 ```{r}
 #Transform ridership data into geo data
 data.y18.sf <-
@@ -444,34 +452,34 @@ nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
   st_set_crs(4326)%>%
   st_transform(2278)
 
-ggplot()+
-  geom_sf(data = nhood)
 ```
 
 ```{r}
 #Load the transformed dataset from long format-stop level to long format-neighborhood level
-Rider_nhood4 <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood4.csv")
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+Rider_nhood4 <- read.csv("Data/GRACE/Rider_nhood4.csv")
 Rider_nhood4$Before <- ifelse(Rider_nhood4$Month == -5 |Rider_nhood4$Month == -4 |Rider_nhood4$Month == -3|Rider_nhood4$Month == -2|Rider_nhood4$Month == -1, "1", "0")
+Rider_nhood <- read.csv("Data/GRACE/Rider_nhood.csv")
+Rider <- merge(Rider_nhood4, nhood, by = "label")
 ```
 
-```{r}
-Rider_nhood <- read.csv("C:/Upenn/Practicum/Data/Rider_nhood.csv")
-Rider <- merge(Rider_nhood, nhood, by = "label")
-```
+After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. Neighborhoods in Austin are used here to show the spatial trend here. 
 
+As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
 
-```{r}
+```{r, eval=F, echo=T}
 ggplot() +
-#    geom_sf(data = nhoods, fill = "grey40") +
     geom_sf(data = Rider, aes(fill = q5(Dif))) +
     scale_fill_brewer(palette = "RdYlBu",
                       aesthetics = "fill",
-                        labels=qBr(Rider,"Dif"),
-                        name="Quintile\nBreaks") +
+                      labels=qBr(Rider,"Dif"),
+                      name="Quintile\nBreaks") +
     labs(title="Ridership Change in Neighborhoods") +
     mapTheme()
 ```
+![](plot1.png)
 
+The following charts are the ridership change in each neighborhood in 2018 ranked by the difference in ridership in June and September. There are 12 neighborhoods experienced ridership decrease from June to September. There are several neighborhoods experienced high ridership increase of more than 10,000 from June to September. Generally, most neighborhoods experienced ridership increase after CapRemap from June to September.
 
 ```{r,fig.height = 30, fig.width = 15}
 plot.nhood <- 
@@ -488,7 +496,9 @@ plot.nhood <-
 
 plot.nhood
 ```
+Among the 78 neighborhoods in Austin, we identified three neighborhoods that represents different characteristics: neighborhoods with expected ridership increase; neighborhoods with unexpected ridership increase; neighborhoods with unexpected ridership decrease.
 
+UT is the neighborhood with expected ridership increase.The location of UT neighborhood is just above downtown neighborhood. With a lot of university students living around here, the bus network is sensitive to school schedule. There is a relatively clear trend in ridership change according to school seasons.
 ```{r}
 UT <- Rider_nhood4 %>%
   subset(Rider_nhood4$label == "UT")
@@ -520,12 +530,12 @@ Map.UT<-
   labs(title = "UT Neighborhoods") +
   mapTheme() + theme(legend.position = "bottom")
 ```
-Neighborhood with ridership increase as we expected
+
 ```{r}
 print(plot.UT)
 print(Map.UT, vp=viewport(.85,.815,.35,.5))
 ```
-
+The second neighborhood Govalle is the neighborhood that experiencnig unexpected ridership increase. After CapRemap, the ridership in Govalle nearly increased by 50% to 75%. As Govalle is closer to the outskirts of Austin, this ridership increase might reflects CapRemap'success in strengthening the east-west connection.
 ```{r}
 Govalle <- Rider_nhood4 %>%
   subset(Rider_nhood4$label == "Govalle")
@@ -553,12 +563,12 @@ Map.Govalle<-
 #  labs(title = "Govalle Neighborhoods") +
   mapTheme() + theme(legend.position = "bottom")
 ```
-Neighborhood with unexpected ridership increase
+
 ```{r}
 print(plot.Govalle)
 print(Map.Govalle, vp=viewport(.85,.72,.4,.42))
 ```
-Neighborhood with unexpected ridership decrease
+But there are also neighborhoods exepriencing ridership decrease on the east-west direction. Zilker located in the southwest side of Austin's downtown region. Its ridership experienced a gradually slight decrease after CapRemap.
 ```{r}
 Zilker <- Rider_nhood4 %>%
   subset(Rider_nhood4$label == "Zilker")
@@ -598,8 +608,7 @@ print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
 ### Identify the Hotlines
 
 ```{r}
-# change the directory in order to load the data
-agg = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 disagg = read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
 nhood = st_read('https://data.austintexas.gov/resource/nz5f-3t2e.geojson')
 
@@ -609,16 +618,9 @@ disagn2 = read.delim('Data/June 2018 Detail 11 to 15.txt', header = FALSE, sep =
 colnames(disagn2) <- colnames(disagg)
 ```
 
-Kmeans Cluster Analysis Finding Hotlines
-```{r}
-# define a function that finds the mode
-Mode <- function(x) {
-  ux <- unique(x)
-  ux[which.max(tabulate(match(x, ux)))]
-}
-```
+Kmeans Cluster Analysis was used to separate the disaggregated data into groups. Kmeans is an unsupervised learning algorithm that automatically group the dataset based on the distribution of each feature. We intend to use this algorithm to see if the resulting grouping identifies the hotlines, i.e. the routes that have higher ridership.
 
-Before CapRemap
+First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route.
 ```{r}
 disagn1_km = disagn1 %>%
   group_by(ROUTE) %>%
@@ -632,7 +634,7 @@ exclude_x <- names(disagn1_km) %in% c("ROUTE")
 disagn1_km1 <- disagn1_km[!exclude_x]
 ```
 
-k means find the clusters, number determined through 26 criteria test, see appendix.
+Then, we apply Kmeans analysis. The number of clusters are determined by both the elbow chart and the 26 criteria provided by the NbClus package. For more information, see appendix.
 ```{r}
 fit.km <- kmeans(disagn1_km1, 3, nstart=25)
 
@@ -640,7 +642,7 @@ summary_before = cbind(round(aggregate(disagn1_km1, by=list(cluster=fit.km$clust
 disagn1_km$cluster = fit.km$cluster
 ```
 
-After Capremap
+We do the same analysis to the disaggregated dataset after the CapRemap.
 ```{r}
 disagn2_km = disagn2 %>%
   group_by(ROUTE) %>%
@@ -654,7 +656,6 @@ exclude_x <- names(disagn2_km) %in% c("ROUTE")
 disagn2_km1 <- disagn2_km[!exclude_x]
 ```
 
-k means find clusters, number determined through 26 criteria test, see appendix.
 ```{r}
 fit.km <- kmeans(disagn2_km1, 3, nstart=25)
 
@@ -662,7 +663,7 @@ summary_after = cbind(round(aggregate(disagn2_km1, by=list(cluster=fit.km$cluste
 disagn2_km$cluster = fit.km$cluster
 ```
 
-kmeans analysis result
+Here is the Kmeans analysis result we got for before and after the CapRemap. The numbers are average of each feature used in the Kmeans analysis. We can clearly see that cluster 2 for both before and after the remapping have the highest average ridership as well as run times. They also have the smallest size. We can conclude that these are the most popular routes and we then define these routes as 'hotlines'.
 ```{r}
 rbind(summary_before,summary_after) %>%
 kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluster", col.names =c("Cluster", "Max Psg Load", "Mean Psg Load", "Psg Miles", "Psg Hours", "Total Run Length", "Total Run Time", "Cluster Size")) %>%
@@ -675,7 +676,7 @@ kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluste
 
 ![](Rplot.png)
 
-join data to the original dataset
+These clustering labels are joined to the original dataset.
 ```{r}
 hotlines_pre = unique(disagn1_km[(disagn1_km$cluster == 2),]$ROUTE)
 hotlines_po = unique(disagn2_km[(disagn2_km$cluster == 2),]$ROUTE)
@@ -693,7 +694,8 @@ disagn2j = left_join(disagn2, disagn2_km)
 
 ### Hotlines' Characteristics
 
-load cap metro shapefile
+What are the characteristics of the hotlines? What can we learn from these successful routes? 
+First, load Capital Metro shapefile.
 ```{r}
 capmetro <- 
   st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Routes.shp")%>%
@@ -703,6 +705,7 @@ capmetro0 <-st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Da
   st_transform(2278)
 ```
 
+The hotlines before and after the remap are plotted below. Most of the hot routes are north-south direction. There are two new hotlines emerged after the CapRemap, line 10 and line 20, and they are colored in red.
 ```{r}
 grid.arrange(
 
@@ -721,7 +724,7 @@ ggplot()+
     labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803') ,ncol =2)
 ```
 
-
+To dive deeper into the characteristics of the hot bus lines, we map out the passenger load for each route at each stop for each direction. We also ploted the passenger load versus stop sequence ID as well as average boarding and alighting at each stop along each route. Note that the Austin bus system has different patterns for each route, and in order to make sure the plots to make sense, we only selected the most used pattern for each plot.
 ```{r}
 routeplot1 <- function(n,p,p1,d) {
   # line n before map
@@ -811,7 +814,6 @@ routeplot1 <- function(n,p,p1,d) {
 }
 ```
 
-select route patterns id that has the majority instances
 ```{r fig.height=9, fig.width=8}
 routeplot1(7,39614, 38294,0)
 ```
@@ -836,6 +838,9 @@ routeplot1(801,39622, 38305,0)
 routeplot1(803,39626, 38309,0)
 ```
 
+By mapping and plotting the average passenger number on bus as well as the average boarding and alighting at each stop, we can see better how specific location or neighborhood could potentially contribute to the ridership. These regions will be feature engineered in the following analysis. We also noticed that ridership tends to be higher in the middle portion of the trip, this means a lot of the passengers board from early stops to stops near the ends.
+
+
 In conclusion, hotlines have the following characteristics:
 
 - In terms of bus route types, Local, MetroRapid, and High Frequency routes have high ridership
@@ -856,7 +861,6 @@ In our future analysis, we will be conducting feature engineering in terms of:
 
 
 # 4. Appendix
-
 ## Kmeans Cluster Analysis
 
 Find the number of kmeans clusters for both before and after the CapRemap:
