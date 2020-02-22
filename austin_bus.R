@@ -2,9 +2,12 @@
 library(tidyr)
 library(tidyverse)
 library(ggplot2)
+library(ggmap)
 library(sf)
 library(gridExtra)
 library(RColorBrewer)
+library(osmdata)
+
 # change the directory in order to load the data
 agg <- read.csv('D:/Spring20/Practicum/data/MUSA Data - Stop Ridership Aggregated.csv')
 Routes1801 <- st_read("D:/Spring20/Practicum/data/Jan2018/Routes.shp")
@@ -167,7 +170,7 @@ ggplot()+
 
 #types of routes
 #local
-local <- ggplot()+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -180,7 +183,8 @@ local <- ggplot()+
   labs(title = "Local Routes Before and After Cap Remap")
 
 #HighFrequency
-highFrequency <- ggplot()+
+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -196,7 +200,8 @@ highFrequency <- ggplot()+
 grid.arrange(local, highFrequency, ncol = 1)
 
 #Crosstown
-crosstown <-ggplot()+
+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -209,7 +214,7 @@ crosstown <-ggplot()+
   labs(title = "Crosstown Routes Before and After Cap Remap")
 
 #Feeder
-feeder <-ggplot()+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -223,7 +228,7 @@ feeder <-ggplot()+
 
 
 #Flyer
-flyer <- ggplot()+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -236,7 +241,7 @@ flyer <- ggplot()+
   labs(title = "Flyer Routes Before and After Cap Remap")
 
 #Express
-express <-ggplot()+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -250,11 +255,11 @@ express <-ggplot()+
 
 #minor changes grid arrange
 
-grid.arrange(crosstown, feeder, flyer, express, ncol =1)
+grid.arrange(crosstown, feeder, flyer, express, special,ncol =2)
 
 
 #UT Shuttle
-UTShuttle <- ggplot()+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -267,7 +272,7 @@ UTShuttle <- ggplot()+
   labs(title = "UT Shuttle Before and After Cap Remap")
 
 #Special
-special <- ggplot()+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -280,7 +285,7 @@ special <- ggplot()+
   labs(title = "Speical Routes Before and After Cap Remap")
 
 #Nigh Owl
-nightowl <- ggplot()+
+ggplot()+
   geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
@@ -294,3 +299,96 @@ nightowl <- ggplot()+
 
 #no change grid arrange
 grid.arrange(UTShuttle, special, nightowl, ncol = 1)
+
+#####OSM#####
+getOSM <- function(key,value){
+  feature <- opq(bbox = 'Austin, Texas')%>%
+    add_osm_feature(key = key, value = value) %>%
+    osmdata_sf ()
+  if(is.null(feature$osm_points)){
+    feature_poly <- feature$osm_polygons%>%
+      select(geometry)%>%
+      st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
+      st_transform(32140)
+    return(feature_poly)
+  } else {
+  feature_pt <- feature$osm_points%>%
+    select(geometry)%>%
+    st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
+    st_transform(32140)
+  return (feature_pt)
+  }
+}
+
+#shop
+shop <- opq(bbox = 'Austin, Texas')%>%
+  add_osm_feature(key = 'shop') %>%
+  osmdata_sf ()
+
+shop_pt <- shop$osm_points
+
+shop_pt <- shop_pt%>%
+  select(osm_id,
+         name,
+         addr.city,
+         geometry)%>%
+  st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
+  st_transform(32140)
+
+levels <- opq(bbox = 'Austin, Texas')%>%
+  add_osm_feature(key = 'building:levels') %>%
+  osmdata_sf ()
+
+levels <- levels$osm_points%>%
+  select(geometry)%>%
+  st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
+  st_transform(32140)
+
+shop_pt <- shop_pt%>%
+  select(osm_id,
+         name,
+         addr.city,
+         geometry)%>%
+  st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
+  st_transform(32140)
+
+#commercial
+commercial <- getOSM('building', 'commercial')
+#retail
+retail <- getOSM('building', 'retail')
+#supermarket
+supermkt <- getOSM('building', 'supermarket')
+#office
+office <- getOSM('building', 'office')
+#residential
+residential <- getOSM('building','residential')
+#hospital
+hospital <- getOSM('building', 'hospital')
+#bar
+bar <- getOSM('amenity', 'bar')
+#school
+school <- getOSM('amenity', 'school')
+#uni
+university <- getOSM('amenity', 'university')
+#parking
+parking <- getOSM('amenity', 'parking')
+#statium
+stadium <- getOSM('building', 'stadium')
+#trainstation
+trainstation <- getOSM('building', 'train_station')
+
+#plot OSM
+plotOSM <- function(OSM)
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data=parking,
+          inherit.aes =FALSE,
+          colour="#238443",
+          fill="#004529",
+          alpha=.5,
+          size=1,
+          shape=21)+
+  labs(x="",y="")
