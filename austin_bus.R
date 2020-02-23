@@ -7,6 +7,7 @@ library(sf)
 library(gridExtra)
 library(RColorBrewer)
 library(osmdata)
+library(tidycensus)
 
 # change the directory in order to load the data
 agg <- read.csv('D:/Spring20/Practicum/data/MUSA Data - Stop Ridership Aggregated.csv')
@@ -308,13 +309,13 @@ getOSM <- function(key,value){
     osmdata_sf ()
   if(is.null(feature$osm_points)){
     feature_poly <- feature$osm_polygons%>%
-      select(geometry)%>%
+      select(osm_id,geometry)%>%
       st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
       st_transform(32614)
     return(feature_poly)
   } else {
   feature_pt <- feature$osm_points%>%
-    select(geometry)%>%
+    select(osm_id,geometry)%>%
     st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
     st_transform(32614)
   return (feature_pt)
@@ -343,7 +344,7 @@ university <- opq(bbox = 'Austin, Texas')%>%
 university <- university$osm_polygons%>%
   select(geometry)%>%
   st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-  st_transform(32140)
+  st_transform(32614)
 
 shop_pt <- shop_pt%>%
   select(osm_id,
@@ -363,8 +364,6 @@ supermkt <- getOSM('building', 'supermarket')
 office <- getOSM('building', 'office')
 #residential
 residential <- getOSM('building','residential')
-#hospital
-hospital <- getOSM('building', 'hospital')
 #bar
 bar <- getOSM('amenity', 'bar')
 #school
@@ -400,3 +399,37 @@ StopBuff <- stops%>%
 
 StopBuff2 <- stops%>%
   st_buffer(2640)
+
+#####census#####
+options(tigris_use_cache = TRUE)
+v17 <- load_variables(2017, "acs5", cache = TRUE)
+
+Hays <- get_acs(state = "48", county = "209", geography = "tract", 
+                     variables = "B01001_001", geometry = TRUE)
+Travis <- get_acs(state = "48", county = "453", geography = "tract", 
+                variables = "B01001_001", geometry = TRUE)
+Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
+                variables = "B01001_001", geometry = TRUE)
+######spatial join#####
+bufferInit <- function(Buffer, Points, Name){
+  if(class(Points$geometry) == "sfc_POINT"){
+  Init <- st_join(Buffer%>% select(STOP_ID), Points, join = st_contains)%>%
+  group_by(STOP_ID)%>%
+    summarize(count = n())%>%
+    rename(!!Name := count)
+  }else {
+    Init <- st_join(Buffer%>% select(STOP_ID), Points, join = st_intersects)%>%
+      group_by(STOP_ID)%>%
+      summarize(count = n())%>%
+      rename(!!Name := count)
+  }
+}
+
+CommercialInit <- bufferInit(StopBuff, commercial, 'commercial_count')
+RetailInit <- bufferInit(StopBuff, retail, 'retail_count')
+OfficeInit <- bufferInit(StopBuff, office, 'office_count')
+ResidentialInit <- bufferInit(StopBuff, residential, 'residential_count')
+SupermktInit <- bufferInit(StopBuff, supermkt, 'supermkt_count')
+BarInit <- bufferInit(StopBuff, bar, 'bar_count')
+UniInit <- bufferInit(StopBuff, university, 'university_count')
+ParkingInit <- bufferInit(StopBuff, parking, 'parking_count')
