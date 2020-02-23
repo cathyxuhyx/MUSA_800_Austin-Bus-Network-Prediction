@@ -19,6 +19,7 @@ HighFreq <- st_read('D:/Spring20/Practicum/data/HighFrequency.shp')
 Replaced <- st_read('D:/Spring20/Practicum/data/EliminatedReplacement.shp')
 Eliminated <- st_read('D:/Spring20/Practicum/data/Eliminated.shp')
 Routes2001 <- st_read('D:/Spring20/Practicum/data/Routes.shp')
+stops <- st_read('D:/Spring20/Practicum/data/Stops.shp')
 
 Routes1801 <- Routes1801%>%
   mutate(capremap = "Before Cap Remap")
@@ -309,13 +310,13 @@ getOSM <- function(key,value){
     feature_poly <- feature$osm_polygons%>%
       select(geometry)%>%
       st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-      st_transform(32140)
+      st_transform(32614)
     return(feature_poly)
   } else {
   feature_pt <- feature$osm_points%>%
     select(geometry)%>%
     st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-    st_transform(32140)
+    st_transform(32614)
   return (feature_pt)
   }
 }
@@ -392,3 +393,10 @@ ggplot()+
           size=1,
           shape=21)+
   labs(x="",y="")
+
+#####buffer#####
+StopBuff <- stops%>%
+  st_buffer(1320)
+
+StopBuff2 <- stops%>%
+  st_buffer(2640)
