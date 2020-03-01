@@ -8,6 +8,9 @@ library(gridExtra)
 library(RColorBrewer)
 library(osmdata)
 library(tidycensus)
+library(areal)
+library(viridis)
+
 
 # change the directory in order to load the data
 agg <- read.csv('D:/Spring20/Practicum/data/MUSA Data - Stop Ridership Aggregated.csv')
@@ -433,3 +436,13 @@ SupermktInit <- bufferInit(StopBuff, supermkt, 'supermkt_count')
 BarInit <- bufferInit(StopBuff, bar, 'bar_count')
 UniInit <- bufferInit(StopBuff, university, 'university_count')
 ParkingInit <- bufferInit(StopBuff, parking, 'parking_count')
+
+#####buffer deomographics#####
+#demo data bind
+Population <- rbind(Travis, Williamson)%>%
+  st_transform(32614)
+
+Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
+                                  output = "sf", extensive = "estimate")
+Population_buff$estimate <- round(Population_buff$estimate)
+
