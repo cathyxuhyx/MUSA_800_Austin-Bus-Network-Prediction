@@ -36,6 +36,9 @@ new_scale <- function(new_aes) {
   structure(ggplot2::standardise_aes_names(new_aes), class = "new_aes")
 }
 
+stops <- stops%>%
+  st_transform(2278)
+
 austin <- austin%>%
   st_transform(2278)
 
