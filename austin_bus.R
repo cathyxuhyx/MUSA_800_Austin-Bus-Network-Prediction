@@ -37,17 +37,17 @@ new_scale <- function(new_aes) {
 }
 
 austin <- austin%>%
-  st_transform(32140)
+  st_transform(2278)
 
 
 counties <- counties%>%
-  st_transform(32614)
+  st_transform(2278)
 
 cities <- cities%>%
-  st_transform(32614)
+  st_transform(2278)
 
 schoolDist <- schoolDist%>%
-  st_transform(32614)%>%
+  st_transform(2278)%>%
   st_contains(routes)%>%
   st_geometry()
 
@@ -60,11 +60,11 @@ cities <- subset(cities, MUNI_NM == "AUSTIN" | MUNI_NM == "JONESTOWN"|MUNI_NM ==
 #turn dataframe into spacitial object
 agg_sf <- agg%>%
   st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
-  st_transform(32614)
+  st_transform(2278)
 
 stops_sf <- Stops%>%
   st_as_sf(coords = c("stop_lon", "stop_lat"), crs = 4326)%>%
-  st_transform(32614)
+  st_transform(2278)
 
 #divide agg_sf data into before and after capremap
 agg_before_sf <- agg_sf%>%
@@ -314,13 +314,13 @@ getOSM <- function(key,value){
     feature_poly <- feature$osm_polygons%>%
       select(osm_id,geometry)%>%
       st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-      st_transform(32614)
+      st_transform(2278)
     return(feature_poly)
   } else {
   feature_pt <- feature$osm_points%>%
     select(osm_id,geometry)%>%
     st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-    st_transform(32614)
+    st_transform(2278)
   return (feature_pt)
   }
 }
@@ -338,7 +338,7 @@ shop_pt <- shop_pt%>%
          addr.city,
          geometry)%>%
   st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-  st_transform(32140)
+  st_transform(2278)
 
 university <- opq(bbox = 'Austin, Texas')%>%
   add_osm_feature(key = 'amenity',value = 'university') %>%
@@ -347,7 +347,7 @@ university <- opq(bbox = 'Austin, Texas')%>%
 university <- university$osm_polygons%>%
   select(geometry)%>%
   st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-  st_transform(32614)
+  st_transform(2278)
 
 shop_pt <- shop_pt%>%
   select(osm_id,
@@ -355,7 +355,7 @@ shop_pt <- shop_pt%>%
          addr.city,
          geometry)%>%
   st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-  st_transform(32140)
+  st_transform(2278)
 
 #commercial
 commercial <- getOSM('building', 'commercial')
@@ -440,7 +440,7 @@ ParkingInit <- bufferInit(StopBuff, parking, 'parking_count')
 #####buffer deomographics#####
 #demo data bind
 Population <- rbind(Travis, Williamson)%>%
-  st_transform(32614)
+  st_transform(2278)
 
 Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
                                   output = "sf", extensive = "estimate")
