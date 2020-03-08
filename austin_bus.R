@@ -10,6 +10,7 @@ library(osmdata)
 library(tidycensus)
 library(areal)
 library(viridis)
+library(lubridate)
 
 
 # change the directory in order to load the data
@@ -415,7 +416,13 @@ Hays <- get_acs(state = "48", county = "209", geography = "tract",
 Travis <- get_acs(state = "48", county = "453", geography = "tract", 
                 variables = "B01001_001", geometry = TRUE)
 Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
-                variables = "B01001_001", geometry = TRUE)
+                variables = "B01001_001", geometry = TRUE) 
+
+Travis_race <- get_acs(state = "48", county = "453", geography = "tract", 
+                  variables = "B02001_002", geometry = TRUE)
+Williamson_race <- get_acs(state = "48", county = "491", geography = "tract", 
+                      variables = "B02001_002", geometry = TRUE) 
+
 ######spatial join#####
 bufferInit <- function(Buffer, Points, Name){
   if(class(Points$geometry) == "sfc_POINT"){
@@ -449,3 +456,36 @@ Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, 
                                   output = "sf", extensive = "estimate")
 Population_buff$estimate <- round(Population_buff$estimate)
 
+Race <- rbind(Travis_race, Williamson_race)%>%
+  st_transform(2278)
+
+Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
+                                  output = "sf", extensive = "estimate")
+Race_buff$estimate <- round(Race_buff$estimate)
+
+
+#####Time Lag#####
+disagg$ACT_STOP_TIME <- as.character(disagg$ACT_STOP_TIME)
+
+disagg <- disagg%>%
+  mutate(interval60 = floor_date(mdy_hm(ACT_STOP_TIME), unit = "hour"),
+         interval15 = floor_date(mdy_hm(ACT_STOP_TIME), unit = "15 mins"))
+
+study.panel <- 
+  expand.grid(interval60=unique(disagg$interval60), 
+              STOP_ID = unique(disagg$STOP_ID))
+
+disagg.panel <- disagg%>%
+  right_join(study.panel)%>%
+  group_by(interval60, STOP_ID)%>%
+  summarize(avg_on = mean(PSGR_ON))
+
+disagg.timelag <- 
+  disagg.panel %>% 
+  arrange(STOP_ID, interval60) %>% 
+  mutate(lagHour = dplyr::lag(avg_on,1),
+         lag2Hours = dplyr::lag(avg_on,2),
+         lag3Hours = dplyr::lag(avg_on,3),
+         lag4Hours = dplyr::lag(avg_on,4),
+         lag12Hours = dplyr::lag(avg_on,12),
+         lag1day = dplyr::lag(avg_on,24))
