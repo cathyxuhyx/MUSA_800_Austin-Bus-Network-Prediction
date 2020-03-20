@@ -407,21 +407,6 @@ StopBuff <- stops%>%
 StopBuff2 <- stops%>%
   st_buffer(2640)
 
-#####census#####
-options(tigris_use_cache = TRUE)
-v17 <- load_variables(2017, "acs5", cache = TRUE)
-
-Hays <- get_acs(state = "48", county = "209", geography = "tract", 
-                     variables = "B01001_001", geometry = TRUE)
-Travis <- get_acs(state = "48", county = "453", geography = "tract", 
-                variables = "B01001_001", geometry = TRUE)
-Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
-                variables = "B01001_001", geometry = TRUE) 
-
-Travis_race <- get_acs(state = "48", county = "453", geography = "tract", 
-                  variables = "B02001_002", geometry = TRUE)
-Williamson_race <- get_acs(state = "48", county = "491", geography = "tract", 
-                      variables = "B02001_002", geometry = TRUE) 
 
 ######spatial join#####
 bufferInit <- function(Buffer, Points, Name){
@@ -447,6 +432,57 @@ BarInit <- bufferInit(StopBuff, bar, 'bar_count')
 UniInit <- bufferInit(StopBuff, university, 'university_count')
 ParkingInit <- bufferInit(StopBuff, parking, 'parking_count')
 
+#####census#####
+options(tigris_use_cache = TRUE)
+v17 <- load_variables(2017, "acs5", cache = TRUE)
+
+Hays <- get_acs(state = "48", county = "209", geography = "tract", 
+                variables = "B01001_001", geometry = TRUE)
+Travis <- get_acs(state = "48", county = "453", geography = "tract", 
+                  variables = "B01001_001", geometry = TRUE)
+Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
+                      variables = "B01001_001", geometry = TRUE) 
+
+Travis_race <- get_acs(state = "48", county = "453", geography = "tract", 
+                       variables = "B02001_002", geometry = TRUE)
+Williamson_race <- get_acs(state = "48", county = "491", geography = "tract", 
+                           variables = "B02001_002", geometry = TRUE) 
+
+Travis_noveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                        variables = "B08014_002", geometry = TRUE)
+Williamson_noveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                            variables = "B08014_002", geometry = TRUE)
+
+Travis_oneveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                        variables = "B08014_003", geometry = TRUE)
+Williamson_oneveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                            variables = "B08014_003", geometry = TRUE)
+
+Travis_twoveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                         variables = "B08014_004", geometry = TRUE)
+Williamson_twoveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                             variables = "B08014_004", geometry = TRUE)
+
+Travis_threeveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                         variables = "B08014_005", geometry = TRUE)
+Williamson_threeveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                             variables = "B08014_005", geometry = TRUE)
+
+Travis_fourveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                           variables = "B08014_006", geometry = TRUE)
+Williamson_fourveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                               variables = "B08014_006", geometry = TRUE)
+
+Travis_fiveveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B08014_007", geometry = TRUE)
+Williamson_fiveveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B08014_007", geometry = TRUE)
+
+Travis_poverty <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B06012_002", geometry = TRUE)
+Williamson_poverty <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B06012_002", geometry = TRUE)
+
 #####buffer deomographics#####
 #demo data bind
 Population <- rbind(Travis, Williamson)%>%
@@ -463,6 +499,54 @@ Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID,
                                   output = "sf", extensive = "estimate")
 Race_buff$estimate <- round(Race_buff$estimate)
 
+NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
+  st_transform(2278)
+
+NoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = NoVeh, sid = GEOID, weight = "sum",
+                            output = "sf", extensive = "estimate")
+NoVeh_buff$estimate <- round(NoVeh_buff$estimate)
+
+OneVeh <- rbind(Travis_oneveh, Williamson_oneveh)%>%
+  st_transform(2278)
+
+OneVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
+                             output = "sf", extensive = "estimate")
+OneVeh_buff$estimate <- round(OneVeh_buff$estimate)
+
+TwoVeh <- rbind(Travis_twoveh, Williamson_twoveh)%>%
+  st_transform(2278)
+
+TwoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = TwoVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+TwoVeh_buff$estimate <- round(TwoVeh_buff$estimate)
+
+ThreeVeh <- rbind(Travis_threeveh, Williamson_threeveh)%>%
+  st_transform(2278)
+
+ThreeVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+ThreeVeh_buff$estimate <- round(ThreeVeh_buff$estimate)
+
+FourVeh <- rbind(Travis_fourveh, Williamson_fourveh)%>%
+  st_transform(2278)
+
+FourVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FourVeh, sid = GEOID, weight = "sum",
+                                output = "sf", extensive = "estimate")
+FourVeh_buff$estimate <- round(FourVeh_buff$estimate)
+
+FiveVeh <- rbind(Travis_fiveveh, Williamson_fiveveh)%>%
+  st_transform(2278)
+
+FiveVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FiveVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+FiveVeh_buff$estimate <- round(FiveVeh_buff$estimate)
+
+Poverty <- rbind(Travis_poverty, Williamson_poverty)%>%
+  st_transform(2278)
+
+Poverty_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+Poverty_buff$estimate <- round(Poverty_buff$estimate)
 
 #####Time Lag#####
 disagg$ACT_STOP_TIME <- as.character(disagg$ACT_STOP_TIME)
