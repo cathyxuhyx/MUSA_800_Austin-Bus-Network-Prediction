@@ -449,3 +449,97 @@ Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, 
                                   output = "sf", extensive = "estimate")
 Population_buff$estimate <- round(Population_buff$estimate)
 
+
+
+
+#Building Area Feature Engineering
+#Create the polygon buffer function
+bufferPoly <- function(Buffer, Polygons, Name){
+  if(class(Polygons$geometry) == "sfc_POLYGON"){
+    Poly <- st_join(Buffer%>% select(STOP_ID), Polygons, join = st_intersects)%>%
+      group_by(STOP_ID)%>%
+      summarize(area = sum(Total_area))%>%
+      rename(!!Name := area)
+  }
+  #else {
+  #  Poly <- st_join(Buffer%>% select(STOP_ID), Polygons, join = st_intersects)%>%
+  #    group_by(STOP_ID)%>%
+  #    summarize(count = n())%>%
+  #    rename(!!Name := count)
+  #}
+}
+
+#Import building footprint shapefile
+Buildings <- 
+  st_read("C:/Upenn/Practicum/Data/building_footprints_2017/building_footprints_2017.shp")%>%
+  st_transform(2278) 
+#Import Stop shp
+stops <-
+  st_read("C:/Upenn/Practicum/Data/Shapefiles_-_JUNE_2018/Stops.shp") %>%
+  st_transform(2278)
+
+#Create columns of the num of floors and total building areas
+Buildings$Floor <- round(Buildings$MAX_HEIGHT/10)
+Buildings$Total_area <- Buildings$Floor * Buildings$SHAPE_AREA
+
+AreaPoly <- bufferPoly(StopBuff, Buildings, 'building_area')
+AreaPoly$geometry <- NULL
+
+AreaPoly2 <- bufferPoly(StopBuff2, Buildings, 'building_area')
+
+write.csv(AreaPoly, "C:/Upenn/Practicum/Data/Building_Area2.csv")
+
+write.csv(AreaPoly2, "C:/Upenn/Practicum/Data/Building_Area2.csv")
+
+?merge
+
+Austin.sf <- merge(AreaPoly, data.2018, by= "STOP_ID", all.x=TRUE)
+
+Austin.sf$geometry <- NULL
+Austin.sf<- Austin.sf[-c(25158,25159,25160,25161,25162,25163,25164,35408,37475,37476,37477,37478,37479,37480,37481,39140,39153,39292,42526,42527,42528,42529,42530,42531,
+                         42532,42533,42534,44292,44293,45249,45250,48882,48883,48915,48916), ]
+which(is.na(Austin.sf$LONGITUDE))
+
+Austin.sf <- 
+  Austin.sf %>% 
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+q5 <- function(variable) {as.factor(ntile(variable, 5))}
+qBr <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]],0),
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]]), digits = 3),
+                 c(.01,.2,.4,.6,.8), na.rm=T)
+  }
+}
+
+library(wesanderson)
+palette5 <- wes_palette("Moonrise3", n = 5)
+palette5 <- 
+  mapTheme <- function(base_size = 12) {
+    theme(
+      text = element_text( color = "black"),
+      plot.title = element_text(size = 14,colour = "black"),
+      plot.subtitle=element_text(face="italic"),
+      plot.caption=element_text(hjust=0),
+      axis.ticks = element_blank(),
+      panel.background = element_blank(),axis.title = element_blank(),
+      axis.text = element_blank(),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(colour = "black", fill=NA, size=2)
+    )
+  }
+
+ggplot() +
+  geom_sf(data = nhood, fill = "grey40") +
+  geom_sf(data = Austin.sf, aes(colour = q5(building_area)), show.legend = "point", size = .75) +
+  scale_colour_manual(values = palette5,
+                      labels=qBr(Austin.sf,"building_area"),
+                      name="Quintile\nBreaks") +
+  labs(title="Building Area within 1/4 Mile Buffer from each Stop") +
+  mapTheme()
