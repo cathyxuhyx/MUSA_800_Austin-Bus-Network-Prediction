@@ -11,6 +11,7 @@ library(tidycensus)
 library(areal)
 library(viridis)
 library(lubridate)
+library(ggrepel)
 
 
 # change the directory in order to load the data
@@ -63,6 +64,10 @@ cities <- subset(cities, MUNI_NM == "AUSTIN" | MUNI_NM == "JONESTOWN"|MUNI_NM ==
 
 #turn dataframe into spacitial object
 agg_sf <- agg%>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
+  st_transform(2278)
+
+disagg_sf <- disagg%>%
   st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
   st_transform(2278)
 
@@ -573,3 +578,45 @@ disagg.timelag <-
          lag4Hours = dplyr::lag(avg_on,4),
          lag12Hours = dplyr::lag(avg_on,12),
          lag1day = dplyr::lag(avg_on,24))
+
+
+#####Data Structure#####
+#We use aggregated data to look at the average ridership on weekdays at individual stops
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA)))+
+  geom_sf(data = subset(agg_after_sf, STOP_ID == 476), aes(color = "Stop 476"), size = 2, show.legend = "point")+
+  scale_colour_manual(values = c("Stop 476" = "darkorange"),
+                      guide = guide_legend("Aggregated Data Example"))+
+  labs(title = "Aggregated Data Structure",
+       subtitle = "Data from Capital Metro")+
+  ggrepel::geom_label_repel(
+    data = subset(agg_after_sf, STOP_ID == 476),aes(label = "Average Ridership = 33 \n Average Passing Buses = 55", geometry = geometry),
+    stat = "sf_coordinates",
+    min.segment.length = 3)
+
+#We use disaggregated data to investigate the average ridership on weekdays on different routes.
+disagg_803 <- subset(disagg_sf, ROUTE == 803)%>%
+  group_by(STOP_ID)%>%
+  summarize(avg_on = mean(PSGR_ON),
+            avg_load = mean(PSGR_LOAD))
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA)))+
+  geom_sf(data = disagg_803, aes(color = "Stops on Route 803"), size = 2, show.legend = "point")+
+  scale_colour_manual(values = c("Stops on Route 803" = "darkorange"),
+                      guide = guide_legend("Disggregated Data Example"))+
+  labs(title = "Disaggregated Data Structure",
+       subtitle = "Data from Capital Metro")+
+  geom_label_repel(
+    data = subset(disagg_803, STOP_ID == 2606),aes(label = "Average On-board Passengers of Stop 2606 = 11 \n Route Type = Metro Rapid", geometry = geometry),
+    stat = "sf_coordinates",
+    min.segment.length = 0,
+    segment.color = "lightgrey",
+    point.padding = 20)
+ 
+  
