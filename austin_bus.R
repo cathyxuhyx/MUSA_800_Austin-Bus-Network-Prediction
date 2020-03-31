@@ -10,6 +10,8 @@ library(osmdata)
 library(tidycensus)
 library(areal)
 library(viridis)
+library(lubridate)
+library(ggrepel)
 
 
 # change the directory in order to load the data
@@ -62,6 +64,10 @@ cities <- subset(cities, MUNI_NM == "AUSTIN" | MUNI_NM == "JONESTOWN"|MUNI_NM ==
 
 #turn dataframe into spacitial object
 agg_sf <- agg%>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
+  st_transform(2278)
+
+disagg_sf <- disagg%>%
   st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
   st_transform(2278)
 
@@ -406,16 +412,7 @@ StopBuff <- stops%>%
 StopBuff2 <- stops%>%
   st_buffer(2640)
 
-#####census#####
-options(tigris_use_cache = TRUE)
-v17 <- load_variables(2017, "acs5", cache = TRUE)
 
-Hays <- get_acs(state = "48", county = "209", geography = "tract", 
-                     variables = "B01001_001", geometry = TRUE)
-Travis <- get_acs(state = "48", county = "453", geography = "tract", 
-                variables = "B01001_001", geometry = TRUE)
-Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
-                variables = "B01001_001", geometry = TRUE)
 ######spatial join#####
 bufferInit <- function(Buffer, Points, Name){
   if(class(Points$geometry) == "sfc_POINT"){
@@ -440,6 +437,57 @@ BarInit <- bufferInit(StopBuff, bar, 'bar_count')
 UniInit <- bufferInit(StopBuff, university, 'university_count')
 ParkingInit <- bufferInit(StopBuff, parking, 'parking_count')
 
+#####census#####
+options(tigris_use_cache = TRUE)
+v17 <- load_variables(2017, "acs5", cache = TRUE)
+
+Hays <- get_acs(state = "48", county = "209", geography = "tract", 
+                variables = "B01001_001", geometry = TRUE)
+Travis <- get_acs(state = "48", county = "453", geography = "tract", 
+                  variables = "B01001_001", geometry = TRUE)
+Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
+                      variables = "B01001_001", geometry = TRUE) 
+
+Travis_race <- get_acs(state = "48", county = "453", geography = "tract", 
+                       variables = "B02001_002", geometry = TRUE)
+Williamson_race <- get_acs(state = "48", county = "491", geography = "tract", 
+                           variables = "B02001_002", geometry = TRUE) 
+
+Travis_noveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                        variables = "B08014_002", geometry = TRUE)
+Williamson_noveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                            variables = "B08014_002", geometry = TRUE)
+
+Travis_oneveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                        variables = "B08014_003", geometry = TRUE)
+Williamson_oneveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                            variables = "B08014_003", geometry = TRUE)
+
+Travis_twoveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                         variables = "B08014_004", geometry = TRUE)
+Williamson_twoveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                             variables = "B08014_004", geometry = TRUE)
+
+Travis_threeveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                         variables = "B08014_005", geometry = TRUE)
+Williamson_threeveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                             variables = "B08014_005", geometry = TRUE)
+
+Travis_fourveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                           variables = "B08014_006", geometry = TRUE)
+Williamson_fourveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                               variables = "B08014_006", geometry = TRUE)
+
+Travis_fiveveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B08014_007", geometry = TRUE)
+Williamson_fiveveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B08014_007", geometry = TRUE)
+
+Travis_poverty <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B06012_002", geometry = TRUE)
+Williamson_poverty <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B06012_002", geometry = TRUE)
+
 #####buffer deomographics#####
 #demo data bind
 Population <- rbind(Travis, Williamson)%>%
@@ -449,6 +497,7 @@ Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, 
                                   output = "sf", extensive = "estimate")
 Population_buff$estimate <- round(Population_buff$estimate)
 
+<<<<<<< HEAD
 
 
 
@@ -543,3 +592,128 @@ ggplot() +
                       name="Quintile\nBreaks") +
   labs(title="Building Area within 1/4 Mile Buffer from each Stop") +
   mapTheme()
+=======
+Race <- rbind(Travis_race, Williamson_race)%>%
+  st_transform(2278)
+
+Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
+                                  output = "sf", extensive = "estimate")
+Race_buff$estimate <- round(Race_buff$estimate)
+
+NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
+  st_transform(2278)
+
+NoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = NoVeh, sid = GEOID, weight = "sum",
+                            output = "sf", extensive = "estimate")
+NoVeh_buff$estimate <- round(NoVeh_buff$estimate)
+
+OneVeh <- rbind(Travis_oneveh, Williamson_oneveh)%>%
+  st_transform(2278)
+
+OneVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
+                             output = "sf", extensive = "estimate")
+OneVeh_buff$estimate <- round(OneVeh_buff$estimate)
+
+TwoVeh <- rbind(Travis_twoveh, Williamson_twoveh)%>%
+  st_transform(2278)
+
+TwoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = TwoVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+TwoVeh_buff$estimate <- round(TwoVeh_buff$estimate)
+
+ThreeVeh <- rbind(Travis_threeveh, Williamson_threeveh)%>%
+  st_transform(2278)
+
+ThreeVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+ThreeVeh_buff$estimate <- round(ThreeVeh_buff$estimate)
+
+FourVeh <- rbind(Travis_fourveh, Williamson_fourveh)%>%
+  st_transform(2278)
+
+FourVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FourVeh, sid = GEOID, weight = "sum",
+                                output = "sf", extensive = "estimate")
+FourVeh_buff$estimate <- round(FourVeh_buff$estimate)
+
+FiveVeh <- rbind(Travis_fiveveh, Williamson_fiveveh)%>%
+  st_transform(2278)
+
+FiveVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FiveVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+FiveVeh_buff$estimate <- round(FiveVeh_buff$estimate)
+
+Poverty <- rbind(Travis_poverty, Williamson_poverty)%>%
+  st_transform(2278)
+
+Poverty_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+Poverty_buff$estimate <- round(Poverty_buff$estimate)
+
+#####Time Lag#####
+disagg$ACT_STOP_TIME <- as.character(disagg$ACT_STOP_TIME)
+
+disagg <- disagg%>%
+  mutate(interval60 = floor_date(mdy_hm(ACT_STOP_TIME), unit = "hour"),
+         interval15 = floor_date(mdy_hm(ACT_STOP_TIME), unit = "15 mins"))
+
+study.panel <- 
+  expand.grid(interval60=unique(disagg$interval60), 
+              STOP_ID = unique(disagg$STOP_ID))
+
+disagg.panel <- disagg%>%
+  right_join(study.panel)%>%
+  group_by(interval60, STOP_ID)%>%
+  summarize(avg_on = mean(PSGR_ON))
+
+disagg.timelag <- 
+  disagg.panel %>% 
+  arrange(STOP_ID, interval60) %>% 
+  mutate(lagHour = dplyr::lag(avg_on,1),
+         lag2Hours = dplyr::lag(avg_on,2),
+         lag3Hours = dplyr::lag(avg_on,3),
+         lag4Hours = dplyr::lag(avg_on,4),
+         lag12Hours = dplyr::lag(avg_on,12),
+         lag1day = dplyr::lag(avg_on,24))
+
+
+#####Data Structure#####
+#We use aggregated data to look at the average ridership on weekdays at individual stops
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA)))+
+  geom_sf(data = subset(agg_after_sf, STOP_ID == 476), aes(color = "Stop 476"), size = 2, show.legend = "point")+
+  scale_colour_manual(values = c("Stop 476" = "darkorange"),
+                      guide = guide_legend("Aggregated Data Example"))+
+  labs(title = "Aggregated Data Structure",
+       subtitle = "Data from Capital Metro")+
+  ggrepel::geom_label_repel(
+    data = subset(agg_after_sf, STOP_ID == 476),aes(label = "Average Ridership = 33 \n Average Passing Buses = 55", geometry = geometry),
+    stat = "sf_coordinates",
+    min.segment.length = 3)
+
+#We use disaggregated data to investigate the average ridership on weekdays on different routes.
+disagg_803 <- subset(disagg_sf, ROUTE == 803)%>%
+  group_by(STOP_ID)%>%
+  summarize(avg_on = mean(PSGR_ON),
+            avg_load = mean(PSGR_LOAD))
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA)))+
+  geom_sf(data = disagg_803, aes(color = "Stops on Route 803"), size = 2, show.legend = "point")+
+  scale_colour_manual(values = c("Stops on Route 803" = "darkorange"),
+                      guide = guide_legend("Disggregated Data Example"))+
+  labs(title = "Disaggregated Data Structure",
+       subtitle = "Data from Capital Metro")+
+  geom_label_repel(
+    data = subset(disagg_803, STOP_ID == 2606),aes(label = "Average On-board Passengers of Stop 2606 = 11 \n Route Type = Metro Rapid", geometry = geometry),
+    stat = "sf_coordinates",
+    min.segment.length = 0,
+    segment.color = "lightgrey",
+    point.padding = 20)
+ 
+  
+>>>>>>> 4fc3a429f0b9f72ccccada1cff76871a629bc90d
