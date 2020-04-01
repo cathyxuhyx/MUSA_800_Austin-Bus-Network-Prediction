@@ -1,3 +1,4 @@
+#New changes
 load.fun <- function(x) { 
   x <- as.character(x) 
   if(isTRUE(x %in% .packages(all.available=TRUE))) { 
