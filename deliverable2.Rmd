@@ -1,0 +1,1492 @@
+---
+title: "Bus Ridership Prediction in Austin, TX"
+author: "Hanyong Xu, Jia Yuan, Yibing Zheng"
+date: "01/2020-present"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: true
+    code_folding: hide
+    prettydoc::html_pretty:
+    theme: cosmo
+    highlight: tango
+---
+<style>
+.superbigimage{
+overflow-x:scroll;
+white-space: nowrap;
+}
+.superbigimage img{
+max-width: none;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	message = FALSE,
+	warning = FALSE,
+	cache = FALSE,
+	results = FALSE
+)
+options(scipen=99)
+```
+
+# 1. Introduction
+
+## 1.1 Background
+
+In 2018, Capital Metropoitan Transportation Authority (CapMetro), a public transportation agency serving Austin, Travis and parts of Williamson Counties, launched the "Cap Remap" by redesigning the bus network of the city as part of its transit development plan, Connections 2025. Cap Remap adjusted the transit network according to internal analysis and community outreach and aims to provide more fewquent, more reliable, and better connected bus system. Specifically, it remapped certain routes, tripled the number of bus routes that operate every 15 minutes, and made sure the frequency meets the need on weekends.
+
+## 1.2 Use Case
+
+Given the renewed interest in bus transit in US cities, we think there is an opportunity to innovate in the realm of bus planning using modern data science methods. The goal of this article is to present a tool for planners to test how changes of built environment and/or bus route information impact bus ridership in Austin.
+
+We will start with an evaluation of the Cap Remap to further understand the trend, pattern, and charateristics of the ridership in Austin. Then, we will use the Automated Passenger Counter data and other open data to develope a machine learning model, followed with accuracy result and validation across different regions.
+
+# 2. Exploratory Analysis
+
+## 2.1 What Data Are We Using?
+
+The data we used come from the Automated Passenger Counter(APC), which counts the number of boarding and alighting on any given bus. The image below illustrate the APC system at work.
+![](../markdown_img/Passenger-bus-APC-1024x576.jpg)
+[source](https://www.tsomobile.com/tso-public-transportation/shuttle-bus-resources/)
+
+The data structure is.............
+![](../markdown_img/agg.PNG)
+
+The data here used are disaggregated data in May 21-25th and June 11-15th in 2018, which are one week before and after the CapRemap. The disaggregated data consist of passenger and bus information for each route, each shift, and each stop. Basically, the number of passenger boarding, alighting, and other related ridership information are recorded at each stop for each shift of each bus route.
+![](../markdown_img/disagg.PNG)
+
+## 2.2 Annual Citywide Ridership Trend
+
+How did ridership change before and after CapRemap (06/03, 2018)?
+
+Current available data from Capital Metro allows us to observe the trend in ridership change before and after Cap Remap. The first important part of exploratory analysis is to see the city-wide change in ridership brought by CapRemap. With the stop-level data from Janurary 207 to November 2019, the aggregated city-wide ridership change is shown in the chart below.
+
+........................need re-edit these...................
+The x-axis represents month, and y-axis repredents the average daily ridership in the given month. The solid lines in the chart are 2018 riderships. The yellow solid line is ridership from Janurary to May in 2018 (before Cap Remap happened in June 2018) while the blue solid line is ridership from June to December in 2018 (after CapRemap). The dashed line is the ridership in 2019 from Janurary to June after CapRemap happend the year before.
+
+From the trend in 2018, it is clear that ridership fluctuated between months. Cap Remap didn't bring a rapid increase in ridership after the implementation. On the contrary, the ridership decreased in June and July. In August, the ridership recovers to the previous level before CapRemap, Then in September the ridership almost exploded to 0.1 million. Then it gradually went down in winter but in 2019, the ridership is generally higher than the same month in 2018. This result shows the general positive impact CapRemap brought to ridership change. For the decrease in June and July and following increasing trend, people might need time to adjust to the new bus schedule and get used to it. And after they realize the convinience of the redesign, the ridership increased rapidly. Another explanation is related to university's opening and closing as the low ridership happened in summer break and high ridership happened in the beginning of the new semester.
+..............................................................S
+![](../markdown_img/AnnualTrend.png)
+
+## 2.3 Ridership Pattern in Subdivisions
+
+After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. Neighborhoods in Austin are used here to show the spatial trend here. 
+
+As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
+
+![](../markdown_img/plot2.png)
+
+We then created charts showing the ridership change in each neighborhood in 2018 in June and September. There are 12 neighborhoods experienced ridership decrease from June to September. There are several neighborhoods experienced high ridership increase of more than 10,000 from June to September. Generally, most neighborhoods experienced ridership increase after CapRemap from June to September. Among the 78 neighborhoods in Austin, we identified three neighborhoods that represents different characteristics: neighborhoods with expected ridership increase; neighborhoods with unexpected ridership increase; neighborhoods with unexpected ridership decrease.
+
+UT is the neighborhood with expected ridership increase.The location of UT neighborhood is just above downtown neighborhood. With a lot of university students living around here, the bus network is sensitive to school schedule. There is a relatively clear trend in ridership change according to school seasons.
+
+![](../markdown_img/ut_change.png)
+
+The second neighborhood Govalle is the neighborhood that experiencnig unexpected ridership increase. After CapRemap, the ridership in Govalle nearly increased by 50% to 75%. As Govalle is closer to the outskirts of Austin, this ridership increase might reflects CapRemap'success in strengthening the east-west connection.
+
+![](../markdown_img/govalle_change.png)
+
+But there are also neighborhoods exepriencing ridership decrease on the east-west direction. Zilker located in the southwest side of Austin's downtown region. Its ridership experienced a gradually slight decrease after CapRemap.
+
+![](../markdown_img/zilker_change.png)
+
+## 2.4 Route Analysis
+
+### 2.4.1 Route Type
+
+What could potentially influence ridership in terms of route information?
+
+There are several route types, each serving different purposes. Our hypothesis is that they will play an important role in determing the ridership.
+
+.........................
+need more description on route types
+talk about the service area as base map
+..........................
+
+![](../markdown_img/routetypePNG.png)
+
+### 2.4.2 Hotlines
+
+What makes a good bus system? What's so special about the 'hotlines'?
+
+The following analysis aim to find out what routes are popular, why are they popular, and how they have changed in a micro perspective. Kmeans Cluster Analysis was used to separate the disaggregated data into groups. Kmeans is an unsupervised learning algorithm that automatically group the dataset based on the distribution of each feature. We intend to use this algorithm to see if the resulting grouping identifies the hotlines, i.e. the routes that have higher ridership.
+
+We looked at the Kmeans analysis both before and after the Cap Remap. We get 4 lines labeled as hotlines before the remap, 6 lines labeled as hotlines after the remap. The hotlines before and after the remap are plotted below. Most of the hot routes are north-south direction. There are two new hotlines emerged after the CapRemap, line 10 and line 20, and they are colored in red.
+
+![](../markdown_img/hotlines.png)
+
+To dive deeper into the characteristics of the hot bus lines, we map out the passenger load for each route at each stop for each direction. We also ploted the passenger load versus stop sequence ID as well as average boarding and alighting at each stop along each route. The purpose of this analysis is to first, find out what is so special about the hotlines, and second, see trends before and after the Cap Remap. Note that the Austin bus system has different patterns for each route, and in order to make sure the plots to make sense, we only selected the most used pattern for each plot. Below we chose two Line 20 (type High Frequency) and Line 801(Metro Rapid) to demonstrate detailed route analysis.
+
+![](../markdown_img/line20.png)
+
+![](../markdown_img/line801.png)
+
+By mapping and plotting the average passenger number on bus as well as the average boarding and alighting at each stop, we can see better how specific location or neighborhood could potentially contribute to the ridership. These regions will be feature engineered in the following analysis. We also noticed that ridership tends to be higher in the middle portion of the trip, this means a lot of the passengers board from early stops to stops near the ends.
+
+In conclusion, hotlines have the following characteristics:
+
+- In terms of bus route types, Local, MetroRapid, and High Frequency routes have high ridership
+- In terms of geographical distribution:
+* Go through Hubs (UT, DT, Pleasant Valley)
+* Mostly North-South direction (Following the shape / geography of the city)
+* Going across the a large portion of the city
+- In terms of temporal trend, we know that more Shifts were added in the day time and rush hours, which might increase ridership.
+
+# 3. Modeling
+
+...............need more text in this section.................
+
+## 3.1 Strategies
+
+............5 types of features..........
+..........will use what model...........
+
+## 3.2 Feature Engineering
+
+![](../markdown_img/featuretable.png)
+
+..............some more feature exploring...............
+![](../markdown_img/corpo.png)
+
+![](../markdown_img/corne.png)
+
+..................feature correlation matrix.............
+![](../markdown_img/cormatrix.png)
+
+## 3.3 Results and Validation
+
+### 3.3.1 Neighborhood Fixed Effect
+
+![](../markdown_img/MAPE_overall_nhood.JPG){width=700px}
+![](../markdown_img/MAE_overall_nhood.JPG){width=700px}
+![](../markdown_img/PreVSObs_nhood.JPG){width=450px}
+
+![](../markdown_img/Bar_Neighborhood_MAE.JPG){width=1200px}
+![](../markdown_img/Map_nhood_MAPE_lm.JPG){width=500px}
+![](../markdown_img/Map_nhood_MAPE_glm.JPG){width=500px}
+![](../markdown_img/Map_nhood_MAPE_rf.JPG){width=500px}
+![](../markdown_img/Map_nhood_MAPE_xgb.JPG){width=500px}
+
+### 3.3.2 School District Fixed Effect
+
+![](../markdown_img/MAPE_overall_school.JPG){width=700px}
+![](../markdown_img/MAE_overall_school.JPG){width=700px}
+![](../markdown_img/PreVSObs_school.JPG){width=450px}
+
+![](../markdown_img/Bar_School_MAE.JPG){width=1200px}
+![](../markdown_img/Map_school_MAPE_lm.JPG){width=500px}
+![](../markdown_img/Map_school_MAPE_glm.JPG){width=500px}
+![](../markdown_img/Map_school_MAPE_rf.JPG){width=500px}
+![](../markdown_img/Map_school_MAPE_xgb.JPG){width=500px}
+
+# 4. Next Steps
+
+- Using ensemble
+- Tune hyperparameters
+- Further feature engineering
+
+# 5. Appendix
+
+We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route, which bacame the features we used for KMeanse Analysis.
+
+## Setup
+
+```{r}
+# package arranged by alphabetical orders
+library(areal)
+library(caret)
+library(class)
+library(ckanr)
+library(corrplot)
+library(data.table)
+library(dplyr)
+library(FNN)
+library(flexclust)
+library(geojsonsf)
+library(gganimate)
+library(ggmap)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(knitr)
+library(kableExtra)
+library(leaflet)
+library(lubridate)
+library(magrittr)
+library(MASS)
+library(metR)
+library(NbClust)
+library(nnet)
+library(nngeo)
+library(openxlsx)
+library(osmdata)
+library(plotly)
+library(QuantPsyc)
+library(RColorBrewer)
+library(reshape2)
+library(RSocrata)
+library(sf)
+library(spatstat)
+library(spdep)
+library(stargazer)
+library(tidycensus)
+library(tidyr)
+library(tidyverse)
+library(tigris)
+library(viridis)
+```
+
+```{r}
+mapTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle=element_text(face="italic"),
+    plot.caption=element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2)
+  )
+}
+
+qBr <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]],0),
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]]), digits = 3),
+                 c(.01,.2,.4,.6,.8), na.rm=T)
+  }
+}
+
+q5 <- function(variable) {as.factor(ntile(variable, 5))}
+
+plotTheme <- theme(
+  plot.title =element_text(size=12),
+  plot.subtitle = element_text(size=8),
+  plot.caption = element_text(size = 6),
+  axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+  axis.text.y = element_text(size = 10),
+  axis.title.y = element_text(size = 10),
+  # Set the entire chart region to blank
+  panel.background=element_blank(),
+  plot.background=element_blank(),
+  axis.ticks=element_blank())
+
+plotTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=1.5),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=12),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=10),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic"),
+    legend.text = element_text(colour = "black", face = "italic"),
+    strip.text.x = element_text(size = 14)
+  )
+}
+
+nn_function <- function(measureFrom,measureTo,k) {
+  
+  nn <-   
+    FNN::get.knnx(measureTo, measureFrom, k)$nn.dist
+  
+  output <-
+    as.data.frame(nn) %>%
+    rownames_to_column(var = "thisPoint") %>%
+    gather(points, point_distance, V1:ncol(.)) %>%
+    arrange(as.numeric(thisPoint)) %>%
+    group_by(thisPoint) %>%
+    summarize(pointDistance = mean(point_distance)) %>%
+    arrange(as.numeric(thisPoint)) %>% 
+    dplyr::select(-thisPoint)
+  
+  return(output)  
+}
+```
+
+```{r load data}
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+agg <- read.csv('D:/Spring20/Practicum/data/MUSA Data - Stop Ridership Aggregated.csv')
+disagg <- read.csv('D:/Spring20/Practicum/data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
+austin <- st_read('https://data.austintexas.gov/api/geospatial/3pzb-6mbr?method=export&format=GeoJSON')
+Routes1801 <- st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")
+serviceArea <- st_read('Data/Shapefiles_-_JUNE_2018/Service_Area.shp')
+NewRoutes <- st_read('Data/Jia/NewRoutes.shp')
+HighFreq <- st_read('Data/Jia/HighFrequency.shp')
+Replaced <- st_read('Data/Jia/EliminatedReplacement.shp')
+Eliminated <- st_read('Data/Jia/Eliminated.shp')
+Routes2001 <- st_read('Data/Jia/Routes2001.shp')
+stops <- st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Stops.shp")%>%
+  st_transform(2278)
+```
+
+```{r processing}
+Routes1801 <- Routes1801%>%
+  mutate(capremap = "Before Cap Remap")
+
+Routes2001 <- Routes2001%>%
+  mutate(capremap = "After Cap Remap")
+```
+
+```{r overview map}
+ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = Eliminated, aes(color = "Eliminated Routes"), lwd = 0.5, show.legend = "line")+
+  geom_sf(data = Replaced, aes(color = "Eliminated but Replaced Routes"),lwd = 0.5, show.legend = "line")+
+  geom_sf(data = HighFreq, aes(color = "High Frequency Routes"), lwd = 0.8, show.legend = "line")+
+  geom_sf(data = NewRoutes, aes(color = "New Routes"),lwd = 0.8, show.legend = "line")+
+  scale_colour_manual(values = c("Eliminated Routes" = "darkorange", "Eliminated but Replaced Routes" = "gold", "High Frequency Routes" = "dodgerblue", "New Routes" = "deeppink"),
+                      guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid", "solid", "solid"), shape = c(NA, NA, NA, NA))))+
+  labs(title = "Cap Remap Route Changes",
+       subtitle = "City of Austin, June 2018")
+```
+
+## Changes on Route Types
+
+```{r major change route types}
+local <- ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Local"), color = "lightblue2",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Local"), color = "lightblue2",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "lightblue2", "After Cap Remap" = "lightblue2"),
+                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Local Routes Before and After Cap Remap")
+
+#HighFrequency
+highFrequency <- ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "High Frequency"), color = "dodgerblue",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "High Frequency"), color = "dodgerblue",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "dodgerblue", "After Cap Remap" = "dodgerblue"),
+                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "High Frequency Routes Before and After Cap Remap")
+
+#major changes grid arrange
+grid.arrange(local, highFrequency, ncol = 1)
+
+```
+
+```{r minor change route types, fig.width = 25, fig.height= 10}
+#Crosstown
+crosstown <-ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Crosstown"), color = "greenyellow",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Crosstown"), color = "greenyellow",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "greenyellow", "After Cap Remap" = "greenyellow"),
+                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Crosstown Routes Before and After Cap Remap")
+
+#Feeder
+feeder <-ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Feeder"), color = "lightcoral",lwd = 0.8, show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Feeder"), color = "lightcoral",lwd = 0.8, show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "lightcoral", "After Cap Remap" = "lightcoral"))+
+                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Feeder Routes Before and After Cap Remap")
+
+
+#Flyer
+flyer <- ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Flyer"), color = "magenta2",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Flyer"), color = "magenta2",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "magenta2", "After Cap Remap" = "magenta2"),
+                     # guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Flyer Routes Before and After Cap Remap")
+
+#Express
+express <-ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Express"), color = "red",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Express"), color = "red",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "red", "After Cap Remap" = "red"),
+                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Express Routes Before and After Cap Remap")
+
+#Special
+special <- ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Special"), color = "seashell2",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Special"), color = "seashell2",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "seashell2", "After Cap Remap" = "seashell2"),
+   #                   guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Speical Routes Before and After Cap Remap")
+
+#minor changes grid arrange
+
+grid.arrange(crosstown, feeder, flyer, express, ncol =2)
+```
+
+``` {r no change route types, fig.width = 25, fig.height= 10}
+#UT Shuttle
+UTShuttle <- ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "UT Shuttle"), color = "orange",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "UT Shuttle"), color = "orange",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "orange", "After Cap Remap" = "orange"),
+                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "UT Shuttle Before and After Cap Remap")
+
+#Nigh Owl
+nightowl <- ggplot()+
+  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  geom_sf(data = subset(Routes1801, ROUTETYPE == "Night Owl"), color = "slategray2",lwd = 0.8,show.legend = FALSE)+
+  geom_sf(data = subset(Routes2001, ROUTETYPE == "Night Owl"), color = "slategray2",lwd = 0.8,show.legend = FALSE)+
+  #scale_colour_manual(values = c("Before Cap Remap" = "slategray2", "After Cap Remap" = "slategray2"),
+   #                   guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
+  facet_grid(~capremap)+
+  labs(title = "Nigh Owl Routes Before and After Cap Remap")
+
+#no change grid arrange
+grid.arrange(UTShuttle, special, nightowl, ncol = 2)
+```
+
+## Exploratory Analysis
+
+### How did ridership change before and after CapRemap (06/03, 2018)?
+```{r}
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+data = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
+
+table(data$YEAR_ID)
+#Subset data in 2018 for further analysis
+data.y18 <- data %>%
+  subset(data$YEAR_ID == "2018")
+```
+
+```{r}
+#Change June to 0 and make months before CapRemap become negative, after CapRemap become positive
+data.y18$MONTH_ID <- as.numeric(data.y18$MONTH_ID)
+
+data.y18$Month <- data.y18$MONTH_ID - 6
+#Make month column become factor
+#data.y18$Month <- factor( data.y18$Month, levels = c( "-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6") )
+
+data.y18$Before <- ifelse(data.y18$Month < 0, 1, 0)
+
+data.y19 <- data %>%
+  subset(data$YEAR_ID == 2019)
+data.y19$Month <- data.y19$MONTH_ID - 6
+
+data.y19$Before <- ifelse(data.y19$Month < -5, 1, 0)
+
+data.y <- rbind(data.y18, data.y19)
+data.y$YEAR_ID <- as.factor(data.y$YEAR_ID)
+
+table(data$YEAR_ID, data$MONTH_ID)
+
+```
+
+```{r}
+#Plot Average_on first
+plot.city<-
+  as.data.frame(data.y) %>%
+  group_by(Month, YEAR_ID) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time, linetype = YEAR_ID)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      ylim(70000,100000) +
+      labs(title="Ridership by stops on an average weekday among all the stops in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#E7B800", "#0072B2"), name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))+
+     # scale_color_brewer(palette = "YlGnBu")
+      scale_linetype_manual(values=c("solid", "dotted"))
+
+plot.city
+```
+
+### Ridership Change in Different Neighborhoods in Austin in 2018
+```{r}
+#Transform ridership data into geo data
+data.y18.sf <-
+  data.y18 %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+data.y.sf <-
+  data.y %>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+
+#Load neighborhood geojson
+nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
+  st_set_crs(4326)%>%
+  st_transform(2278)
+
+```
+
+```{r}
+#Load the transformed dataset from long format-stop level to long format-neighborhood level
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+Rider_nhood4 <- read.csv("Data/GRACE/Rider_nhood4.csv")
+Rider_nhood4$Before <- ifelse(Rider_nhood4$Month == -5 |Rider_nhood4$Month == -4 |Rider_nhood4$Month == -3|Rider_nhood4$Month == -2|Rider_nhood4$Month == -1, "1", "0")
+Rider_nhood <- read.csv("Data/GRACE/Rider_nhood.csv")
+Rider <- merge(Rider_nhood4, nhood, by = "label")
+```
+
+```{r, eval=F, echo=T}
+ggplot() +
+    geom_sf(data = Rider, aes(fill = q5(Dif))) +
+    scale_fill_brewer(palette = "RdYlBu",
+                      aesthetics = "fill",
+                      labels=qBr(Rider,"Dif"),
+                      name="Quintile\nBreaks") +
+    labs(title="Ridership Change in Neighborhoods") +
+    mapTheme()
+```
+
+```{r,fig.height = 30, fig.width = 15}
+plot.nhood <- 
+  as.data.frame(Rider_nhood4) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership by Neighborhoods in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in the Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+
+plot.nhood
+```
+
+```{r}
+UT <- Rider_nhood4 %>%
+  subset(Rider_nhood4$label == "UT")
+
+plot.UT <- 
+  as.data.frame(UT) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership in UT Neighborhood",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in UT Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+```
+
+```{r}
+nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
+  st_set_crs(4326)%>%
+  st_transform(2278)
+
+UT2 <- nhood%>%
+  subset(nhood$label == "UT")
+Map.UT<-
+  ggplot() +
+  geom_sf(data = nhood, fill = "grey30") +
+  geom_sf(data = UT2, fill = "#56B4E9") +
+  labs(title = "UT Neighborhoods") +
+  mapTheme() + theme(legend.position = "bottom")
+```
+
+```{r}
+print(plot.UT)
+#print(Map.UT, vp=viewport(.85,.815,.35,.5))
+print(Map.UT, vp=viewport(.85,.72,.4,.42))
+```
+
+```{r}
+Govalle <- Rider_nhood4 %>%
+  subset(Rider_nhood4$label == "Govalle")
+
+plot.Govalle <- 
+  as.data.frame(Govalle) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership in Govalle Neighborhood",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in Govalle Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+```
+
+```{r}
+Govalle2 <- nhood%>%
+  subset(nhood$label == "Govalle")
+Map.Govalle<-
+  ggplot() +
+  geom_sf(data = nhood, fill = "grey30") +
+  geom_sf(data = Govalle2, fill = "#56B4E9") +
+#  labs(title = "Govalle Neighborhoods") +
+  mapTheme() + theme(legend.position = "bottom")
+```
+
+```{r}
+print(plot.Govalle)
+print(Map.Govalle, vp=viewport(.85,.72,.4,.42))
+```
+
+```{r}
+Zilker <- Rider_nhood4 %>%
+  subset(Rider_nhood4$label == "Zilker")
+
+plot.Zilker <- 
+  as.data.frame(Zilker) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership in Zilker Neighborhood",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in Zilker Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+```
+
+```{r}
+Zilker2 <- nhood%>%
+  subset(nhood$label == "Zilker")
+Map.Zilker<-
+  ggplot() +
+  geom_sf(data = nhood, fill = "grey30") +
+  geom_sf(data = Zilker2, fill = "#56B4E9") +
+#  labs(title = "Zilker Neighborhoods") +
+  mapTheme() + theme(legend.position = "bottom")
+```
+
+```{r}
+print(plot.Zilker)
+print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
+```
+
+### Identify the Hotlines
+
+```{r}
+setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
+disagg = read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
+nhood = st_read('https://data.austintexas.gov/resource/nz5f-3t2e.geojson')
+
+disagn1 = read.delim('Data/May 2018 Detail 21 to 25.txt', header = FALSE, sep = "\t", dec = ".")
+colnames(disagn1) <- colnames(disagg)
+disagn2 = read.delim('Data/June 2018 Detail 11 to 15.txt', header = FALSE, sep = "\t", dec = ".")
+colnames(disagn2) <- colnames(disagg)
+```
+First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route.
+```{r}
+disagn1_km = disagn1 %>%
+  group_by(ROUTE) %>%
+  summarise(max_load = max(PSGR_LOAD), mean_load = mean(PSGR_LOAD), 
+            psgmiles = mean(PSGR_MILES), psghours = mean(PSGR_HOURS), 
+            rlength = sum(ACT_MILES_SINCE_LAST_STOP), rtime = sum(ACT_MINS_SINCE_LAST_STOP))
+```
+
+```{r}
+exclude_x <- names(disagn1_km) %in% c("ROUTE")
+disagn1_km1 <- disagn1_km[!exclude_x]
+```
+
+Then, we apply Kmeans analysis. The number of clusters are determined by both the elbow chart and the 26 criteria provided by the NbClus package. For more information, see appendix.
+```{r}
+fit.km <- kmeans(disagn1_km1, 3, nstart=25)
+
+summary_before = cbind(round(aggregate(disagn1_km1, by=list(cluster=fit.km$cluster), mean),1),fit.km$size)
+disagn1_km$cluster = fit.km$cluster
+```
+
+We do the same analysis to the disaggregated dataset after the CapRemap.
+```{r}
+disagn2_km = disagn2 %>%
+  group_by(ROUTE) %>%
+  summarise(max_load = max(PSGR_LOAD), mean_load = mean(PSGR_LOAD), 
+            psgmiles = mean(PSGR_MILES), psghours = mean(PSGR_HOURS), 
+            rlength = sum(ACT_MILES_SINCE_LAST_STOP), rtime = sum(ACT_MINS_SINCE_LAST_STOP))
+```
+
+```{r}
+exclude_x <- names(disagn2_km) %in% c("ROUTE")
+disagn2_km1 <- disagn2_km[!exclude_x]
+```
+
+```{r}
+fit.km <- kmeans(disagn2_km1, 3, nstart=25)
+
+summary_after = cbind(round(aggregate(disagn2_km1, by=list(cluster=fit.km$cluster), mean),1),fit.km$size)
+disagn2_km$cluster = fit.km$cluster
+```
+
+These clustering labels are joined to the original dataset. For more about the clustering result, please see appendix.
+```{r}
+hotlines_pre = unique(disagn1_km[(disagn1_km$cluster == 2),]$ROUTE)
+hotlines_po = unique(disagn2_km[(disagn2_km$cluster == 2),]$ROUTE)
+
+print("Hotlines Before:")
+print(hotlines_pre)
+print("Hotlines After:")
+print(hotlines_po)
+```
+
+```{r}
+disagn1j = left_join(disagn1, disagn1_km)
+disagn2j = left_join(disagn2, disagn2_km)
+```
+Find the number of kmeans clusters for both before and after the CapRemap:
+
+Both the Elbow chart and the 26 indicies provided by the NbClust package are used to check how many clusters should be used in the Kmeans analysis.
+
+Before CapRemap:
+```{r}
+wss <- (nrow(disagn1_km1)-1)*sum(apply(disagn1_km1,2,var))
+for (i in 2:20) wss[i] <- sum(kmeans(disagn1_km1,centers=i)$withinss)
+plot(1:20, wss, type="b", xlab="Number of Clusters", ylab="Within groups sum of squares")
+```
+
+```{r}
+set.seed(1234)
+nc <- NbClust(disagn1_km1, min.nc=2, max.nc=15, method="kmeans", index="all")
+table(nc$Best.n[1,])
+
+barplot(table(nc$Best.n[1,]),
+        xlab="Numer of Clusters", ylab="Number of Criteria",
+        main="Number of Clusters \nChosen by 26 Criteria")
+```
+
+After CapRemap:
+```{r}
+wss <- (nrow(disagn2_km1)-1)*sum(apply(disagn2_km1,2,var))
+for (i in 2:20) wss[i] <- sum(kmeans(disagn2_km1, centers=i)$withinss)
+plot(1:20, wss, type="b", xlab="Number of Clusters", ylab="Within groups sum of squares")
+```
+
+```{r}
+set.seed(1234)
+nc <- NbClust(disagn2_km1, min.nc=2, max.nc=15, method="kmeans", index="all")
+table(nc$Best.n[1,])
+
+barplot(table(nc$Best.n[1,]),
+        xlab="Numer of Clusters", ylab="Number of Criteria",
+        main="Number of Clusters \nChosen by 26 Criteria")
+```
+
+In either case, it is evident that the most optimal number for the Kmeans cluster analysis is 3. We then conduct Kmeans analysis with 3 clusters as mentioned above in the exploratory analysis section.
+
+Here is the Kmeans analysis result we got for before and after the CapRemap. The numbers are average of each feature used in the Kmeans analysis. We can clearly see that cluster 2 for both before and after the remapping have the highest average ridership as well as run times. They also have the smallest size. We can conclude that these are the most popular routes and we then define these routes as 'hotlines'.
+```{r}
+rbind(summary_before,summary_after) %>%
+kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluster", col.names =c("Cluster", "Max Psg Load", "Mean Psg Load", "Psg Miles", "Psg Hours", "Total Run Length", "Total Run Time", "Cluster Size")) %>%
+  kable_styling("striped", full_width = F) %>%
+  pack_rows("Before the CapRemap (May 21 - 25, 2018)", 1, 3) %>%
+  row_spec(2, bold = T, color = "black", background = "#e7b800")%>%
+  pack_rows("After the CapRemap (June 11 - 15, 2018)", 4, 6)%>%
+  row_spec(5, bold = T, color = "black", background = "#e7b800")
+```
+
+```{r}
+capmetro <- 
+  st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Routes.shp")%>%
+  st_transform(2278) 
+
+capmetro0 <-st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JANUARY_2018/Routes.shp")%>%
+  st_transform(2278)
+```
+
+```{r}
+grid.arrange(
+
+  ggplot()+
+  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
+  geom_sf(data = capmetro0 %>%
+  filter(ROUTE_ID %in% c(7,300,801,803)),color = '#e7b800')+
+    labs(title='Hotlines Before:\nLine 7, 300, 801, 803')+ mapTheme(),
+
+ggplot()+
+  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
+  geom_sf(data = capmetro %>%
+            filter(ROUTE_ID %in% c(7,10,20,300,801,803)),color = '#e7b800') +
+  geom_sf(data = capmetro %>%
+            filter(ROUTE_ID == 20 | ROUTE_ID == 10), color='red')+
+    labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803')+mapTheme() ,ncol =2)
+```
+
+```{r}
+routeplot1 <- function(n,p,p1,d) {
+  # line n before map
+  t1 = ggplot() +
+  geom_sf(data = nhood, color = 'grey30',fill = 'grey20') +
+  geom_sf(data = disagn1j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN== p) %>%
+            st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+            st_transform(2278) %>%
+            group_by(STOP_ID) %>%
+            summarise(mean_stop_load = mean(PSGR_LOAD),size = 0.8), 
+          aes(color = mean_stop_load))+
+  scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
+                       breaks = c(0, 5, 10, 15, 20, 25)) +
+  labs(title=paste("Line",n,"Direction 1, Before CapRemap"),
+  subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
+  
+  #line n before passenger load chart
+  t11 = ggplot(data = disagn1j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN == p) %>%
+         group_by(STOP_SEQ_ID) %>%
+         summarise(mean_on = mean(PSGR_ON), mean_off = mean(PSGR_OFF), 
+                   mean_load = mean(PSGR_LOAD))) +
+    geom_path(aes(x = STOP_SEQ_ID, y = mean_load, 
+                size = mean_load, color = mean_load), lineend="round",linejoin="mitre")+
+    scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
+                       breaks = c(0, 5, 10, 15, 20, 25))+
+    scale_size_continuous()+
+    ylim(0, 23) +
+    labs(subtitle=paste("Average Passenger Load"))+plotTheme()+ 
+    theme(legend.position="none")
+  
+  #line n before passenger boarding and alighting
+  t12 = ggplot(data = disagn1j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN == p) %>%
+         group_by(STOP_SEQ_ID) %>%
+         summarise(mean_on = mean(PSGR_ON), mean_off = mean(PSGR_OFF), 
+                   mean_load = mean(PSGR_LOAD))) +
+    geom_ribbon(aes(x = STOP_SEQ_ID,ymin=0,ymax=mean_on), fill="#9999CC", alpha="0.25") +
+    geom_ribbon(aes(x = STOP_SEQ_ID,ymin=0,ymax=mean_off), fill="#9999CC", alpha="0.25") +
+    geom_line(aes(x = STOP_SEQ_ID, y = mean_on, color = "Average Boarding"), size=1) + 
+    geom_line(aes(x = STOP_SEQ_ID, y = mean_off, color = "Average Alighting"), size=1)+ 
+    ylim(0, 10) +
+    labs(subtitle=paste("Average Boarding/Alighting"))+plotTheme()+ 
+    theme(legend.position="bottom", legend.box = "horizontal")
+  
+  # line n after map
+  t2 = ggplot() +
+  geom_sf(data = nhood, color = 'grey30',fill = 'grey20') +
+  geom_sf(data = disagn2j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN== p1) %>%
+            st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+            st_transform(2278) %>%
+            group_by(STOP_ID) %>%
+            summarise(mean_stop_load = mean(PSGR_LOAD),size = 0.8), 
+          aes(color = mean_stop_load))+
+  scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
+                       breaks = c(0, 5, 10, 15, 20, 25)) +
+  labs(title=paste("Line",n,"Direction 1, After CapRemap"),
+  subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
+  
+  #line n after passenger load chart
+  t21 = ggplot(data = disagn2j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN == p1) %>%
+         group_by(STOP_SEQ_ID) %>%
+         summarise(mean_on = mean(PSGR_ON), mean_off = mean(PSGR_OFF), 
+                   mean_load = mean(PSGR_LOAD))) +
+    geom_path(aes(x = STOP_SEQ_ID, y = mean_load, 
+                size = mean_load, color = mean_load), lineend="round",linejoin="mitre")+
+    scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
+                       breaks = c(0, 5, 10, 15, 20, 25))+
+    scale_size_continuous()+
+    ylim(0, 23) +
+    labs(subtitle=paste("Average Passenger Load"))+plotTheme()+ 
+    theme(legend.position="none")
+  
+  #line n after passenger boarding and alighting
+  t22 = ggplot(data = disagn2j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN == p1) %>%
+         group_by(STOP_SEQ_ID) %>%
+         summarise(mean_on = mean(PSGR_ON), mean_off = mean(PSGR_OFF), 
+                   mean_load = mean(PSGR_LOAD))) +
+    geom_ribbon(aes(x = STOP_SEQ_ID,ymin=0,ymax=mean_on), fill="#9999CC", alpha="0.25") +
+    geom_ribbon(aes(x = STOP_SEQ_ID,ymin=0,ymax=mean_off), fill="#9999CC", alpha="0.25") +
+    geom_line(aes(x = STOP_SEQ_ID, y = mean_on, color = "Average Boarding"), size=1) + 
+    geom_line(aes(x = STOP_SEQ_ID, y = mean_off, color = "Average Alighting"), size=1)+ 
+    ylim(0, 10) +
+    labs(subtitle=paste("Average Boarding/Alighting"))+plotTheme()+ 
+    theme(legend.position="bottom", legend.box = "horizontal")
+  
+  grid.arrange(arrangeGrob(t1, t11, t12, ncol = 1, nrow = 3),
+               arrangeGrob(t2, t21, t22, ncol = 1, nrow = 3),ncol=2)
+}
+```
+
+```{r fig.height=9, fig.width=8}
+routeplot1(7,39614, 38294,0)
+routeplot1(10,39326, 38023,0)
+routeplot1(20,39372, 39309,0)
+routeplot1(300,39428, 38119,0)
+routeplot1(801,39622, 38305,0)
+routeplot1(803,39626, 38309,0)
+```
+
+## Feature Engineering
+
+# use datasets after cap remap
+
+```{r}
+route_stop = disagn2j %>% group_by(ROUTE, TRIP, STOP_ID) %>% slice(1)
+```
+
+```{r}
+# reorganize the direction feature
+capmetro_dir_mod = capmetro %>% 
+                   select(ROUTE_ID, DIRECTION, ROUTETYPE) %>% 
+                   st_drop_geometry() %>%
+                   mutate(DTYPES=case_when(
+                     DIRECTION=="Southbound"~"SouthNorth",
+                     DIRECTION=="Northbound"~"SouthNorth",
+                     DIRECTION=="Westbound"~"WestEast",
+                     DIRECTION=="Eastbound"~"WestEast",
+                     DIRECTION=="Inbound"~"InOut",
+                     DIRECTION=="Outbound"~"InOut",
+                     DIRECTION=="Counterclockwise"~"Counterclockwise",
+                     DIRECTION=="Clockwise"~"Clockwise",
+  ))
+```
+
+```{r}
+dis_cap1 = merge(x = route_stop %>% select(ROUTE, STOP_ID), 
+                 y = capmetro_dir_mod %>%
+                   group_by(ROUTETYPE, DTYPES, ROUTE_ID) %>%
+                   slice(1), 
+                 by.x = 'ROUTE', by.y = 'ROUTE_ID')
+```
+
+```{r}
+# number of shifts (total frequency); route orientation frequency at each stop
+stop_dir_freq = merge(x = dis_cap1 %>% group_by(STOP_ID) %>% summarise(nshifts=n()), 
+      y = dis_cap1 %>% group_by(STOP_ID, DTYPES) %>% summarise(n=n()) %>% 
+        mutate(prop_route=n/sum(n)) %>% subset(select=c("STOP_ID","DTYPES","prop_route")) %>% 
+        spread(DTYPES, prop_route), by = "STOP_ID")
+stop_dir_freq[is.na(stop_dir_freq)] <- 0
+```
+
+```{r}
+# route type frequency at each stop
+stop_type_freq = dis_cap1 %>% group_by(STOP_ID, ROUTETYPE) %>% summarise(n=n()) %>% 
+        mutate(prop_type=n/sum(n)) %>% subset(select=c("STOP_ID","ROUTETYPE","prop_type")) %>% 
+        spread(ROUTETYPE, prop_type)
+stop_type_freq[is.na(stop_type_freq)] <- 0
+stop_type_freq[11] <- NULL # remove NA column
+```
+
+```{r}
+# hotlines frequency & hub dummy
+hotline_dum = as.numeric(dis_cap1$ROUTE %in% hotlines_po$hotlines_po)
+stop_hot = cbind(dis_cap1, hotline_dum)
+stop_hot_freq = stop_hot %>% group_by(STOP_ID, hotline_dum) %>% summarise(n=n()) %>% 
+        mutate(prop_hot=n/sum(n)) %>% subset(select=c("STOP_ID","hotline_dum","prop_hot")) %>% 
+        spread(hotline_dum, prop_hot)
+stop_hot_freq[is.na(stop_hot_freq)] <- 0
+colnames(stop_hot_freq) <- c("STOP_ID", "hotline_0", "hotline_1")
+```
+
+```{r}
+hub_stop <- 
+  st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Hub_Stops.shp") %>% st_transform(2278)
+```
+
+```{r}
+hub_dum <- as.numeric(unique(dis_cap1$STOP_ID) %in% hub_stop$STOP_ID)
+hub_dum = data.frame(STOP_ID = stop_type_freq$STOP_ID, hubs = hub_dum)
+stop_type_freq = merge(stop_type_freq, hub_dum, by = "STOP_ID")
+```
+
+# see austin_bus.R for amenity and population calc
+
+# building area
+```{r}
+build_dens <- read.csv("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Building_Area2.csv")
+```
+
+# ridership calc (import data see Data_Transform_New_agg.R)
+```{r}
+data.2019$STOP_ID = as.numeric(data.2019$STOP_ID) 
+data.2019.mean = data.2019 %>%
+  group_by(STOP_ID) %>%
+  summarise(mean_on = mean(as.numeric(AVERAGE_LOAD)))
+```
+
+
+## add land use data as fixed effect
+```{r}
+landuse <- 
+  st_read("https://data.austintexas.gov/api/geospatial/fj9m-h5qy?method=export&format=GeoJSON") %>% 
+  st_transform(2278)
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = landuse) +
+  mapTheme()
+```
+
+```{r}
+# re-categorize the general land use column
+landuse_x = landuse %>% 
+                   select(shape_area, general_land_use, land_use, geometry) %>% 
+                   mutate(land_use_x=case_when(
+                     general_land_use %in% c(100, 113, 200) ~ "residential",
+                     general_land_use == 300 ~ "commercial",
+                     general_land_use == 330 ~ "mixed_use",
+                     general_land_use == 400 ~ "office",
+                     general_land_use == 500 ~ "industrial",
+                     general_land_use == 600 ~ "civic",
+                     general_land_use %in% c(700, 940) ~ "nature",
+                     general_land_use %in% c(800, 860) ~ "transportation",
+                     general_land_use %in% c(870, 900, 999) ~ "others"
+  ))
+```
+
+```{r}
+all_x2 = all_x1 %>% st_join(landuse_x)
+```
+
+```{r}
+#find the composition of the landuse surrounding each stop
+stop_buff_landuse = all_x2 %>% 
+  group_by(STOP_ID, land_use_x) %>% 
+  summarize(n=sum(as.numeric(shape_area))) %>%
+  mutate(prop_landuse=n/sum(n)) %>%
+  select(STOP_ID, prop_landuse, land_use_x) %>%
+  spread(land_use_x, prop_landuse)
+#drop the na column
+stop_buff_landuse[12] <- NULL
+#fill na with 0
+stop_buff_landuse[is.na(stop_buff_landuse)] <- 0
+```
+
+## neighborhood as fixed effect
+```{r}
+stop_nhood = stops %>% 
+  select(STOP_ID, geometry) %>%
+  st_as_sf() %>%
+  st_transform(2278) %>%
+  st_join(nhood %>% select(label))
+#fill in the na values (outside all the neighborhood boundaries) with "Not Defined"
+stop_nhood$label <- as.character(stop_nhood$label)
+stop_nhood[is.na(stop_nhood)] <- "Not Defined"
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = nhood) +
+  geom_sf(data = stops) +
+  mapTheme()
+```
+
+## school district as fixed effect
+```{r}
+stop_school = stops %>% 
+  select(STOP_ID, geometry) %>%
+  st_as_sf() %>%
+  st_transform(2278) %>%
+  st_join(TrusteeDist %>% select(TRUSTEE))
+
+#fill in the na values (outside all the neighborhood boundaries) with "Not Defined"
+stop_school$TRUSTEE <- as.character(stop_school$TRUSTEE)
+stop_school[is.na(stop_school)] <- "Not Defined"
+stop_school$TRUSTEE <- as.factor(stop_school$TRUSTEE)
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = TrusteeDist) +
+  geom_sf(data = stops) +
+  mapTheme()
+```
+
+## k nearest neighbor distance as features
+```{r}
+## function for k nearest neighbor
+nn_function <- function(measureFrom,measureTo,k) {
+  
+  nn <-   
+    FNN::get.knnx(measureTo, measureFrom, k)$nn.dist
+  
+  output <-
+    as.data.frame(nn) %>%
+    rownames_to_column(var = "thisPoint") %>%
+    gather(points, point_distance, V1:ncol(.)) %>%
+    arrange(as.numeric(thisPoint)) %>%
+    group_by(thisPoint) %>%
+    summarize(pointDistance = mean(point_distance)) %>%
+    arrange(as.numeric(thisPoint)) %>% 
+    dplyr::select(-thisPoint)
+  
+  return(output)  
+}
+```
+
+```{r}
+#make the stop points into lat long format
+stopsXY <- stops %>% 
+  select(STOP_ID, geometry) %>%
+  st_as_sf() %>% 
+  st_transform(2278) %>%
+  mutate(lat = st_coordinates(.)[,2],
+         lng = st_coordinates(.)[,1]) %>%
+  as.data.frame() %>% 
+  select(lat,lng) %>%
+  as.matrix()
+```
+
+```{r}
+#function that change the geometry into lat long
+makeXY <- function(original_data, geometry_name) {
+  output = original_data %>%
+    select(geometry) %>%
+    st_as_sf() %>% 
+    st_transform(2278) %>%
+    mutate(lat = st_coordinates(.)[,2],
+           lng = st_coordinates(.)[,1]) %>%
+    as.data.frame() %>% 
+    select(lat,lng) %>%
+    as.matrix()
+  return(output)
+}
+```
+
+```{r}
+# function that create the knn column ready for join
+amenity_dist <- function(original_data, geometry_name, k, new_name) {
+  makeXY <- makeXY(original_data, geometry_name)
+  
+  pointDistance <- nn_function(stopsXY, makeXY, k) 
+  
+  names(pointDistance) <- new_name
+  
+  return(pointDistance)
+}
+```
+
+```{r}
+#add point of interest locations
+#UT Austin
+UTAustin <- data_frame(name = "UT Austin", lat = 30.285350, lon = -97.734458) %>%
+  st_as_sf(coords = c("lon","lat"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+UTAustin_bound <- st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/UTAustin/POLYGON.shp") %>% 
+  st_transform(2278)
+#CBD
+CBD_bound <- st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/CBD/POLYGON.shp") %>% 
+  st_transform(2278)
+#air port
+airport <- data_frame(name = "Airport", lat = 30.202741, lon = -97.666771) %>%
+  st_as_sf(coords = c("lon","lat"), crs = 4326, agr = "constant") %>%
+  st_transform(2278)
+```
+
+```{r}
+ggplot() + 
+  #geom_sf(data = nhood) +
+  #geom_sf(data = stops, aes(color = as.numeric(st_distance(stops, UTAustin_bound, by_element = TRUE))),size=0.5) +
+  geom_sf(data = UTAustin_bound) +
+  #geom_sf(data = stops, aes(color = as.numeric(st_distance(stops, CBD_bound))),size=0.5) +
+  #geom_sf(data = CBD_bound) +
+  mapTheme()
+```
+
+```{r}
+#find the distance to UT Austin
+utaustinDist = st_distance(stops, UTAustin_bound) %>% 
+  as.data.frame() %>%
+  rowwise() %>% 
+  mutate(utaustin_dist = min(V1, V2, V3, V4, V5, V6, V7)) %>%
+  select(utaustin_dist)
+```
+
+```{r}
+#find the distance to CBD
+CBDDist = st_distance(stops, CBD_bound) %>% 
+  as.numeric() %>%
+  as.data.frame()
+colnames(CBDDist) = "CBD_dist"
+```
+
+
+```{r}
+# calculate the distance to 3 nearest amenities 
+commercialDist = amenity_dist(commercial, geometry, 3, "commercialDist")
+retailDist = amenity_dist(retail, geometry, 3, "retailDist")
+supermktDist = amenity_dist(supermkt, geometry, 3, "supermktDist")
+officeDist = amenity_dist(office, geometry, 3, "officeDist")
+residentialDist = amenity_dist(residential, geometry, 3, "residentialDist")
+barDist = amenity_dist(bar, geometry, 3, "barDist")
+schoolDist = amenity_dist(school, geometry, 3, "schoolDist")
+universityDist = amenity_dist(university, geometry, 3, "universityDist")
+parkingDist = amenity_dist(parking, geometry, 3, "parkingDist")
+stadiumDist = amenity_dist(stadium, geometry, 3, "stadiumDist")
+trainstationDist = amenity_dist(trainstation, geometry, 3, "trainstationDist")
+universityDist = amenity_dist(university, geometry, 3, "universityDist")
+airportDist = amenity_dist(airport, geometry, 1, "airportDist")
+```
+
+## spatial lag
+
+```{r}
+spatial_lag = get.knn(stopsXY, 5)$nn.index %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "thisPoint") %>%
+  mutate(ridership1 = all_x1$mean_on[.$V1], ridership2 = all_x1$mean_on[.$V2], 
+         ridership3 = all_x1$mean_on[.$V3], ridership4 = all_x1$mean_on[.$V4],
+         ridership5 = all_x1$mean_on[.$V5]) %>%
+  mutate(spatial_lag2 = rowMeans(.[,7:8], na.rm = TRUE),
+         spatial_lag3 = rowMeans(.[,7:9], na.rm = TRUE),
+         spatial_lag5 = rowMeans(.[,7:11], na.rm = TRUE))
+```
+
+
+```{r}
+#census rename
+Population_buff$population <- round(Population_buff$estimate)
+Race_buff$race <- round(Race_buff$estimate)
+NoVeh_buff$NoVeh <- round(NoVeh_buff$estimate)
+OneVeh_buff$OneVeh <- round(OneVeh_buff$estimate)
+TwoVeh_buff$TwoVeh <- round(TwoVeh_buff$estimate)
+ThreeVeh_buff$ThreeVeh <- round(ThreeVeh_buff$estimate)
+FourVeh_buff$FourVeh <- round(FourVeh_buff$estimate)
+FiveVeh_buff$FiveVeh <- round(FiveVeh_buff$estimate)
+Poverty_buff$Poverty <- round(Poverty_buff$estimate)
+```
+
+# join all data
+
+```{r}
+#all_x1 = merge(x = stop_dir_freq, y = stop_hot_freq, by = "STOP_ID", all.x = T)
+#all_x1 = merge(x = all_x1, y = stop_type_freq, by = "STOP_ID", all.x = T)
+#popbuf = Population_buff[c("STOP_ID","estimate")] %>% st_set_geometry(NULL)
+all_x1 = CommercialInit %>%  #amenities and route related
+  left_join(st_drop_geometry(RetailInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(OfficeInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(ResidentialInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(SupermktInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(BarInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(UniInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(ParkingInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(SchoolInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(StationInit), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(StadiumInit), by = "STOP_ID") %>%
+  left_join(stop_dir_freq, by = "STOP_ID") %>%
+  left_join(stop_type_freq, by = "STOP_ID") %>%
+  left_join(stop_hot_freq, by = "STOP_ID") %>%
+  left_join(build_dens, by = "STOP_ID") %>%
+  left_join(st_drop_geometry(stop_buff_landuse), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(Race_buff) %>% select(STOP_ID, race) %>% mutate(STOP_ID = as.numeric(STOP_ID), race = as.numeric(race)), by = "STOP_ID") %>% #census data
+  left_join(st_drop_geometry(Population_buff) %>% select(STOP_ID, population) %>% mutate(STOP_ID = as.numeric(STOP_ID), population = as.numeric(population)), by = "STOP_ID") %>% 
+  left_join(st_drop_geometry(NoVeh_buff) %>% select(STOP_ID, NoVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), NoVeh = as.numeric(NoVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(OneVeh_buff) %>% select(STOP_ID, OneVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), OneVeh = as.numeric(OneVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(TwoVeh_buff) %>% select(STOP_ID, TwoVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), TwoVeh = as.numeric(TwoVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(ThreeVeh_buff) %>% select(STOP_ID, ThreeVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), ThreeVeh = as.numeric(ThreeVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(FourVeh_buff) %>% select(STOP_ID, FourVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), FourVeh = as.numeric(FourVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(FiveVeh_buff) %>% select(STOP_ID, FiveVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), FiveVeh = as.numeric(FiveVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(Poverty_buff) %>% select(STOP_ID, Poverty) %>% mutate(STOP_ID = as.numeric(STOP_ID), Poverty = as.numeric(Poverty)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(stop_nhood), by = "STOP_ID") %>% # fixed effects
+  left_join(st_drop_geometry(stop_school), by = "STOP_ID") %>%
+  select(-c(hotline_0, X)) %>%
+  left_join(data.2019.mean, by = "STOP_ID")
+
+#spatial lag, knn dist
+all_x3 = bind_cols(list(all_x1, utaustinDist, CBDDist, commercialDist, retailDist, supermktDist, officeDist, residentialDist, schoolDist, universityDist, parkingDist, stadiumDist, trainstationDist, universityDist, airportDist, spatial_lag %>% select(spatial_lag2, spatial_lag3, spatial_lag5)))
+
+
+#time lag
+```
+
+```{r}
+#put ridership to the end
+all_x3 = all_x3 %>% select(-mean_on, mean_on)
+write.csv(st_drop_geometry(all_x3),"all_2.csv", row.names = FALSE)
+```
+
+
+```{r}
+all1cor <- 
+  all_x3 %>% 
+  select(-c(STOP_ID, label, TRUSTEE)) %>%
+  st_set_geometry(NULL)
+
+M <- cor(na.omit(all1cor))
+corrplot(M, number.cex = .7, tl.srt = 90, method = "color", type = "upper", tl.col = "black", na.label = ".", na.rm = T, tl.cex = 0.7, col = brewer.pal(n = 10, name = "RdYlBu"))
+```
+
+# simple linear regression
+
+```{r}
+all_x1_ = all_x3 %>% st_set_geometry(NULL)
+lmreg <- lm(mean_on ~ .,data = all_x1_) 
+summary(lmreg)
+
+lm_model <-
+  all_x3 %>%
+  mutate(ridership.Predict = predict(lmreg, all_x1_),
+         ridership.Error = mean_on - ridership.Predict,
+         ridership.AbsError = abs(mean_on - ridership.Predict),
+         ridership.APE = (abs(mean_on - ridership.Predict) / mean_on))
+```
+
+```{r}
+plot_result = lm_model %>%
+  st_drop_geometry() %>%
+  left_join(stops %>% select(STOP_ID)) %>%
+  st_as_sf()
+
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  #geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  #scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL) +
+  #geom_sf(data=parking,inherit.aes =FALSE,colour="#E4C054",
+          #fill="#004529",alpha=.2,size=0.8)+
+  geom_sf(data = plot_result, aes(color = plot_result$ridership.APE ),size = 1.5) +
+  labs(title = "Ridership Prediction Absolute Percentage Error") +
+  mapTheme()
+```
+
+```{r}
+ggplot()+
+  geom_sf(data = nhood) +
+  #geom_sf(data = stops %>% filter(STOP_ID %in% plot_result[is.na(plot_result$WestEast),]$STOP_ID)) +
+  geom_sf(data = stops %>% filter(STOP_ID %in% apply(is.na(plot_result), 2, which)$ridership.APE)) +
+  mapTheme()
+```
+
+## correlation plots
+```{r}
+correlation.long <-
+  st_set_geometry(all_x3, NULL) %>%
+    select(-c(STOP_ID, label, TRUSTEE)) %>%
+    gather(Variable, Value, -mean_on)
+```
+
+```{r fig.height=30, fig.width= 15}
+correlation.cor <-
+  correlation.long %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+    
+ggplot(correlation.long, aes(Value, mean_on)) +
+  geom_point(size = 0.1) +
+  geom_text(data = correlation.cor, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
+  facet_wrap(~Variable, ncol = 5, scales = "free") +
+  labs(title = "Mean Ridership as A Function of Potential Factors")
+```
+
+```{r}
+#highest correlation
+airportDist
+CBD_dist
+High Frequency
+hotline_1
+nshifts
+SouthNorth
+sptial_lag5
+TrainstationDist
+utaustin_dist
+WestEast
+
+#lower correlation but still interesting
+Crosstown
+ Flyer
+officeDist
+ TwoVeh
+parkingDist
+population
+race
+residentialDist
+schoolDist
+```
+
+
+```{r}
+#highest correlation
+correlation.long1 <-
+  st_set_geometry(all_x3 %>% select("High Frequency", hotline_1, nshifts, SouthNorth, spatial_lag5, mean_on), NULL) %>%
+    gather(Variable, Value, -mean_on)
+
+correlation.long2 <-
+  st_set_geometry(all_x3 %>% select(trainstationDist, utaustin_dist, WestEast, airportDist, CBD_dist, mean_on), NULL) %>%
+    gather(Variable, Value, -mean_on)
+```
+
+```{r }
+correlation.cor1 <-
+  correlation.long1 %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+
+correlation.cor2 <-
+  correlation.long2 %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+```
+
+```{r fig.height=3, fig.width= 15}
+ggplot(correlation.long1, aes(Value, mean_on)) +
+  geom_point(size = 0.1) +
+  geom_text(data = correlation.cor1, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
+  facet_wrap(~Variable, ncol = 5, scales = "free") +
+  labs(title = "Mean Ridership as A Function of Positively Related Factors") + plotTheme()
+```
+
+```{r  fig.height=3, fig.width= 15}
+ggplot(correlation.long2, aes(Value, mean_on)) +
+  geom_point(size = 0.1) +
+  geom_text(data = correlation.cor2, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
+  facet_wrap(~Variable, ncol = 5, scales = "free") +
+  labs(title = "Mean Ridership as A Function of Negatively Related Factors") + plotTheme()
+```
+
+
+
+
+## Modeling and Validation
+
+

@@ -495,14 +495,14 @@ Population <- rbind(Travis, Williamson)%>%
 
 Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
                                   output = "sf", extensive = "estimate")
-Population_buff$estimate <- round(Population_buff$estimate)
+Population_buff$population <- round(Population_buff$estimate)
 
 Race <- rbind(Travis_race, Williamson_race)%>%
   st_transform(2278)
 
 Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
                                   output = "sf", extensive = "estimate")
-Race_buff$estimate <- round(Race_buff$estimate)
+Race_buff$race <- round(Race_buff$estimate)
 
 NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
   st_transform(2278)
