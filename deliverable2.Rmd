@@ -50,14 +50,20 @@ We will start with an evaluation of the Cap Remap to further understand the tren
 
 ## 2.1 What Data Are We Using?
 
-The data we used come from the Automated Passenger Counter(APC), which counts the number of boarding and alighting on any given bus. The image below illustrate the APC system at work.
+The ridership data we used come from the Automated Passenger Counter(APC), which counts the number of boarding and alighting on any given bus. The image below illustrate the APC system at work.
 ![](../markdown_img/Passenger-bus-APC-1024x576.jpg)
 [source](https://www.tsomobile.com/tso-public-transportation/shuttle-bus-resources/)
 
-The data structure is.............
+There are two sets of ridership data that we have used - aggregated and disaggregated. 
+Aggregated data presents average ridership data of every single bus stop in the system on weekdays in all the months from 2017 to 2019. We used the aggregated data to explore the annual ridership trend of the bus system and the neighborhood and school district effect on ridership. And these fixed effects are used later in the model. 
+
+
 ![](../markdown_img/agg.PNG)
 
-The data here used are disaggregated data in May 21-25th and June 11-15th in 2018, which are one week before and after the CapRemap. The disaggregated data consist of passenger and bus information for each route, each shift, and each stop. Basically, the number of passenger boarding, alighting, and other related ridership information are recorded at each stop for each shift of each bus route.
+Disaggregated data contains more detailed ridership data. It is detailed to each trip within a time period of a week. Therefore, besides the ridership information at a specific bus stop during a specific trip, disaggregated data also provides the trip's route numbers and route directions so that we can associate those route characteristics with the ridership. 
+The data used here are disaggregated data in May 21-25th and June 11-15th in 2018, which are one week before and after the CapRemap. As mentioned above, the disaggregated data consist of passenger and bus information for each route, each shift, and each stop. Basically, the number of passenger boarding, alighting, and other related ridership information are recorded at each stop for each shift of each bus route.
+We use the disaggregated data to study the relationship between route characteristics, such as route type, route orientations, and riderships, and further identify popular routes and unpopular routes and create additional route-related features for modelling. 
+
 ![](../markdown_img/disagg.PNG)
 
 ## 2.2 Annual Citywide Ridership Trend
@@ -103,10 +109,21 @@ What could potentially influence ridership in terms of route information?
 
 There are several route types, each serving different purposes. Our hypothesis is that they will play an important role in determing the ridership.
 
-.........................
-need more description on route types
-talk about the service area as base map
-..........................
+The Austin Bus System is comprised of nine types of routes. The graphs below show six main route types. Since Capital Metro is a regional transit agency so that its service area covers more than City of Austin. Since we mainly focus our analysis and model building in Austin, the basemap below outlines only City of Ausitn. 
+
+Regarding route types, the characteristics are listed below:
+
+Local: Capital Metro's Local routes are intended to connect specific neighborhoods of Austin to Downtown Austin, with frequent stops.
+
+MetroRapid: Capital Metro's MetroRapid routes is an ostensibly bus rapid transit service serving high-traffic corridors. The service utilizes high-frequency service of every 15 minutes on weekdays with 10 minute service at rush hours. 
+
+UT Shuttle: The UT Shuttle system includes a number of routes during the University of Texas semester. They do not operate on Saturdays, except during finals.
+
+Crosstown: Capital Metro's Crosstown routes are local services between two neighborhoods of Austin, for which the route does not pass through Downtown Austin or the University of Texas.
+
+Limited & Flyer: Capital Metro's Limited and Flyer routes are limited stop services between two destinations. Limited routes tend to have fewer stops compared to their local counterparts, while Flyer routes serve nonstop between downtown or the UT campus and their neighborhoods of service.
+
+Feeder: Capital Metro's Feeder routes are local services between a neighborhood and a major transfer point for connecting service.
 
 ![](../markdown_img/routetypePNG.png)
 
@@ -124,6 +141,7 @@ To dive deeper into the characteristics of the hot bus lines, we map out the pas
 
 ![](../markdown_img/line20.png)
 
+Below is the analysis for Line 801.
 ![](../markdown_img/line801.png)
 
 By mapping and plotting the average passenger number on bus as well as the average boarding and alighting at each stop, we can see better how specific location or neighborhood could potentially contribute to the ridership. These regions will be feature engineered in the following analysis. We also noticed that ridership tends to be higher in the middle portion of the trip, this means a lot of the passengers board from early stops to stops near the ends.
@@ -141,19 +159,31 @@ In conclusion, hotlines have the following characteristics:
 
 ## 3.1 Strategies
 
-............5 types of features..........
-..........will use what model...........
+We will be creating a machine learning model that predicts the ridership at each stop. Specifically, we will look at how Linear, Lasso and Ridge regression, Random Forest, and Xgboost captures the variability in our dataset. We will start with feature engineering, which consists of 5 major categories: amenity, built environment, demographics, route network, stop characteristics (internal data). The hypothesis is that these five categories will influence the ridership at each stop in different ways. The dependent variable we used is the average ridership for each stop in 2019. We use 2019 data because we want to focus on the data after Cap Remap, and our feature engineering align with year 2019 better. 
 
 ## 3.2 Feature Engineering
 
+The feature table below demonstrates five types of features and the sources of each feature. All data comes from the following sources: APC data collected, Capital Metro, OpenStreetMap (OSM), Open Data Austin, and ACS Census.
+
+For amenity, buffer of 1/4 miles around each station is created. The number of each type of amenity within the buffer is calculated. In order to capture the distance factor related between stops and amenities, the distance between the stop and the closest 3 amenities are calculated as well. 
+
+For the built environment, some features are spatial joined with the stops, such as the neighborhood and the school district data. The area percentage of each type of land use within the buffer is calculated as well. The building density is approximated as a function of building lot area times the building height. 
+
+For demographics, we used Areal Weighted Interpolation and joined the weighted census estimates within the buffer to each stop.
+
+For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts going through each stop on a given week is also calculated.
+
+For internal (stop characteristics) category, we first added transit hub dummy defined by Capital Metro; we then calculated the spatial lag, which is the average ridership of the surrounding stops.
+
 ![](../markdown_img/featuretable.png)
 
-..............some more feature exploring...............
+A series of analysis is conducted to see what features are important. We first looked at the correlation between all features and the dependent variable, the mean ridership in 2019. Below are selected features that highly correlates with ridership positively and negatively. We found that the route information, amenity distance, and stop characteristics often correlates highly with ridership.
+
 ![](../markdown_img/corpo.png)
 
 ![](../markdown_img/corne.png)
 
-..................feature correlation matrix.............
+A correlation matrix is made to see potential colinearity between all features as well as the dependent variable. We found that certain features correlate highly, such as route direction feature SouthNorth versus WestEast, land use feature land use versus residential, amenity feature distance to CBD versus distance to train stations. It is important to identify these variables when using features in the model.
 ![](../markdown_img/cormatrix.png)
 
 ## 3.3 Results and Validation
