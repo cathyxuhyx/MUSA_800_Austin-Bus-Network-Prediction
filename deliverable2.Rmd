@@ -72,11 +72,11 @@ How did ridership change before and after CapRemap (06/03, 2018)?
 
 Current available data from Capital Metro allows us to observe the trend in ridership change before and after Cap Remap. The first important part of exploratory analysis is to see the city-wide change in ridership brought by CapRemap. With the stop-level data from Janurary 207 to November 2019, the aggregated city-wide ridership change is shown in the chart below.
 
-........................need re-edit these...................
-The x-axis represents month, and y-axis repredents the average daily ridership in the given month. The solid lines in the chart are 2018 riderships. The yellow solid line is ridership from Janurary to May in 2018 (before Cap Remap happened in June 2018) while the blue solid line is ridership from June to December in 2018 (after CapRemap). The dashed line is the ridership in 2019 from Janurary to June after CapRemap happend the year before.
+The x-axis represents month, and y-axis repredents the average daily ridership in the given month. The yellow, blue, red lines represents the monthly ridership in year 2017, 2018, 2019, respectively. The vertical line represents month June, which is the month when Cap Remap rolled out in 2018. 
 
-From the trend in 2018, it is clear that ridership fluctuated between months. Cap Remap didn't bring a rapid increase in ridership after the implementation. On the contrary, the ridership decreased in June and July. In August, the ridership recovers to the previous level before CapRemap, Then in September the ridership almost exploded to 0.1 million. Then it gradually went down in winter but in 2019, the ridership is generally higher than the same month in 2018. This result shows the general positive impact CapRemap brought to ridership change. For the decrease in June and July and following increasing trend, people might need time to adjust to the new bus schedule and get used to it. And after they realize the convinience of the redesign, the ridership increased rapidly. Another explanation is related to university's opening and closing as the low ridership happened in summer break and high ridership happened in the beginning of the new semester.
-..............................................................S
+From the trend in 2018, it is clear that ridership fluctuated between months. Year 2017 and 2018 disply similar trend where we see a spike of ridership in June. However, year 2019 seems to have a smoother curve and ridership actually decreased in the same month. We suspect that there might be issues related with data retrieval and will ask for new data. Ridership are generally high in fall and winter in all three years. Our hypothesis is that this could be related with school or university holiday and class schedules. If we ignore the June data and compare the trend across three years, we do see an increasing ridership trend in general, each year has higher ridership than before, which demonstrates the effect of Cap Remap. 
+
+
 ![](../markdown_img/AnnualTrend.png)
 
 ## 2.3 Ridership Pattern in Subdivisions
