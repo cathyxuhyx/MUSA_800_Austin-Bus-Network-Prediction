@@ -247,7 +247,7 @@ ggplot(data = val_preds %>%
          dplyr::select(model, MAPE) %>% 
          distinct() , 
        aes(x = model, y = MAPE, group = 1)) +
-  geom_path(color = "red") +
+  geom_path(color = "blue") +
   geom_label(aes(label = paste0(round(MAPE,1),"%"))) +
   labs(title= "MAPE of each model on the testing set")
   theme_bw()
@@ -256,7 +256,7 @@ ggplot(data = val_preds %>%
            dplyr::select(model, MAE) %>% 
            distinct() , 
          aes(x = model, y = MAE, group = 1)) +
-    geom_path(color = "red") +
+    geom_path(color = "blue") +
     geom_label(aes(label = paste0(round(MAE,1)))) +
     labs(title= "MAE of each model on the testing set")
   theme_bw()  
@@ -301,7 +301,7 @@ plotTheme <- function(base_size = 20) {
     strip.text.x = element_text(size = 50)
   )
 }
-palette4 <- c("#D2FBD4","#92BCAB","#527D82","#123F5A")
+palette4 <- c("#eff3ff", "#bdd7e7","#6baed6","#2171b5")
 
 
 val_MAPE_by_hood %>%
@@ -309,7 +309,7 @@ val_MAPE_by_hood %>%
   gather(Variable, MAE, -model, -label) %>%
   ggplot(aes(label, MAE)) + 
   geom_bar(aes(fill = model), position = "dodge", stat="identity") +
-  scale_fill_manual(values = palette4) +
+  scale_fill_manual(values = "Blues") +
   facet_wrap(~label,scales="free", ncol=6)+
   labs(title = "Mean Absolute Errors by model specification and neighborhood") +
   plotTheme()
@@ -346,15 +346,9 @@ mapTheme <- function(base_size = 12) {
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
     panel.grid.minor = element_blank(),
-    panel.border = element_rect(colour = "black", fill=NA, size=2)
+    panel.border = element_rect(colour = NA, fill=NA, size=2)
   )
 }
-palette5 <- c("#edf8fb","#b2e2e2","#66c2a4","#2ca25f","#006d2c")
-
-
-
-
-
 
 
 #Map: MAPE of lm
@@ -363,7 +357,7 @@ MAE.nhood%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.nhood,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
@@ -376,7 +370,7 @@ MAE.nhood%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.nhood,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
@@ -388,7 +382,7 @@ MAE.nhood%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.nhood,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
@@ -401,7 +395,7 @@ MAE.nhood%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.nhood,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
@@ -600,7 +594,7 @@ ggplot(data = val_preds %>%
          dplyr::select(model, MAPE) %>% 
          distinct() , 
        aes(x = model, y = MAPE, group = 1)) +
-  geom_path(color = "red") +
+  geom_path(color = "blue") +
   geom_label(aes(label = paste0(round(MAPE,1),"%"))) +
   labs(title= "MAPE of each model on the testing set")
 theme_bw()
@@ -609,7 +603,7 @@ ggplot(data = val_preds %>%
          dplyr::select(model, MAE) %>% 
          distinct() , 
        aes(x = model, y = MAE, group = 1)) +
-  geom_path(color = "red") +
+  geom_path(color = "blue") +
   geom_label(aes(label = paste0(round(MAE,1)))) +
   labs(title= "MAE of each model on the testing set")
 theme_bw()  
@@ -684,7 +678,7 @@ MAE.district%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
@@ -697,7 +691,7 @@ MAE.district%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
@@ -709,7 +703,7 @@ MAE.district%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
@@ -722,7 +716,7 @@ MAE.district%>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
-  scale_fill_brewer(palette = palette5,
+  scale_fill_brewer(palette = "Blues",
                     aesthetics = "fill",
                     labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
