@@ -187,37 +187,46 @@ A correlation matrix is made to see potential colinearity between all features a
 ![](../markdown_img/cormatrix.png)
 
 ## 3.3 Results and Validation
+
 With the features created in five categories, there are four types of models built: simple linear regression model (lm in the following visualizations), lasso and ridge regression model (glmnet in the following visualizations); random forest model (rf in the following visualizations) and xgboost model (xgb in the following visualizations).
 As mentioned in the exploratory analysis, neighborhood has been contributing a huge impact on ridership as downtown and UT influence the ridership pattern a lot by its natural built environments or school schedules. Likewise, school districts is another critical impact on ridership. Thus in the modeling validation section, neighborhood and school district are used to test the model's generalizability.
+
 ### 3.3.1 Neighborhood Fixed Effect
+
 The MAPE and MAE of the four models reveals that, genrally speaking, random forest model is the model with the best accuracy while lasso and ridge model gives prediction less accurately than other three. Lasso and ridge regression has the largest MAPE and MAE while random forest model has the least MAPE and MAE.
-![](../markdown_img/MAPE_overall_nhood.JPG){width=700px}
-![](../markdown_img/MAE_overall_nhood.JPG){width=700px}
+
+![](../markdown_img/MAPE_overall_nhood.JPG){width=400px}![](../markdown_img/MAE_overall_nhood.JPG){width=400px}
 
 In terms of predicted value and actual values, simple linear regression tends to underpredict ridership when the actual ridership is higher than 300.Lasso and ridge model generally overpredict ridership. Random forest model tends to overpredict ridership when the actual ridership is over 250. Xgboost model generally overpredict ridership but performs better than glmnet model when the actual ridership is low.
-![](../markdown_img/PreVSObs_nhood.JPG){width=450px}
+
+![](../markdown_img/PreVSObs_nhood.JPG){width=350px}
+
 In order to test the the generaliability of the models on neighborhoods, the following bar chart reveals each model's MAE in the neighborhoods. The charts demonstrate most of the MAEs are below 100. There are several neighborhoods appear to have a higher MAE among which most of them gathered around UT.
+
 ![](../markdown_img/Bar_Neighborhood_MAE.JPG){width=1200px}
+
 To take a closer look at the neighborhoods, maps of MAPE are plotted to show the generalizability. As mentioned before, the model's acuuracy is lower in the neighborhoods around University of Texas. 
-![](../markdown_img/Map_nhood_MAPE_lm.JPG){width=500px}
-![](../markdown_img/Map_nhood_MAPE_glm.JPG){width=500px}
-![](../markdown_img/Map_nhood_MAPE_rf.JPG){width=500px}
-![](../markdown_img/Map_nhood_MAPE_xgb.JPG){width=500px}
+
+![](../markdown_img/Map_nhood_MAPE_lm.JPG){width=400px}![](../markdown_img/Map_nhood_MAPE_glm.JPG){width=400px}
+![](../markdown_img/Map_nhood_MAPE_rf.JPG){width=400px}![](../markdown_img/Map_nhood_MAPE_xgb.JPG){width=400px}
 
 ### 3.3.2 School District Fixed Effect
 This drives us to consider the model's generalizability in school district since UT has been a big factor. According to the MAPE and MAE of the four models, there is a similar trend that lasso and ridge regression is not as accurate as other three models, and random forest model has the best overall accuracy.
-![](../markdown_img/MAPE_overall_school.JPG){width=700px}
-![](../markdown_img/MAE_overall_school.JPG){width=700px}
+
+![](../markdown_img/MAPE_overall_school.JPG){width=400px}![](../markdown_img/MAE_overall_school.JPG){width=400px}
+
 The predicting power of each model is also similar to the last one. Simple linear regression model tends to underpredict ridership when the actual ridership is higher than 300.Lasso and Ridge model generally overpredict ridership.Randome forest model tends to overpredict ridership more, when the ridership is higher. Xgboost model generally overpredict ridership but performs better than glmnet model when the actual ridership is low.
-![](../markdown_img/PreVSObs_school.JPG){width=450px}
+
+![](../markdown_img/PreVSObs_school.JPG){width=350px}
 
 Then the chart showing the MAE in different school districts reveals a general MAE below 100 in most school districts. However, in school district 5, where UT is located, the MAE is higher than the rest, which corresponds to our previous findings that, the generalizability of the model is not as wel around UT areas.
+
 ![](../markdown_img/Bar_School_MAE.JPG){width=1200px}
+
 As shown in the maps, the darkest blue represents the largest MAPE appear in school district 5. The model's accuracy still needs to be improved around UT areas.
-![](../markdown_img/Map_school_MAPE_lm.JPG){width=500px}
-![](../markdown_img/Map_school_MAPE_glm.JPG){width=500px}
-![](../markdown_img/Map_school_MAPE_rf.JPG){width=500px}
-![](../markdown_img/Map_school_MAPE_xgb.JPG){width=500px}
+
+![](../markdown_img/Map_school_MAPE_lm.JPG){width=400px}![](../markdown_img/Map_school_MAPE_glm.JPG){width=400px}
+![](../markdown_img/Map_school_MAPE_rf.JPG){width=400px}![](../markdown_img/Map_school_MAPE_xgb.JPG){width=400px}
 
 # 4. Next Steps
 With all of the findings from the modeling results and validation, there are several steps that we are considering to take, in order to improve the model's generalizability around UT area.
