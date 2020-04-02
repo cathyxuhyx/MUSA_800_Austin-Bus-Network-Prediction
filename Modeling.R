@@ -408,12 +408,20 @@ MAE.nhood%>%
   labs(title="MAPE of xgb in Neighborhoods") +
   mapTheme()
 
-########################Test on Landuse##########
+
+
+
+
+
+
+
+
+########################Test on school District##########
 #Create recipe
 model_rec <- recipe(mean_on ~ ., data = bus_train) %>% #the "." means using every variable we have in the training dataset
-  update_role(label, new_role = "label") %>% #This is more like to keep the neighborhood variable out of the model
-  step_other(label, threshold = 0.005) %>%
-  step_dummy(all_nominal(), -label) %>%
+  update_role(TRUSTEE, new_role = "TRUSTEE") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(TRUSTEE, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -TRUSTEE) %>%
   step_log(mean_on) %>% 
   step_zv(all_predictors()) %>%
   step_center(all_predictors(), -mean_on) %>%
@@ -577,7 +585,7 @@ val_preds <- rbind(data.frame(lm_val_pred_geo, model = "lm"),
                    data.frame(xgb_val_pred_geo, model = "xgb")) %>% 
   left_join(., data %>% 
               rowid_to_column(var = ".row") %>% 
-              dplyr::select(label, .row), 
+              dplyr::select(TRUSTEE, .row), 
             by = ".row") %>% 
   group_by(model) %>%
   mutate(.pred = exp(.pred),
@@ -617,8 +625,8 @@ ggplot(val_preds, aes(x =.pred, y = mean_on, group = model)) +
 theme_bw()
 
 #Neighborhood validation
-val_MAPE_by_hood <- val_preds %>% 
-  group_by(label, model) %>% 
+val_MAPE_by_district <- val_preds %>% 
+  group_by(TRUSTEE, model) %>% 
   summarise(RMSE = yardstick::rmse_vec(mean_on, .pred),
             MAE  = yardstick::mae_vec(mean_on, .pred),
             MAPE = yardstick::mape_vec(mean_on, .pred)) %>% 
@@ -627,7 +635,7 @@ val_MAPE_by_hood <- val_preds %>%
 plotTheme <- function(base_size = 20) {
   theme(
     text = element_text( color = "black"),
-    plot.title = element_text(size = 80,colour = "black"),
+    plot.title = element_text(size = 50,colour = "black"),
     plot.subtitle = element_text(face="italic"),
     plot.caption = element_text(hjust=0),
     axis.ticks = element_blank(),
@@ -636,120 +644,88 @@ plotTheme <- function(base_size = 20) {
     panel.grid.minor = element_blank(),
     panel.border = element_rect(colour = "black", fill=NA, size=2),
     strip.background = element_rect(fill = "grey80", color = "white"),
-    strip.text = element_text(size=60),
-    axis.title = element_text(size=60),
-    axis.text = element_text(size=45),
+    strip.text = element_text(size=30),
+    axis.title = element_text(size=30),
+    axis.text = element_text(size=20),
     plot.background = element_blank(),
     legend.background = element_blank(),
-    legend.title = element_text(colour = "black", face = "italic", size= 80),
-    legend.text = element_text(colour = "black", face = "italic",size = 80),
-    strip.text.x = element_text(size = 50)
+    legend.title = element_text(colour = "black", face = "italic", size= 50),
+    legend.text = element_text(colour = "black", face = "italic",size = 50),
+    strip.text.x = element_text(size = 30)
   )
 }
-palette4 <- c("#D2FBD4","#92BCAB","#527D82","#123F5A")
 
 
-val_MAPE_by_hood %>%
-  dplyr::select(label, model, MAE) %>%
-  gather(Variable, MAE, -model, -label) %>%
-  ggplot(aes(label, MAE)) + 
+val_MAPE_by_district %>%
+  dplyr::select(TRUSTEE, model, MAE) %>%
+  gather(Variable, MAE, -model, -TRUSTEE) %>%
+  ggplot(aes(TRUSTEE, MAE)) + 
   geom_bar(aes(fill = model), position = "dodge", stat="identity") +
   scale_fill_manual(values = palette4) +
-  facet_wrap(~label,scales="free", ncol=6)+
-  labs(title = "Mean Absolute Errors by model specification and neighborhood") +
+  facet_wrap(~TRUSTEE,scales="free", ncol=8)+
+  ylim(0,200)+
+  labs(title = "Mean Absolute Errors by model specification and school districts") +
   plotTheme()
 
-#Map of MAE in each neighborhood
-#Load neighborhood data
-nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
-  st_set_crs(4326)%>%
-  st_transform(2278)
+#Map of MAE in each school district
+#Load school district data
+TrusteeDist <- 
+  st_read("C:/Upenn/Practicum/Data/Trustee_Boundaries/Trustee.shp")%>%
+  st_transform(2278) 
 #Add geometry to the MAE
-MAE.nhood <- merge(nhood, val_MAPE_by_hood, by.x="label", by.y="label", all.y=TRUE)
+MAE.district <- merge(TrusteeDist, val_MAPE_by_district, by.x="TRUSTEE", by.y="TRUSTEE", all.y=TRUE)
 
 #Produce the map
-q5 <- function(variable) {as.factor(ntile(variable, 5))}
-qBr <- function(df, variable, rnd) {
-  if (missing(rnd)) {
-    as.character(quantile(round(df[[variable]],0),
-                          c(.01,.2,.4,.6,.8), na.rm=T))
-  } else if (rnd == FALSE | rnd == F) {
-    as.character(formatC(quantile(df[[variable]]), digits = 3),
-                 c(.01,.2,.4,.6,.8), na.rm=T)
-  }
-}
-library(RColorBrewer)
-mapTheme <- function(base_size = 12) {
-  theme(
-    text = element_text( color = "black"),
-    plot.title = element_text(size = 14,colour = "black"),
-    plot.subtitle=element_text(face="italic"),
-    plot.caption=element_text(hjust=0),
-    axis.ticks = element_blank(),
-    panel.background = element_blank(),axis.title = element_blank(),
-    axis.text = element_blank(),
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_rect(colour = "black", fill=NA, size=2)
-  )
-}
-palette5 <- c("#edf8fb","#b2e2e2","#66c2a4","#2ca25f","#006d2c")
-
-
-
-
-
 
 
 #Map: MAPE of lm
-MAE.nhood%>%
+MAE.district%>%
   filter(model=="lm") %>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = palette5,
                     aesthetics = "fill",
-                    labels=qBr(MAE.nhood,"MAPE"),
+                    labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
-  labs(title="MAPE of lm in Neighborhoods") +
+  labs(title="MAPE of lm in School Districts") +
   mapTheme()
 
 #Map: MAPE of glmnet
-MAE.nhood%>%
+MAE.district%>%
   filter(model=="glmnet") %>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = palette5,
                     aesthetics = "fill",
-                    labels=qBr(MAE.nhood,"MAPE"),
+                    labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
-  labs(title="MAPE of glmnet in Neighborhoods") +
+  labs(title="MAPE of glmnet in School Districts") +
   mapTheme()
 #MAPE of rf
-MAE.nhood%>%
+MAE.district%>%
   filter(model=="rf") %>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = palette5,
                     aesthetics = "fill",
-                    labels=qBr(MAE.nhood,"MAPE"),
+                    labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
-  labs(title="MAPE of rf in Neighborhoods") +
+  labs(title="MAPE of rf in School Districts") +
   mapTheme()
 
 #MAPE of xgb
-MAE.nhood%>%
+MAE.district%>%
   filter(model=="xgb") %>%
   ggplot() +
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = palette5,
                     aesthetics = "fill",
-                    labels=qBr(MAE.nhood,"MAPE"),
+                    labels=qBr(MAE.district,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
-  labs(title="MAPE of xgb in Neighborhoods") +
+  labs(title="MAPE of xgb in School Districts") +
   mapTheme()
 
