@@ -1,0 +1,120 @@
+---
+title: "Markdown02.05_Yibing"
+author: "Yibing Zheng"
+date: "February 5, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploratory Analysis in Aggregated Data
+Install the library and load data
+```{r}
+library(corrplot)
+library(caret) 
+library(viridis)
+library(stargazer)
+library(tidyverse)
+library(sf)
+library(FNN)
+library(tigris)
+library(spdep)
+library(ckanr)
+library(grid)
+library(gridExtra)
+library(ggplot2)
+```
+
+```{r}
+data <- read.csv("C:/Upenn/Practicum/Data/OneDrive_1_1-16-2020/Stop Ridership Aggregated.csv")
+
+table(data$YEAR_ID)
+#Subset data in 2018 for further analysis
+data.y18 <- data %>%
+  subset(data$YEAR_ID == "2018")
+```
+
+```{r}
+plotTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=12),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=10),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic"),
+    legend.text = element_text(colour = "black", face = "italic"),
+    strip.text.x = element_text(size = 14)
+  )
+}
+```
+
+```{r}
+#Change June to 0 and make months before CapRemap become negative, after CapRemap become positive
+data.y18$MONTH_ID <- as.numeric(data.y18$MONTH_ID)
+
+data.y18$Month <- data.y18$MONTH_ID - 6
+#Make month column become factor
+#data.y18$Month <- factor( data.y18$Month, levels = c( "-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6") )
+
+data.y18$Before <- ifelse(data.y18$Month < 0, 1, 0)
+```
+### 1. City-wide Ridership change before and after CapRemap
+```{r}
+age3=ggplot(mlda, aes(x = agecell, y = all,colour=over21)) + 
+  geom_point() + ylim(80,115)
+age4=age3 + stat_smooth(method = loess)
+age4
+
+
+plot1 <-
+plot.city <- as.data.frame(data.y18) %>%
+  group_by(Month) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = max(Before)) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time)) + 
+      geom_point()+
+      plotTheme()+
+      ylim(50000, 110000)
+
+plot.city2 = plot.city +stat_smooth(method = loess) +      labs(title="Ridership by stops on an average weekday among all the stops in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 0, color = "blue")
+
+plot.city2
+
+plot.city<-
+  as.data.frame(data.y18) %>%
+  group_by(Month) %>% 
+   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Time)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      ylim(50000,110000) +
+      labs(title="Ridership by stops on an average weekday among all the stops in Austin",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_discrete(name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("Before", "After"))
+
+plot.city
+
+ggplot(data, aes(running.var, outcome, color = treat.ind)) +
+  geom_point() + stat_smooth(size = 1.5) +
+  geom_vline(xintercept=0, linetype="longdash") +
+  xlab("Running variable") +
+  ylab("Outcome variable") +
+  scale_colour_discrete(name="Experimental\nCondition",
+                          breaks=c("0", "1"), labels=c("Control", "Treatment"))
+```
+

@@ -282,4 +282,36 @@ Map.Zilker<-
 print(plot.Zilker)
 print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
 ```
+```{r}
+Galindo <- Rider_nhood4 %>%
+  subset(Rider_nhood4$label == "Galindo")
+
+plot.Galindo <- 
+  as.data.frame(Galindo) %>%
+  arrange(desc(Dif))%>%
+    ggplot(aes(x=Month,y=BOARD_Count, colour = Before)) + 
+      geom_point() + stat_smooth(size=1) +
+      plotTheme() +
+      facet_wrap(Dif~label,scales="free", ncol=4) +
+      labs(title="Average Daily Ridership in Galindo Neighborhood",
+           subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership in Galindo Neighborhood")+ 
+      geom_vline(xintercept = 0, color = "blue")+
+      scale_colour_manual(values = c("#0072B2", "#E7B800"),name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
+```
+
+```{r}
+Galindo2 <- nhood%>%
+  subset(nhood$label == "Galindo")
+Map.Galindo<-
+  ggplot() +
+  geom_sf(data = nhood, fill = "grey30") +
+  geom_sf(data = Galindo2, fill = "#56B4E9") +
+#  labs(title = "Galindo Neighborhoods") +
+  mapTheme() + theme(legend.position = "bottom")
+```
+
+```{r}
+print(plot.Galindo)
+print(Map.Galindo, vp=viewport(.85,.72,.4,.42))
+```
 
