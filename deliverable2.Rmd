@@ -141,6 +141,7 @@ To dive deeper into the characteristics of the hot bus lines, we map out the pas
 
 ![](../markdown_img/line20.png)
 
+Below is the analysis for Line 801.
 ![](../markdown_img/line801.png)
 
 By mapping and plotting the average passenger number on bus as well as the average boarding and alighting at each stop, we can see better how specific location or neighborhood could potentially contribute to the ridership. These regions will be feature engineered in the following analysis. We also noticed that ridership tends to be higher in the middle portion of the trip, this means a lot of the passengers board from early stops to stops near the ends.
@@ -156,23 +157,33 @@ In conclusion, hotlines have the following characteristics:
 
 # 3. Modeling
 
-...............need more text in this section.................
-
 ## 3.1 Strategies
 
-............5 types of features..........
-..........will use what model...........
+We will be creating a machine learning model that predicts the ridership at each stop. Specifically, we will look at how Linear, Lasso and Ridge regression, Random Forest, and Xgboost captures the variability in our dataset. We will start with feature engineering, which consists of 5 major categories: amenity, built environment, demographics, route network, stop characteristics (internal data). The hypothesis is that these five categories will influence the ridership at each stop in different ways. The dependent variable we used is the average ridership for each stop in 2019. We use 2019 data because we want to focus on the data after Cap Remap, and our feature engineering align with year 2019 better. 
 
 ## 3.2 Feature Engineering
 
+The feature table below demonstrates five types of features and the sources of each feature. All data comes from the following sources: APC data collected, Capital Metro, OpenStreetMap (OSM), Open Data Austin, and ACS Census.
+
+For amenity, buffer of 1/4 miles around each station is created. The number of each type of amenity within the buffer is calculated. In order to capture the distance factor related between stops and amenities, the distance between the stop and the closest 3 amenities are calculated as well. 
+
+For the built environment, some features are spatial joined with the stops, such as the neighborhood and the school district data. The area percentage of each type of land use within the buffer is calculated as well. The building density is approximated as a function of building lot area times the building height. 
+
+For demographics, we used Areal Weighted Interpolation and joined the weighted census estimates within the buffer to each stop.
+
+For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts going through each stop on a given week is also calculated.
+
+For internal (stop characteristics) category, we first added transit hub dummy defined by Capital Metro; we then calculated the spatial lag, which is the average ridership of the surrounding stops.
+
 ![](../markdown_img/featuretable.png)
 
-..............some more feature exploring...............
+A series of analysis is conducted to see what features are important. We first looked at the correlation between all features and the dependent variable, the mean ridership in 2019. Below are selected features that highly correlates with ridership positively and negatively. We found that the route information, amenity distance, and stop characteristics often correlates highly with ridership.
+
 ![](../markdown_img/corpo.png)
 
 ![](../markdown_img/corne.png)
 
-..................feature correlation matrix.............
+A correlation matrix is made to see potential colinearity between all features as well as the dependent variable. We found that certain features correlate highly, such as route direction feature SouthNorth versus WestEast, land use feature land use versus residential, amenity feature distance to CBD versus distance to train stations. It is important to identify these variables when using features in the model.
 ![](../markdown_img/cormatrix.png)
 
 ## 3.3 Results and Validation
