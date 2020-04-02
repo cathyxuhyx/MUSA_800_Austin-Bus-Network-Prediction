@@ -702,18 +702,18 @@ From the clustering analysis before, we get 4 lines labeled as hotlines before t
 grid.arrange(
 
   ggplot()+
-  geom_sf(data = nhood, fill = 'grey20',color = 'grey30')+
+  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
   geom_sf(data = capmetro0 %>%
   filter(ROUTE_ID %in% c(7,300,801,803)),color = '#e7b800')+
-    labs(title='Hotlines Before:\nLine 7, 300, 801, 803'),
+    labs(title='Hotlines Before:\nLine 7, 300, 801, 803')+ mapTheme(),
 
 ggplot()+
-  geom_sf(data = nhood, fill = 'grey20',color = 'grey30')+
+  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
   geom_sf(data = capmetro %>%
             filter(ROUTE_ID %in% c(7,10,20,300,801,803)),color = '#e7b800') +
   geom_sf(data = capmetro %>%
             filter(ROUTE_ID == 20 | ROUTE_ID == 10), color='red')+
-    labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803') ,ncol =2)
+    labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803')+mapTheme() ,ncol =2)
 ```
 
 To dive deeper into the characteristics of the hot bus lines, we map out the passenger load for each route at each stop for each direction. We also ploted the passenger load versus stop sequence ID as well as average boarding and alighting at each stop along each route. The purpose of this analysis is to first, find out what is so special about the hotlines, and second, see trends before and after the CapRemap. Note that the Austin bus system has different patterns for each route, and in order to make sure the plots to make sense, we only selected the most used pattern for each plot.
@@ -731,7 +731,7 @@ routeplot1 <- function(n,p,p1,d) {
   scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
                        breaks = c(0, 5, 10, 15, 20, 25)) +
   labs(title=paste("Line",n,"Direction 1, Before CapRemap"),
-  subtitle = "Average Number of\nPassengers at Each Stop")
+  subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
   
   #line n before passenger load chart
   t11 = ggplot(data = disagn1j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN == p) %>%
@@ -744,7 +744,7 @@ routeplot1 <- function(n,p,p1,d) {
                        breaks = c(0, 5, 10, 15, 20, 25))+
     scale_size_continuous()+
     ylim(0, 23) +
-    labs(subtitle=paste("Average Passenger Load"))+ 
+    labs(subtitle=paste("Average Passenger Load"))+plotTheme()+ 
     theme(legend.position="none")
   
   #line n before passenger boarding and alighting
@@ -757,7 +757,7 @@ routeplot1 <- function(n,p,p1,d) {
     geom_line(aes(x = STOP_SEQ_ID, y = mean_on, color = "Average Boarding"), size=1) + 
     geom_line(aes(x = STOP_SEQ_ID, y = mean_off, color = "Average Alighting"), size=1)+ 
     ylim(0, 10) +
-    labs(subtitle=paste("Average Boarding/Alighting"))+ 
+    labs(subtitle=paste("Average Boarding/Alighting"))+plotTheme()+ 
     theme(legend.position="bottom", legend.box = "horizontal")
   
   # line n after map
@@ -772,7 +772,7 @@ routeplot1 <- function(n,p,p1,d) {
   scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
                        breaks = c(0, 5, 10, 15, 20, 25)) +
   labs(title=paste("Line",n,"Direction 1, After CapRemap"),
-  subtitle = "Average Number of\nPassengers at Each Stop")
+  subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
   
   #line n after passenger load chart
   t21 = ggplot(data = disagn2j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN == p1) %>%
@@ -785,7 +785,7 @@ routeplot1 <- function(n,p,p1,d) {
                        breaks = c(0, 5, 10, 15, 20, 25))+
     scale_size_continuous()+
     ylim(0, 23) +
-    labs(subtitle=paste("Average Passenger Load"))+ 
+    labs(subtitle=paste("Average Passenger Load"))+plotTheme()+ 
     theme(legend.position="none")
   
   #line n after passenger boarding and alighting
@@ -798,7 +798,7 @@ routeplot1 <- function(n,p,p1,d) {
     geom_line(aes(x = STOP_SEQ_ID, y = mean_on, color = "Average Boarding"), size=1) + 
     geom_line(aes(x = STOP_SEQ_ID, y = mean_off, color = "Average Alighting"), size=1)+ 
     ylim(0, 10) +
-    labs(subtitle=paste("Average Boarding/Alighting"))+ 
+    labs(subtitle=paste("Average Boarding/Alighting"))+plotTheme()+ 
     theme(legend.position="bottom", legend.box = "horizontal")
   
   grid.arrange(arrangeGrob(t1, t11, t12, ncol = 1, nrow = 3),

@@ -41,7 +41,9 @@ HighFreq <- st_read('D:/Spring20/Practicum/data/HighFrequency.shp')
 Replaced <- st_read('D:/Spring20/Practicum/data/EliminatedReplacement.shp')
 Eliminated <- st_read('D:/Spring20/Practicum/data/Eliminated.shp')
 Routes2001 <- st_read('D:/Spring20/Practicum/data/Routes.shp')
-stops <- st_read('D:/Spring20/Practicum/data/Stops.shp')
+#stops <- st_read('D:/Spring20/Practicum/data/Stops.shp')
+stops <- st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Stops.shp")%>%
+  st_transform(2278)
 
 Routes1801 <- Routes1801%>%
   mutate(capremap = "Before Cap Remap")
@@ -375,6 +377,7 @@ shop_pt <- shop_pt%>%
   st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
   st_transform(2278)
 
+#university
 university <- opq(bbox = 'Austin, Texas')%>%
   add_osm_feature(key = 'amenity',value = 'university') %>%
   osmdata_sf ()
@@ -415,22 +418,6 @@ stadium <- getOSM('building', 'stadium')
 #trainstation
 trainstation <- getOSM('building', 'train_station')
 
-#plot OSM
-plotOSM <- function(OSM)
-ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
-  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
-  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
-                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
-  geom_sf(data=parking,
-          inherit.aes =FALSE,
-          colour="#238443",
-          fill="#004529",
-          alpha=.5,
-          size=1,
-          shape=21)+
-  labs(x="",y="")
-
 #####buffer#####
 StopBuff <- stops%>%
   st_buffer(1320)
@@ -462,6 +449,24 @@ SupermktInit <- bufferInit(StopBuff, supermkt, 'supermkt_count')
 BarInit <- bufferInit(StopBuff, bar, 'bar_count')
 UniInit <- bufferInit(StopBuff, university, 'university_count')
 ParkingInit <- bufferInit(StopBuff, parking, 'parking_count')
+SchoolInit <- bufferInit(StopBuff, school, 'school_count')
+StationInit <- bufferInit(StopBuff, trainstation, 'station_count')
+StadiumInit <- bufferInit(StopBuff, stadium, 'stadium_count')
+
+
+#plot OSM
+plotOSM <- function(OSM)
+  ggplot()+
+  #geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
+  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL#,
+                    #guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))
+  ) +
+  #geom_sf(data=parking,inherit.aes =FALSE,colour="#E4C054",
+  #fill="#004529",alpha=.2,size=0.8)+
+  geom_sf(data = stops, aes(color = UniInit$university_count),size = 0.8) +
+  #geom_sf(data = SchoolInit)+
+  mapTheme()
 
 #####census#####
 options(tigris_use_cache = TRUE)
@@ -521,7 +526,7 @@ Population <- rbind(Travis, Williamson)%>%
 
 Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
                                   output = "sf", extensive = "estimate")
-Population_buff$estimate <- round(Population_buff$estimate)
+Population_buff$population <- round(Population_buff$estimate)
 
 <<<<<<< HEAD
 
@@ -624,7 +629,7 @@ Race <- rbind(Travis_race, Williamson_race)%>%
 
 Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
                                   output = "sf", extensive = "estimate")
-Race_buff$estimate <- round(Race_buff$estimate)
+Race_buff$race <- round(Race_buff$estimate)
 
 NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
   st_transform(2278)

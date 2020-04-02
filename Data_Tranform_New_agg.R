@@ -63,7 +63,24 @@ data_final <- rbind(data.2017,data.test)
 data_final$AVERAGE_ON <- as.numeric(data_final$AVERAGE_ON)
 
 table(data_final$Month, data_final$YEAR_ID)
+####################This is the new annual ridership plot###################################
+plot.all2<-
+  as.data.frame(data_final) %>%
+  group_by(Month, YEAR_ID) %>% 
+  summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
+  ggplot(aes(x=Month,y=BOARD_Count,  colour = YEAR_ID, linetype = Time)) + 
+  geom_point() + stat_smooth(size=1) +
+  plotTheme() +
+  ylim(50000,170000) +
+  labs(title="System-wide Ridership on an average weekday among all the stops in Austin",
+       subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
+  geom_vline(xintercept = 0, color = "blue")+
+  scale_colour_manual(values = c("#E7B800", "#0072B2", "#d95f02"), name="Year", breaks=c("2017", "2018","2019"), labels=c("2017", "2018","2019"))+
+  # scale_color_brewer(palette = "YlGnBu")
+  scale_linetype_manual(values=c("solid", "dashed"), name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
 
+plot.all2
+###############################################################################################
 plot.all<-
   as.data.frame(data_final) %>%
   group_by(Month, YEAR_ID) %>% 
@@ -71,7 +88,7 @@ plot.all<-
   ggplot(aes(x=Month,y=BOARD_Count,  colour = Time, linetype = YEAR_ID)) + 
   geom_point() + stat_smooth(size=1) +
   plotTheme() +
-  ylim(70000,170000) +
+  ylim(50000,170000) +
   labs(title="System-wide Ridership on an average weekday among all the stops in Austin",
        subtitle="CapRemap Redesign Implemented Month in Blue", x="Month", y="Average Daily Ridership")+ 
   geom_vline(xintercept = 0, color = "blue")+
@@ -79,8 +96,60 @@ plot.all<-
   # scale_color_brewer(palette = "YlGnBu")
   scale_linetype_manual(values=c("dotted", "solid", "dashed"))
 
-plot.all
-
-
 
 write.csv(data_final, "C:/Upenn/Practicum/Data/Final.csv")
+data.2017$AVERAGE_ON <- as.numeric(data.2017$AVERAGE_ON)
+data.2017$MONTH_ID <- as.factor(data.2017$MONTH_ID)
+
+plot.2017<-
+  as.data.frame(data.2017) %>%
+  group_by(MONTH_ID) %>% 
+  summarize(BOARD_Count = sum(AVERAGE_ON)) %>%
+  ggplot(aes(x=MONTH_ID,y=BOARD_Count)) + 
+  geom_bar(stat = "identity") + 
+#  plotTheme() #+
+  ylim(0,160000) +
+  labs(title="System-wide Ridership in 2017 in Austin") + 
+  geom_vline(xintercept = 6, color = "blue")#+
+#  scale_colour_manual(values = c("#E7B800", "#0072B2"), name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))+
+  # scale_color_brewer(palette = "YlGnBu")
+#  scale_linetype_manual(values=c("dotted", "solid", "dashed"))
+
+plot.2017
+data.2018$AVERAGE_ON <- as.numeric(data.2018$AVERAGE_ON)
+data.2018$MONTH_ID <- as.factor(data.2018$MONTH_ID)
+
+plot.2018<-
+  as.data.frame(data.2018) %>%
+  group_by(MONTH_ID) %>% 
+  summarize(BOARD_Count = sum(AVERAGE_ON)) %>%
+  ggplot(aes(x=MONTH_ID,y=BOARD_Count)) + 
+  geom_bar(stat = "identity") + 
+  #  plotTheme() #+
+  ylim(0,160000) +
+  labs(title="System-wide Ridership in 2018 in Austin") + 
+  geom_vline(xintercept = 6, color = "blue")#+
+#  scale_colour_manual(values = c("#E7B800", "#0072B2"), name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))+
+# scale_color_brewer(palette = "YlGnBu")
+#  scale_linetype_manual(values=c("dotted", "solid", "dashed"))
+
+plot.2018
+
+data.2019$AVERAGE_ON <- as.numeric(data.2019$AVERAGE_ON)
+data.2019$MONTH_ID <- as.factor(data.2019$MONTH_ID)
+
+plot.2019<-
+  as.data.frame(data.2019) %>%
+  group_by(MONTH_ID) %>% 
+  summarize(BOARD_Count = sum(AVERAGE_ON)) %>%
+  ggplot(aes(x=MONTH_ID,y=BOARD_Count)) + 
+  geom_bar(stat = "identity") + 
+  #  plotTheme() #+
+  ylim(0,160000) +
+  labs(title="System-wide Ridership in 2019 in Austin") + 
+  geom_vline(xintercept = 6, color = "blue")#+
+#  scale_colour_manual(values = c("#E7B800", "#0072B2"), name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))+
+# scale_color_brewer(palette = "YlGnBu")
+#  scale_linetype_manual(values=c("dotted", "solid", "dashed"))
+
+plot.2019
