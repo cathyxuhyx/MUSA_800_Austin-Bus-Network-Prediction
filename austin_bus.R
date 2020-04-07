@@ -573,7 +573,7 @@ Race <- rbind(Travis_race, Williamson_race)%>%
 
 Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
                             output = "sf", extensive = "estimate")
-Race_buff$estimate <- round(Race_buff0$estimate)
+Race_buff$estimate <- round(Race_buff$estimate)
 
 Race_buff0 <- aw_interpolate(StopBuff0, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
                             output = "sf", extensive = "estimate")
@@ -736,7 +736,7 @@ bufferPoly <- function(Buffer, Polygons, Name){
 
 #Import building footprint shapefile
 Buildings <- 
-  st_read("C:/Upenn/Practicum/Data/building_footprints_2017/building_footprints_2017.shp")%>%
+  st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/building_footprints_2017/building_footprints_2017.shp")%>%
   st_transform(2278) 
 #Import Stop shp
 stops <-
