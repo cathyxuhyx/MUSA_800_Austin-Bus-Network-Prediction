@@ -875,6 +875,7 @@ nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
   st_set_crs(4326)%>%
   st_transform(2278)
 
+
 agg_nhood_sf <- left_join(agg_nhood, nhood, by = "label" )%>%
   st_as_sf()
   
@@ -917,14 +918,16 @@ agg_sf19_sch <- agg_sf19_sch%>%
   group_by(TRUSTEE)%>%
   summarize(avg_on = mean(avg_on))
 
-library(lwgeom)
 
-UT <- st_read("D:/Spring20/Practicum/data/UTAustin/POLYGON.shp")%>%
+UT <- st_read("D:/Spring20/Practicum/data/UTAustin/UT1.shp")%>%
   st_transform(2278)%>%
-  select(geometry)%>%
-  st_make_valid()
+  select(geometry)
 
-nhood_merge  <- st_make_valid(nhood_merge)
+st_write(UT, "D:/Spring20/Practicum/data/UTAustin/UT.shp")
+
+nhood_merge  <- st_read("D:/Spring20/Practicum/data/nhood_merge.shp")%>%
+  st_as_sf(4326)%>%
+  st_transform(2278)
 
 CBD <- st_read("D:/Spring20/Practicum/data/CBD/CBD.shp")%>%
   st_transform(2278)
@@ -934,16 +937,26 @@ nhood_merge <- st_union(nhood)%>%
   st_transform(2278)
 
 nhood_CBD <- st_difference(nhood_merge, CBD)
-nhood_UT <- st_difference(nhood_merge, UT)
 
-agg_sf19_CBD <- st_join(CBD, agg_sf19, join = st_contains)
+#ST_DIFFERENCE didnt work for UT
+nhood_UT <- st_read("D:/Spring20/Practicum/data/nhood_UT.shp")%>%
+  st_as_sf()%>%
+  st_transform(2278)
+
+ggplot()+
+  geom_sf(data = nhood_UT)
+
+agg_sf19_CBD <- st_join(CBD, agg_sf19, join = st_contains)%>%
+  mutate(typology = "CBD")
 
 agg_sf19_CBD <- agg_sf19_CBD%>%
   group_by(Id)%>%
   summarize(avg_on = mean(avg_on))%>%
   mutate(label = "CBD")
 
-agg_sf19_oCBD <- st_join(nhood_CBD, agg_sf19, join = st_contains)
+agg_sf19_oCBD <- st_join(nhood_CBD, agg_sf19, join = st_contains)%>%
+  mutate(typology = "oCBD")%>%
+  rename(geometry = x)
 
 agg_sf19_oCBD <- agg_sf19_oCBD%>%
   group_by(Id)%>%
@@ -951,8 +964,10 @@ agg_sf19_oCBD <- agg_sf19_oCBD%>%
   mutate(label = "The Rest of Austin")
 
 agg_CBD <- rbind(agg_sf19_CBD,agg_sf19_oCBD)
+agg_CBD_typology <- rbind(agg_sf19_CBD,agg_sf19_oCBD)
 
-agg_sf19_UT <- st_join(UT, agg_sf19, join = st_contains)
+agg_sf19_UT <- st_join(UT, agg_sf19, join = st_contains)%>%
+  mutate(typology = "UT")
 
 agg_sf19_UT <- agg_sf19_UT%>%
   mutate(Id = 0)%>%
@@ -960,8 +975,15 @@ agg_sf19_UT <- agg_sf19_UT%>%
   summarize(avg_on = mean(na.omit(avg_on)))%>%
   mutate(label = "UT Austin")
 
-agg_sf19_oUT <- st_join(nhood_UT, agg_sf19, join = st_contains)
+agg_sf19_oUT <- st_join(nhood_UT, agg_sf19, join = st_contains)%>%
+  mutate(typology = "oUT")%>%
+  select(STOP_ID,
+         avg_on,
+         typology,
+         geometry)
 
+ggplot()+
+  geom_sf(data= agg_sf19_oUT)
 agg_sf19_oUT <- agg_sf19_oUT%>%
   mutate(Id = 0)%>%
   group_by(Id)%>%
@@ -969,6 +991,32 @@ agg_sf19_oUT <- agg_sf19_oUT%>%
   mutate(label = "The Rest of Austin")
 
 agg_UT <- rbind(agg_sf19_UT,agg_sf19_oUT)
+agg_UT_typology <- rbind(agg_sf19_UT,agg_sf19_oUT)
+
+#combine to final features
+final <- merge(final, agg_sf19_UT, by = "STOP_ID", all = T)
+final <- merge(final, agg_sf19_CBD, by = "STOP_ID", all = T)
+
+final <- final%>%
+  select(-geometry.y,
+         -avg_on.x,
+         -avg_on.y,
+         -Id)
+
+final <- final %>%
+  mutate(typology = ifelse(is.na(typology.x)  & is.na(typology.y), "theRest", 
+                                             ifelse(typology.x == "UT" & typology.y == "CBD", "UT&CBD",
+                                                    ifelse(typology.x == "UT" & is.na(typology.y), "UT", 
+                                                           if(is.na(typology.x) & typology.y == "CBD"), "CBD")))
+final <- final%>%
+  mutate(typology = ifelse(is.na(typology.x) & typology.y == "CBD", "CBD",
+                           ifelse(typology.x == "UT" & is.na(typology.y), "UT",
+                                  ifelse(is.na(typology.x) & is.na(typology.y), "theRest", "UT&CBD"))))
+
+write.csv(final, "D:/Spring20/Practicum/data/All_3.csv")                         
+
+final <- final%>%
+  select(-geometry.x)
 
 ggplot()+
   geom_sf(data = CBD)+
@@ -1023,5 +1071,10 @@ schoolDist_sf <- final%>%
   st_as_sf()%>%
   st_transform(2278)%>%
   mutate(dif = agg_after_sf)
+
+#####create typology#####
+final <- cbind(final, agg_sf19_CBD, by = STOP_ID)
+final <- final%>%
+  mutate(typology = )
   
 
