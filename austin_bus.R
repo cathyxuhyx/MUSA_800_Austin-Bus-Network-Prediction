@@ -417,6 +417,10 @@ trainstation <- getOSM('building', 'train_station')
 
 #####buffer#####
 #1/8 mile
+StopBuff3 <- stops%>%
+  st_buffer(330)
+
+#1/8 mile
 StopBuff0 <- stops%>%
   st_buffer(660)
 
@@ -483,6 +487,19 @@ ParkingInit0 <- bufferInit(StopBuff0, parking, 'parking_count')
 SchoolInit0 <- bufferInit(StopBuff0, school, 'school_count')
 StationInit0 <- bufferInit(StopBuff0, trainstation, 'station_count')
 StadiumInit0 <- bufferInit(StopBuff0, stadium, 'stadium_count')
+
+#1/16 mile buffer OSM data
+CommercialInit3 <- bufferInit(StopBuff3, commercial, 'commercial_count')
+RetailInit3 <- bufferInit(StopBuff3, retail, 'retail_count')
+OfficeInit3 <- bufferInit(StopBuff3, office, 'office_count')
+ResidentialInit3 <- bufferInit(StopBuff3, residential, 'residential_count')
+SupermktInit3 <- bufferInit(StopBuff3, supermkt, 'supermkt_count')
+BarInit3 <- bufferInit(StopBuff3, bar, 'bar_count')
+UniInit3 <- bufferInit(StopBuff3, university, 'university_count')
+ParkingInit3 <- bufferInit(StopBuff3, parking, 'parking_count')
+SchoolInit3 <- bufferInit(StopBuff3, school, 'school_count')
+StationInit3 <- bufferInit(StopBuff3, trainstation, 'station_count')
+StadiumInit3 <- bufferInit(StopBuff3, stadium, 'stadium_count')
 
 
 #plot OSM
@@ -567,6 +584,10 @@ Population_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = Population
                                   output = "sf", extensive = "estimate")
 Population_buff2$estimate <- round(Population_buff2$estimate)
 
+Population_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
+                                  output = "sf", extensive = "estimate")
+Population_buff3$estimate<- round(Population_buff3$estimate)
+
 #race
 Race <- rbind(Travis_race, Williamson_race)%>%
   st_transform(2278)
@@ -582,6 +603,10 @@ Race_buff0$estimate <- round(Race_buff0$estimate)
 Race_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
                             output = "sf", extensive = "estimate")
 Race_buff2$estimate <- round(Race_buff2$estimate)
+
+Race_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
+                            output = "sf", extensive = "estimate")
+Race_buff3$estimate <- round(Race_buff3$estimate)
 
 #vehicle ownership
 NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
@@ -599,6 +624,10 @@ NoVeh_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = NoVeh, sid = GE
                              output = "sf", extensive = "estimate")
 NoVeh_buff2$estimate <- round(NoVeh_buff2$estimate)
 
+NoVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = NoVeh, sid = GEOID, weight = "sum",
+                             output = "sf", extensive = "estimate")
+NoVeh_buff3$estimate <- round(NoVeh_buff3$estimate)
+
 OneVeh <- rbind(Travis_oneveh, Williamson_oneveh)%>%
   st_transform(2278)
 
@@ -613,6 +642,10 @@ OneVeh_buff0$estimate <- round(OneVeh_buff0$estimate)
 OneVeh_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
                               output = "sf", extensive = "estimate")
 OneVeh_buff2$estimate <- round(OneVeh_buff2$estimate)
+
+OneVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+OneVeh_buff3$estimate <- round(OneVeh_buff3$estimate)
 
 TwoVeh <- rbind(Travis_twoveh, Williamson_twoveh)%>%
   st_transform(2278)
@@ -629,6 +662,10 @@ TwoVeh_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = TwoVeh, sid = 
                               output = "sf", extensive = "estimate")
 TwoVeh_buff2$estimate <- round(TwoVeh_buff2$estimate)
 
+TwoVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = TwoVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+TwoVeh_buff3$estimate <- round(TwoVeh_buff3$estimate)
+
 ThreeVeh <- rbind(Travis_threeveh, Williamson_threeveh)%>%
   st_transform(2278)
 
@@ -643,6 +680,10 @@ ThreeVeh_buff0$estimate <- round(ThreeVeh_buff0$estimate)
 ThreeVeh_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
                                 output = "sf", extensive = "estimate")
 ThreeVeh_buff2$estimate <- round(ThreeVeh_buff2$estimate)
+
+ThreeVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
+                                output = "sf", extensive = "estimate")
+ThreeVeh_buff3$estimate <- round(ThreeVeh_buff3$estimate)
 
 FourVeh <- rbind(Travis_fourveh, Williamson_fourveh)%>%
   st_transform(2278)
@@ -659,6 +700,11 @@ FourVeh_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = FourVeh, sid 
                                output = "sf", extensive = "estimate")
 FourVeh_buff2$estimate <- round(FourVeh_buff2$estimate)
 
+FourVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = FourVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+FourVeh_buff3$estimate <- round(FourVeh_buff3$estimate)
+
+
 FiveVeh <- rbind(Travis_fiveveh, Williamson_fiveveh)%>%
   st_transform(2278)
 
@@ -673,6 +719,10 @@ FiveVeh_buff0$estimate <- round(FiveVeh_buff0$estimate)
 FiveVeh_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = FiveVeh, sid = GEOID, weight = "sum",
                                output = "sf", extensive = "estimate")
 FiveVeh_buff2$estimate <- round(FiveVeh_buff2$estimate)
+
+FiveVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = FiveVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+FiveVeh_buff3$estimate <- round(FiveVeh_buff3$estimate)
 
 #poverty
 Poverty <- rbind(Travis_poverty, Williamson_poverty)%>%
@@ -689,6 +739,10 @@ Poverty_buff0$estimate <- round(Poverty_buff0$estimate)
 Poverty_buff2 <- aw_interpolate(StopBuff2, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
                                output = "sf", extensive = "estimate")
 Poverty_buff2$estimate <- round(Poverty_buff2$estimate)
+
+Poverty_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+Poverty_buff3$estimate <- round(Poverty_buff3$estimate)
 
 #####Time Lag#####
 disagg$ACT_STOP_TIME <- as.character(disagg$ACT_STOP_TIME)
@@ -983,7 +1037,11 @@ agg_sf19_oUT <- st_join(nhood_UT, agg_sf19, join = st_contains)%>%
          geometry)
 
 ggplot()+
-  geom_sf(data= agg_sf19_oUT)
+  geom_sf(data= agg_CBD, aes(fill = label))+
+  geom_sf(data = nhood_UT)
+
+ggplot()+
+  geom_sf(data =agg_UT)
 agg_sf19_oUT <- agg_sf19_oUT%>%
   mutate(Id = 0)%>%
   group_by(Id)%>%
@@ -993,34 +1051,6 @@ agg_sf19_oUT <- agg_sf19_oUT%>%
 agg_UT <- rbind(agg_sf19_UT,agg_sf19_oUT)
 agg_UT_typology <- rbind(agg_sf19_UT,agg_sf19_oUT)
 
-#combine to final features
-final <- merge(final, agg_sf19_UT, by = "STOP_ID", all = T)
-final <- merge(final, agg_sf19_CBD, by = "STOP_ID", all = T)
-
-final <- final%>%
-  select(-geometry.y,
-         -avg_on.x,
-         -avg_on.y,
-         -Id)
-
-final <- final %>%
-  mutate(typology = ifelse(is.na(typology.x)  & is.na(typology.y), "theRest", 
-                                             ifelse(typology.x == "UT" & typology.y == "CBD", "UT&CBD",
-                                                    ifelse(typology.x == "UT" & is.na(typology.y), "UT", 
-                                                           if(is.na(typology.x) & typology.y == "CBD"), "CBD")))
-final <- final%>%
-  mutate(typology = ifelse(is.na(typology.x) & typology.y == "CBD", "CBD",
-                           ifelse(typology.x == "UT" & is.na(typology.y), "UT",
-                                  ifelse(is.na(typology.x) & is.na(typology.y), "theRest", "UT&CBD"))))
-
-write.csv(final, "D:/Spring20/Practicum/data/All_3.csv")                         
-
-final <- final%>%
-  select(-geometry.x)
-
-ggplot()+
-  geom_sf(data = CBD)+
-  geom_sf(data = nhood_CBD)
 #Ridership by neighborhoods
 ggplot() +
   geom_sf(data = agg_sf19_nhood, aes(fill = q5(avg_on))) +
@@ -1071,10 +1101,3 @@ schoolDist_sf <- final%>%
   st_as_sf()%>%
   st_transform(2278)%>%
   mutate(dif = agg_after_sf)
-
-#####create typology#####
-final <- cbind(final, agg_sf19_CBD, by = STOP_ID)
-final <- final%>%
-  mutate(typology = )
-  
-
