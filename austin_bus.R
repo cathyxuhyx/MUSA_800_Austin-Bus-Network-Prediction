@@ -582,7 +582,13 @@ Williamson_fiveveh <- get_acs(state = "48", county = "491", geography = "tract",
 Travis_poverty <- get_acs(state = "48", county = "453", geography = "tract", 
                           variables = "B06012_002", geometry = TRUE)
 Williamson_poverty <- get_acs(state = "48", county = "491", geography = "tract", 
-                              variables = "B06012_002", geometry = TRUE)
+                              variables = "B07011_001", geometry = TRUE)
+
+Travis_medInc <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B19013_001", geometry = TRUE)
+Williamson_medInc <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B19013_001", geometry = TRUE)
+
 
 #####buffer deomographics#####
 #population
@@ -772,6 +778,7 @@ FiveVeh_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = FiveVeh, sid 
                                 output = "sf", extensive = "estimate")
 FiveVeh_buff4$estimate <- round(FiveVeh_buff4$estimate)
 
+
 #poverty
 Poverty <- rbind(Travis_poverty, Williamson_poverty)%>%
   st_transform(2278)
@@ -795,6 +802,17 @@ Poverty_buff3$estimate <- round(Poverty_buff3$estimate)
 Poverty_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
                                 output = "sf", extensive = "estimate")
 Poverty_buff4$estimate <- round(Poverty_buff4$estimate)
+
+#MedInc
+medInc <- rbind(Travis_medInc, Williamson_medInc)%>%
+  st_transform(2278)
+
+
+medInc_stop <- st_join(stops, medInc, join = st_intersects)
+
+medInc_stop <- medInc_stop%>%
+  select(STOP_ID,
+         estimate)
 
 #####Time Lag#####
 disagg$ACT_STOP_TIME <- as.character(disagg$ACT_STOP_TIME)
