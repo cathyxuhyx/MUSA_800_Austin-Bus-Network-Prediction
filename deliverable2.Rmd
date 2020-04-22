@@ -1,7 +1,7 @@
 ---
 title: "Bus Ridership Prediction in Austin, TX"
 author: "Hanyong Xu, Jia Yuan, Yibing Zheng"
-date: "12/2019-present"
+date: "01/2020-present"
 output:
   html_document:
     toc: TRUE
@@ -236,8 +236,6 @@ With all of the findings from the modeling results and validation, there are sev
 - Use different buffer radius
 
 # 5. Appendix
-
-We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route, which bacame the features we used for KMeanse Analysis.
 
 ## Setup
 
@@ -778,7 +776,6 @@ print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
 ############ data.2019, new data code
 ```
 
-
 ### Identify the Hotlines
 
 First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route.
@@ -890,6 +887,8 @@ kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluste
   pack_rows("After the CapRemap (June 11 - 15, 2018)", 4, 6)%>%
   row_spec(5, bold = T, color = "black", background = "#e7b800")
 ```
+
+![](Rplot.png)
 
 ```{r}
 # load capital metro routes shape files
