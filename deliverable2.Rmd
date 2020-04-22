@@ -1,12 +1,12 @@
 ---
 title: "Bus Ridership Prediction in Austin, TX"
 author: "Hanyong Xu, Jia Yuan, Yibing Zheng"
-date: "01/2020-present"
+date: "12/2019-present"
 output:
   html_document:
     toc: TRUE
     toc_float: true
-    #code_folding: hide
+    code_folding: hide
     prettydoc::html_pretty:
     theme: cosmo
     highlight: tango
@@ -242,52 +242,34 @@ We group the disaggregated data by routes, and calculated the max and mean numbe
 ## Setup
 
 ```{r}
-# package arranged by alphabetical orders
-library(areal)
-library(caret)
-library(class)
-library(ckanr)
-library(corrplot)
-library(data.table)
-library(dplyr)
-library(FNN)
-library(flexclust)
-library(geojsonsf)
-library(gganimate)
-library(ggmap)
-library(ggplot2)
-library(ggrepel)
-library(grid)
-library(gridExtra)
-library(knitr)
-library(kableExtra)
-library(leaflet)
-library(lubridate)
-library(magrittr)
-library(MASS)
-library(metR)
-library(NbClust)
-library(nnet)
-library(nngeo)
-library(openxlsx)
-library(osmdata)
-library(plotly)
-library(QuantPsyc)
-library(RColorBrewer)
-library(reshape2)
-library(RSocrata)
-library(sf)
-library(spatstat)
-library(spdep)
-library(stargazer)
-library(tidycensus)
-library(tidyr)
-library(tidyverse)
-library(tigris)
-library(viridis)
+######### Package installs #########
+load.fun <- function(x) { 
+  x <- as.character(x) 
+  if(isTRUE(x %in% .packages(all.available=TRUE))) { 
+    eval(parse(text=paste("require(", x, ")", sep=""))) 
+    print(paste(c(x, " : already installed; requiring"), collapse=''))
+  } else { 
+    #update.packages()
+    print(paste(c(x, " : not installed; installing"), collapse=''))
+    eval(parse(text=paste("install.packages('", x, "')", sep=""))) 
+    print(paste(c(x, " : installed and requiring"), collapse=''))
+    eval(parse(text=paste("require(", x, ")", sep=""))) 
+  } 
+} 
+
+######### Required Packages ######### 
+packages = c("areal", "bayesplot", "broom",  "caret", "class", "ckanr", "corrplot", "data.table", "dials", "doParallel", "dplyr", "e1071", "earth", "FNN", "flexclust", "geojsonsf", "gganimate", "ggrepel", "glmnet", "ggmap","ggplot2","grid","gridExtra", "ipred", "kableExtra", "kknn", "klaR", "knitr", "leaflet", "lme4", "lubridate", "magrittr", "MASS", "mapview", "metR", "mltools", "NbClust", "nnet", "nngeo", "openxlsx", "osmdata", "plotly", "pROC", "QuantPsyc", "randomForest", "ranger", "RColorBrewer", "RcppEigen", "recipes", "reshape2", "rpart", "RSocrata", "rstan", "sessioninfo", "sf", "shinystan", "spatstat", "spdep", "stargazer", "themis", "tidycensus", "tidymodels", "tidyr", "tidyverse", "tigris", "viridis", "workflows", "xgboost")
+
+for(i in seq_along(packages)){
+  packge <- as.character(packages[i])
+  load.fun(packge)
+}
+
+session_info()
 ```
 
 ```{r}
+######### Set Up Functions and Plotting Options ######### 
 mapTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
@@ -323,7 +305,6 @@ plotTheme <- theme(
   axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
   axis.text.y = element_text(size = 10),
   axis.title.y = element_text(size = 10),
-  # Set the entire chart region to blank
   panel.background=element_blank(),
   plot.background=element_blank(),
   axis.ticks=element_blank())
@@ -350,41 +331,38 @@ plotTheme <- function(base_size = 12) {
     strip.text.x = element_text(size = 14)
   )
 }
-
-nn_function <- function(measureFrom,measureTo,k) {
-  
-  nn <-   
-    FNN::get.knnx(measureTo, measureFrom, k)$nn.dist
-  
-  output <-
-    as.data.frame(nn) %>%
-    rownames_to_column(var = "thisPoint") %>%
-    gather(points, point_distance, V1:ncol(.)) %>%
-    arrange(as.numeric(thisPoint)) %>%
-    group_by(thisPoint) %>%
-    summarize(pointDistance = mean(point_distance)) %>%
-    arrange(as.numeric(thisPoint)) %>% 
-    dplyr::select(-thisPoint)
-  
-  return(output)  
-}
 ```
 
+## Load Data
 ```{r load data}
+######### Load Data ######### 
 setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
-agg <- read.csv('D:/Spring20/Practicum/data/MUSA Data - Stop Ridership Aggregated.csv')
-disagg <- read.csv('D:/Spring20/Practicum/data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
-austin <- st_read('https://data.austintexas.gov/api/geospatial/3pzb-6mbr?method=export&format=GeoJSON')
-Routes1801 <- st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")
-serviceArea <- st_read('Data/Shapefiles_-_JUNE_2018/Service_Area.shp')
+
+data = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
+agg <- data######### need to add new agg data path
+disagg = read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
+disagn1 = read.delim('Data/May 2018 Detail 21 to 25.txt', header = FALSE, sep = "\t", dec = ".")
+colnames(disagn1) <- colnames(disagg)
+disagn2 = read.delim('Data/June 2018 Detail 11 to 15.txt', header = FALSE, sep = "\t", dec = ".")
+colnames(disagn2) <- colnames(disagg)
+
+nhood = st_read('https://data.austintexas.gov/resource/nz5f-3t2e.geojson')%>%
+  st_set_crs(4326)%>%
+  st_transform(2278)
+austin <- st_read('https://data.austintexas.gov/api/geospatial/3pzb-6mbr?method=export&format=GeoJSON')%>% st_transform(2278)
+serviceArea <- st_read('Data/Shapefiles_-_JUNE_2018/Service_Area.shp') %>% st_transform(2278)
 NewRoutes <- st_read('Data/Jia/NewRoutes.shp')
 HighFreq <- st_read('Data/Jia/HighFrequency.shp')
 Replaced <- st_read('Data/Jia/EliminatedReplacement.shp')
 Eliminated <- st_read('Data/Jia/Eliminated.shp')
-Routes2001 <- st_read('Data/Jia/Routes2001.shp')
-stops <- st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Stops.shp")%>%
+stops <- st_read("Data/Shapefiles_-_JUNE_2018/Stops.shp")%>%
   st_transform(2278)
+
+Routes1801 <- st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")
+Routes2001 <- st_read('Data/Jia/Routes2001.shp')
 ```
+
+## Background
 
 ```{r processing}
 Routes1801 <- Routes1801%>%
@@ -394,11 +372,20 @@ Routes2001 <- Routes2001%>%
   mutate(capremap = "After Cap Remap")
 ```
 
+### Data Structure
+
 ```{r}
-#####Data Structure#####
-#We use aggregated data to look at the average ridership on weekdays at individual stops
+#turn dataframe into spacitial object
+agg_sf <- agg%>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
+  st_transform(2278)
+
+disagg_sf <- disagg%>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
+  st_transform(2278)
+
+# We use aggregated data to look at the average ridership on weekdays at individual stops
 ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA)))+
@@ -410,15 +397,14 @@ ggplot()+
   ggrepel::geom_label_repel(
     data = subset(agg_after_sf, STOP_ID == 476),aes(label = "Average Ridership = 33 \n Average Passing Buses = 55", geometry = geometry),
     stat = "sf_coordinates",
-    min.segment.length = 3)
+    min.segment.length = 3)+mapTheme()
 
-#We use disaggregated data to investigate the average ridership on weekdays on different routes.
+# We use disaggregated data to investigate the average ridership on weekdays on different routes.
 disagg_803 <- subset(disagg_sf, ROUTE == 803)%>%
   group_by(STOP_ID)%>%
   summarize(avg_on = mean(PSGR_ON),
             avg_load = mean(PSGR_LOAD))
 ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea,NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA)))+
@@ -432,8 +418,10 @@ ggplot()+
     stat = "sf_coordinates",
     min.segment.length = 0,
     segment.color = "lightgrey",
-    point.padding = 20)
+    point.padding = 20)+mapTheme()
 ```
+
+### Route Types Changes
 
 ```{r overview map}
 ggplot()+
@@ -448,152 +436,128 @@ ggplot()+
   scale_colour_manual(values = c("Eliminated Routes" = "darkorange", "Eliminated but Replaced Routes" = "gold", "High Frequency Routes" = "dodgerblue", "New Routes" = "deeppink"),
                       guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid", "solid", "solid"), shape = c(NA, NA, NA, NA))))+
   labs(title = "Cap Remap Route Changes",
-       subtitle = "City of Austin, June 2018")
+       subtitle = "City of Austin, June 2018")+mapTheme()
 ```
 
-## Changes on Route Types
-
 ```{r major change route types}
+# Local
 local <- ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "Local"), color = "lightblue2",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "Local"), color = "lightblue2",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "lightblue2", "After Cap Remap" = "lightblue2"),
-                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "Local Routes Before and After Cap Remap")
+  labs(title = "Local Routes Before and After Cap Remap")+mapTheme()
 
-#HighFrequency
+# HighFrequency
 highFrequency <- ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "High Frequency"), color = "dodgerblue",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "High Frequency"), color = "dodgerblue",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "dodgerblue", "After Cap Remap" = "dodgerblue"),
-                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "High Frequency Routes Before and After Cap Remap")
+  labs(title = "High Frequency Routes Before and After Cap Remap")+mapTheme()
 
-#major changes grid arrange
+# major changes grid arrange
 grid.arrange(local, highFrequency, ncol = 1)
-
 ```
 
 ```{r minor change route types, fig.width = 25, fig.height= 10}
-#Crosstown
+# Crosstown
 crosstown <-ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "Crosstown"), color = "greenyellow",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "Crosstown"), color = "greenyellow",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "greenyellow", "After Cap Remap" = "greenyellow"),
-                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "Crosstown Routes Before and After Cap Remap")
+  labs(title = "Crosstown Routes Before and After Cap Remap")+mapTheme()
 
-#Feeder
+# Feeder
 feeder <-ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "Feeder"), color = "lightcoral",lwd = 0.8, show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "Feeder"), color = "lightcoral",lwd = 0.8, show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "lightcoral", "After Cap Remap" = "lightcoral"))+
-                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "Feeder Routes Before and After Cap Remap")
+  labs(title = "Feeder Routes Before and After Cap Remap")+mapTheme()
 
 
-#Flyer
+# Flyer
 flyer <- ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "Flyer"), color = "magenta2",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "Flyer"), color = "magenta2",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "magenta2", "After Cap Remap" = "magenta2"),
-                     # guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "Flyer Routes Before and After Cap Remap")
+  labs(title = "Flyer Routes Before and After Cap Remap")+mapTheme()
 
-#Express
+# Express
 express <-ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "Express"), color = "red",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "Express"), color = "red",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "red", "After Cap Remap" = "red"),
-                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "Express Routes Before and After Cap Remap")
+  labs(title = "Express Routes Before and After Cap Remap")+mapTheme()
 
-#Special
+# Special
 special <- ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "Special"), color = "seashell2",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "Special"), color = "seashell2",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "seashell2", "After Cap Remap" = "seashell2"),
-   #                   guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "Speical Routes Before and After Cap Remap")
+  labs(title = "Speical Routes Before and After Cap Remap")+mapTheme()
 
-#minor changes grid arrange
+# minor changes grid arrange
 
 grid.arrange(crosstown, feeder, flyer, express, ncol =2)
 ```
 
 ``` {r no change route types, fig.width = 25, fig.height= 10}
-#UT Shuttle
+# UT Shuttle
 UTShuttle <- ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "UT Shuttle"), color = "orange",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "UT Shuttle"), color = "orange",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "orange", "After Cap Remap" = "orange"),
-                      #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "UT Shuttle Before and After Cap Remap")
+  labs(title = "UT Shuttle Before and After Cap Remap")+mapTheme()
 
-#Nigh Owl
+# Nigh Owl
 nightowl <- ggplot()+
-  geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
   geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
   scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
                     guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   geom_sf(data = subset(Routes1801, ROUTETYPE == "Night Owl"), color = "slategray2",lwd = 0.8,show.legend = FALSE)+
   geom_sf(data = subset(Routes2001, ROUTETYPE == "Night Owl"), color = "slategray2",lwd = 0.8,show.legend = FALSE)+
-  #scale_colour_manual(values = c("Before Cap Remap" = "slategray2", "After Cap Remap" = "slategray2"),
-   #                   guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   facet_grid(~capremap)+
-  labs(title = "Nigh Owl Routes Before and After Cap Remap")
+  labs(title = "Nigh Owl Routes Before and After Cap Remap")+mapTheme()
 
-#no change grid arrange
+# no change grid arrange
 grid.arrange(UTShuttle, special, nightowl, ncol = 2)
 ```
 
 ## Exploratory Analysis
 
-### How did ridership change before and after CapRemap (06/03, 2018)?
-```{r}
-setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
-data = read.csv('Data/MUSA Data - Stop Ridership Aggregated.csv')
+### Ridership Typology
 
+```{r}
+############ need to add more code here
+```
+
+
+### How did ridership change before and after CapRemap (06/03, 2018)?
+
+```{r}
 table(data$YEAR_ID)
 #Subset data in 2018 for further analysis
 data.y18 <- data %>%
@@ -660,8 +624,8 @@ plot.all2<-
   scale_linetype_manual(values=c("solid", "dashed"), name="Time Period (Before,After)", breaks=c("0", "1"), labels=c("After", "Before"))
 ```
 
-
 ### Ridership Change in Different Neighborhoods in Austin in 2018
+
 ```{r}
 #Transform ridership data into geo data
 data.y18.sf <-
@@ -673,17 +637,10 @@ data.y.sf <-
   data.y %>%
   st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
   st_transform(2278)
-
-#Load neighborhood geojson
-nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
-  st_set_crs(4326)%>%
-  st_transform(2278)
-
 ```
 
 ```{r}
 #Load the transformed dataset from long format-stop level to long format-neighborhood level
-setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
 Rider_nhood4 <- read.csv("Data/GRACE/Rider_nhood4.csv")
 Rider_nhood4$Before <- ifelse(Rider_nhood4$Month == -5 |Rider_nhood4$Month == -4 |Rider_nhood4$Month == -3|Rider_nhood4$Month == -2|Rider_nhood4$Month == -1, "1", "0")
 Rider_nhood <- read.csv("Data/GRACE/Rider_nhood.csv")
@@ -735,10 +692,6 @@ plot.UT <-
 ```
 
 ```{r}
-nhood <- st_read("https://data.austintexas.gov/resource/nz5f-3t2e.geojson")%>%
-  st_set_crs(4326)%>%
-  st_transform(2278)
-
 UT2 <- nhood%>%
   subset(nhood$label == "UT")
 Map.UT<-
@@ -821,19 +774,15 @@ print(plot.Zilker)
 print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
 ```
 
+```{r}
+############ data.2019, new data code
+```
+
+
 ### Identify the Hotlines
 
-```{r}
-setwd('C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801')
-disagg = read.csv('Data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
-nhood = st_read('https://data.austintexas.gov/resource/nz5f-3t2e.geojson')
-
-disagn1 = read.delim('Data/May 2018 Detail 21 to 25.txt', header = FALSE, sep = "\t", dec = ".")
-colnames(disagn1) <- colnames(disagg)
-disagn2 = read.delim('Data/June 2018 Detail 11 to 15.txt', header = FALSE, sep = "\t", dec = ".")
-colnames(disagn2) <- colnames(disagg)
-```
 First, let us look at the Kmeans analysis before the CapRemap. We group the disaggregated data by routes, and calculated the max and mean number of passengers on bus at each stop, the average miles traveled and the average hours spent for each passenger at each stop, as well as the total run length and total run time of the route.
+
 ```{r}
 disagn1_km = disagn1 %>%
   group_by(ROUTE) %>%
@@ -943,11 +892,12 @@ kable(caption = "K-Means Clustering Analysis Result: Mean Values for Each Cluste
 ```
 
 ```{r}
+# load capital metro routes shape files
 capmetro <- 
-  st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Routes.shp")%>%
+  st_read("Data/Shapefiles_-_JUNE_2018/Routes.shp")%>%
   st_transform(2278) 
 
-capmetro0 <-st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JANUARY_2018/Routes.shp")%>%
+capmetro0 <-st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")%>%
   st_transform(2278)
 ```
 
@@ -1067,10 +1017,24 @@ routeplot1(801,39622, 38305,0)
 routeplot1(803,39626, 38309,0)
 ```
 
+
 ## Feature Engineering
 
+### Buffer Set Up
 ```{r}
-#####OSM#####
+#1/4 mile
+StopBuff <- stops%>%
+  st_buffer(1320)
+#1/16 mile: 330
+#1/8 mile: 660
+#1/2 mile: 2640
+```
+
+### Amenities (use buffer)
+
+#### Open Street Map (OSM) Amenity Counts
+```{r}
+######### Get OSM Data #########
 getOSM <- function(key,value){
   feature <- opq(bbox = 'Austin, Texas')%>%
     add_osm_feature(key = key, value = value) %>%
@@ -1089,41 +1053,6 @@ getOSM <- function(key,value){
   return (feature_pt)
   }
 }
-```
-
-```{r}
-#shop
-shop <- opq(bbox = 'Austin, Texas')%>%
-  add_osm_feature(key = 'shop') %>%
-  osmdata_sf ()
-
-shop_pt <- shop$osm_points
-
-shop_pt <- shop_pt%>%
-  select(osm_id,
-         name,
-         addr.city,
-         geometry)%>%
-  st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-  st_transform(2278)
-
-#university
-university <- opq(bbox = 'Austin, Texas')%>%
-  add_osm_feature(key = 'amenity',value = 'university') %>%
-  osmdata_sf ()
-
-university <- university$osm_polygons%>%
-  select(geometry)%>%
-  st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-  st_transform(2278)
-
-shop_pt <- shop_pt%>%
-  select(osm_id,
-         name,
-         addr.city,
-         geometry)%>%
-  st_as_sf(coords = geometry, crs = 4326, agr = "constant")%>%
-  st_transform(2278)
 
 #commercial
 commercial <- getOSM('building', 'commercial')
@@ -1147,19 +1076,8 @@ parking <- getOSM('amenity', 'parking')
 stadium <- getOSM('building', 'stadium')
 #trainstation
 trainstation <- getOSM('building', 'train_station')
-```
 
-```{r}
-#####buffer#####
-StopBuff <- stops%>%
-  st_buffer(1320)
-
-StopBuff2 <- stops%>%
-  st_buffer(2640)
-```
-
-```{r}
-######spatial join#####
+######### spatial join #########
 bufferInit <- function(Buffer, Points, Name){
   if(class(Points$geometry) == "sfc_POINT"){
   Init <- st_join(Buffer%>% select(STOP_ID), Points, join = st_contains)%>%
@@ -1173,7 +1091,10 @@ bufferInit <- function(Buffer, Points, Name){
       rename(!!Name := count)
   }
 }
+```
 
+```{r}
+#1/4 mile buffer OSM data
 CommercialInit <- bufferInit(StopBuff, commercial, 'commercial_count')
 RetailInit <- bufferInit(StopBuff, retail, 'retail_count')
 OfficeInit <- bufferInit(StopBuff, office, 'office_count')
@@ -1185,421 +1106,9 @@ ParkingInit <- bufferInit(StopBuff, parking, 'parking_count')
 SchoolInit <- bufferInit(StopBuff, school, 'school_count')
 StationInit <- bufferInit(StopBuff, trainstation, 'station_count')
 StadiumInit <- bufferInit(StopBuff, stadium, 'stadium_count')
-
-#plot OSM
-plotOSM <- function(OSM)
-  ggplot()+
-  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
-  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL) +
-  geom_sf(data = stops, aes(color = UniInit$university_count),size = 0.8) +
-  mapTheme()
 ```
 
-```{r}
-#####census#####
-options(tigris_use_cache = TRUE)
-v17 <- load_variables(2017, "acs5", cache = TRUE)
-
-Hays <- get_acs(state = "48", county = "209", geography = "tract", 
-                variables = "B01001_001", geometry = TRUE)
-Travis <- get_acs(state = "48", county = "453", geography = "tract", 
-                  variables = "B01001_001", geometry = TRUE)
-Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
-                      variables = "B01001_001", geometry = TRUE) 
-
-Travis_race <- get_acs(state = "48", county = "453", geography = "tract", 
-                       variables = "B02001_002", geometry = TRUE)
-Williamson_race <- get_acs(state = "48", county = "491", geography = "tract", 
-                           variables = "B02001_002", geometry = TRUE) 
-
-Travis_noveh <- get_acs(state = "48", county = "453", geography = "tract", 
-                        variables = "B08014_002", geometry = TRUE)
-Williamson_noveh <- get_acs(state = "48", county = "491", geography = "tract", 
-                            variables = "B08014_002", geometry = TRUE)
-
-Travis_oneveh <- get_acs(state = "48", county = "453", geography = "tract", 
-                        variables = "B08014_003", geometry = TRUE)
-Williamson_oneveh <- get_acs(state = "48", county = "491", geography = "tract", 
-                            variables = "B08014_003", geometry = TRUE)
-
-Travis_twoveh <- get_acs(state = "48", county = "453", geography = "tract", 
-                         variables = "B08014_004", geometry = TRUE)
-Williamson_twoveh <- get_acs(state = "48", county = "491", geography = "tract", 
-                             variables = "B08014_004", geometry = TRUE)
-
-Travis_threeveh <- get_acs(state = "48", county = "453", geography = "tract", 
-                         variables = "B08014_005", geometry = TRUE)
-Williamson_threeveh <- get_acs(state = "48", county = "491", geography = "tract", 
-                             variables = "B08014_005", geometry = TRUE)
-
-Travis_fourveh <- get_acs(state = "48", county = "453", geography = "tract", 
-                           variables = "B08014_006", geometry = TRUE)
-Williamson_fourveh <- get_acs(state = "48", county = "491", geography = "tract", 
-                               variables = "B08014_006", geometry = TRUE)
-
-Travis_fiveveh <- get_acs(state = "48", county = "453", geography = "tract", 
-                          variables = "B08014_007", geometry = TRUE)
-Williamson_fiveveh <- get_acs(state = "48", county = "491", geography = "tract", 
-                              variables = "B08014_007", geometry = TRUE)
-
-Travis_poverty <- get_acs(state = "48", county = "453", geography = "tract", 
-                          variables = "B06012_002", geometry = TRUE)
-Williamson_poverty <- get_acs(state = "48", county = "491", geography = "tract", 
-                              variables = "B06012_002", geometry = TRUE)
-```
-
-```{r}
-#####buffer deomographics#####
-#demo data bind
-Population <- rbind(Travis, Williamson)%>%
-  st_transform(2278)
-
-Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
-                                  output = "sf", extensive = "estimate")
-Population_buff$population <- round(Population_buff$estimate)
-```
-
-```{r}
-Race <- rbind(Travis_race, Williamson_race)%>%
-  st_transform(2278)
-
-Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
-                                  output = "sf", extensive = "estimate")
-Race_buff$race <- round(Race_buff$estimate)
-
-NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
-  st_transform(2278)
-
-NoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = NoVeh, sid = GEOID, weight = "sum",
-                            output = "sf", extensive = "estimate")
-NoVeh_buff$estimate <- round(NoVeh_buff$estimate)
-
-OneVeh <- rbind(Travis_oneveh, Williamson_oneveh)%>%
-  st_transform(2278)
-
-OneVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
-                             output = "sf", extensive = "estimate")
-OneVeh_buff$estimate <- round(OneVeh_buff$estimate)
-
-TwoVeh <- rbind(Travis_twoveh, Williamson_twoveh)%>%
-  st_transform(2278)
-
-TwoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = TwoVeh, sid = GEOID, weight = "sum",
-                              output = "sf", extensive = "estimate")
-TwoVeh_buff$estimate <- round(TwoVeh_buff$estimate)
-
-ThreeVeh <- rbind(Travis_threeveh, Williamson_threeveh)%>%
-  st_transform(2278)
-
-ThreeVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
-                              output = "sf", extensive = "estimate")
-ThreeVeh_buff$estimate <- round(ThreeVeh_buff$estimate)
-
-FourVeh <- rbind(Travis_fourveh, Williamson_fourveh)%>%
-  st_transform(2278)
-
-FourVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FourVeh, sid = GEOID, weight = "sum",
-                                output = "sf", extensive = "estimate")
-FourVeh_buff$estimate <- round(FourVeh_buff$estimate)
-
-FiveVeh <- rbind(Travis_fiveveh, Williamson_fiveveh)%>%
-  st_transform(2278)
-
-FiveVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FiveVeh, sid = GEOID, weight = "sum",
-                               output = "sf", extensive = "estimate")
-FiveVeh_buff$estimate <- round(FiveVeh_buff$estimate)
-
-Poverty <- rbind(Travis_poverty, Williamson_poverty)%>%
-  st_transform(2278)
-
-Poverty_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
-                               output = "sf", extensive = "estimate")
-Poverty_buff$estimate <- round(Poverty_buff$estimate)
-```
-
-```{r}
-#####Time Lag#####
-disagg$ACT_STOP_TIME <- as.character(disagg$ACT_STOP_TIME)
-
-disagg <- disagg%>%
-  mutate(interval60 = floor_date(mdy_hm(ACT_STOP_TIME), unit = "hour"),
-         interval15 = floor_date(mdy_hm(ACT_STOP_TIME), unit = "15 mins"))
-
-study.panel <- 
-  expand.grid(interval60=unique(disagg$interval60), 
-              STOP_ID = unique(disagg$STOP_ID))
-
-disagg.panel <- disagg%>%
-  right_join(study.panel)%>%
-  group_by(interval60, STOP_ID)%>%
-  summarize(avg_on = mean(PSGR_ON))
-
-disagg.timelag <- 
-  disagg.panel %>% 
-  arrange(STOP_ID, interval60) %>% 
-  mutate(lagHour = dplyr::lag(avg_on,1),
-         lag2Hours = dplyr::lag(avg_on,2),
-         lag3Hours = dplyr::lag(avg_on,3),
-         lag4Hours = dplyr::lag(avg_on,4),
-         lag12Hours = dplyr::lag(avg_on,12),
-         lag1day = dplyr::lag(avg_on,24))
-```
-
-```{r}
-
-#Building Area Feature Engineering
-#Create the polygon buffer function
-bufferPoly <- function(Buffer, Polygons, Name){
-  if(class(Polygons$geometry) == "sfc_POLYGON"){
-    Poly <- st_join(Buffer%>% select(STOP_ID), Polygons, join = st_intersects)%>%
-      group_by(STOP_ID)%>%
-      summarize(area = sum(Total_area))%>%
-      rename(!!Name := area)
-  }
-  #else {
-  #  Poly <- st_join(Buffer%>% select(STOP_ID), Polygons, join = st_intersects)%>%
-  #    group_by(STOP_ID)%>%
-  #    summarize(count = n())%>%
-  #    rename(!!Name := count)
-  #}
-}
-
-#Import building footprint shapefile
-Buildings <- 
-  st_read("C:/Upenn/Practicum/Data/building_footprints_2017/building_footprints_2017.shp")%>%
-  st_transform(2278) 
-#Import Stop shp
-stops <-
-  st_read("C:/Upenn/Practicum/Data/Shapefiles_-_JUNE_2018/Stops.shp") %>%
-  st_transform(2278)
-
-#Create columns of the num of floors and total building areas
-Buildings$Floor <- round(Buildings$MAX_HEIGHT/10)
-Buildings$Total_area <- Buildings$Floor * Buildings$SHAPE_AREA
-
-AreaPoly <- bufferPoly(StopBuff, Buildings, 'building_area')
-AreaPoly$geometry <- NULL
-
-AreaPoly2 <- bufferPoly(StopBuff2, Buildings, 'building_area')
-
-write.csv(AreaPoly, "C:/Upenn/Practicum/Data/Building_Area2.csv")
-
-write.csv(AreaPoly2, "C:/Upenn/Practicum/Data/Building_Area2.csv")
-
-?merge
-
-Austin.sf <- merge(AreaPoly, data.2018, by= "STOP_ID", all.x=TRUE)
-
-Austin.sf$geometry <- NULL
-Austin.sf<- Austin.sf[-c(25158,25159,25160,25161,25162,25163,25164,35408,37475,37476,37477,37478,37479,37480,37481,39140,39153,39292,42526,42527,42528,42529,42530,42531,
-                         42532,42533,42534,44292,44293,45249,45250,48882,48883,48915,48916), ]
-which(is.na(Austin.sf$LONGITUDE))
-
-Austin.sf <- 
-  Austin.sf %>% 
-  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
-  st_transform(2278)
-
-library(wesanderson)
-palette5 <- wes_palette("Moonrise3", n = 5)
-palette5 <- 
-  mapTheme <- function(base_size = 12) {
-    theme(
-      text = element_text( color = "black"),
-      plot.title = element_text(size = 14,colour = "black"),
-      plot.subtitle=element_text(face="italic"),
-      plot.caption=element_text(hjust=0),
-      axis.ticks = element_blank(),
-      panel.background = element_blank(),axis.title = element_blank(),
-      axis.text = element_blank(),
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.border = element_rect(colour = "black", fill=NA, size=2)
-    )
-  }
-
-ggplot() +
-  geom_sf(data = nhood, fill = "grey40") +
-  geom_sf(data = Austin.sf, aes(colour = q5(building_area)), show.legend = "point", size = .75) +
-  scale_colour_manual(values = palette5,
-                      labels=qBr(Austin.sf,"building_area"),
-                      name="Quintile\nBreaks") +
-  labs(title="Building Area within 1/4 Mile Buffer from each Stop") +
-  mapTheme()
-```
-
-```{r}
-# use datasets after cap remap
-route_stop = disagn2j %>% group_by(ROUTE, TRIP, STOP_ID) %>% slice(1)
-```
-
-```{r}
-# reorganize the direction feature
-capmetro_dir_mod = capmetro %>% 
-                   select(ROUTE_ID, DIRECTION, ROUTETYPE) %>% 
-                   st_drop_geometry() %>%
-                   mutate(DTYPES=case_when(
-                     DIRECTION=="Southbound"~"SouthNorth",
-                     DIRECTION=="Northbound"~"SouthNorth",
-                     DIRECTION=="Westbound"~"WestEast",
-                     DIRECTION=="Eastbound"~"WestEast",
-                     DIRECTION=="Inbound"~"InOut",
-                     DIRECTION=="Outbound"~"InOut",
-                     DIRECTION=="Counterclockwise"~"Counterclockwise",
-                     DIRECTION=="Clockwise"~"Clockwise",
-  ))
-```
-
-```{r}
-dis_cap1 = merge(x = route_stop %>% select(ROUTE, STOP_ID), 
-                 y = capmetro_dir_mod %>%
-                   group_by(ROUTETYPE, DTYPES, ROUTE_ID) %>%
-                   slice(1), 
-                 by.x = 'ROUTE', by.y = 'ROUTE_ID')
-```
-
-```{r}
-# number of shifts (total frequency); route orientation frequency at each stop
-stop_dir_freq = merge(x = dis_cap1 %>% group_by(STOP_ID) %>% summarise(nshifts=n()), 
-      y = dis_cap1 %>% group_by(STOP_ID, DTYPES) %>% summarise(n=n()) %>% 
-        mutate(prop_route=n/sum(n)) %>% subset(select=c("STOP_ID","DTYPES","prop_route")) %>% 
-        spread(DTYPES, prop_route), by = "STOP_ID")
-stop_dir_freq[is.na(stop_dir_freq)] <- 0
-```
-
-```{r}
-# route type frequency at each stop
-stop_type_freq = dis_cap1 %>% group_by(STOP_ID, ROUTETYPE) %>% summarise(n=n()) %>% 
-        mutate(prop_type=n/sum(n)) %>% subset(select=c("STOP_ID","ROUTETYPE","prop_type")) %>% 
-        spread(ROUTETYPE, prop_type)
-stop_type_freq[is.na(stop_type_freq)] <- 0
-stop_type_freq[11] <- NULL # remove NA column
-```
-
-```{r}
-# hotlines frequency & hub dummy
-hotline_dum = as.numeric(dis_cap1$ROUTE %in% hotlines_po$hotlines_po)
-stop_hot = cbind(dis_cap1, hotline_dum)
-stop_hot_freq = stop_hot %>% group_by(STOP_ID, hotline_dum) %>% summarise(n=n()) %>% 
-        mutate(prop_hot=n/sum(n)) %>% subset(select=c("STOP_ID","hotline_dum","prop_hot")) %>% 
-        spread(hotline_dum, prop_hot)
-stop_hot_freq[is.na(stop_hot_freq)] <- 0
-colnames(stop_hot_freq) <- c("STOP_ID", "hotline_0", "hotline_1")
-```
-
-```{r}
-hub_stop <- 
-  st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Shapefiles_-_JUNE_2018/Hub_Stops.shp") %>% st_transform(2278)
-```
-
-```{r}
-hub_dum <- as.numeric(unique(dis_cap1$STOP_ID) %in% hub_stop$STOP_ID)
-hub_dum = data.frame(STOP_ID = stop_type_freq$STOP_ID, hubs = hub_dum)
-stop_type_freq = merge(stop_type_freq, hub_dum, by = "STOP_ID")
-```
-
-```{r}
-# building area
-build_dens <- read.csv("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/Building_Area2.csv")
-```
-
-```{r}
-# ridership calc (import data see Data_Transform_New_agg.R)
-data.2019$STOP_ID = as.numeric(data.2019$STOP_ID) 
-data.2019.mean = data.2019 %>%
-  group_by(STOP_ID) %>%
-  summarise(mean_on = mean(as.numeric(AVERAGE_LOAD)))
-```
-
-```{r}
-# add land use data as fixed effect
-landuse <- 
-  st_read("https://data.austintexas.gov/api/geospatial/fj9m-h5qy?method=export&format=GeoJSON") %>% 
-  st_transform(2278)
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data = landuse) +
-  mapTheme()
-```
-
-```{r}
-# re-categorize the general land use column
-landuse_x = landuse %>% 
-                   select(shape_area, general_land_use, land_use, geometry) %>% 
-                   mutate(land_use_x=case_when(
-                     general_land_use %in% c(100, 113, 200) ~ "residential",
-                     general_land_use == 300 ~ "commercial",
-                     general_land_use == 330 ~ "mixed_use",
-                     general_land_use == 400 ~ "office",
-                     general_land_use == 500 ~ "industrial",
-                     general_land_use == 600 ~ "civic",
-                     general_land_use %in% c(700, 940) ~ "nature",
-                     general_land_use %in% c(800, 860) ~ "transportation",
-                     general_land_use %in% c(870, 900, 999) ~ "others"
-  ))
-```
-
-```{r}
-all_x2 = all_x1 %>% st_join(landuse_x)
-```
-
-```{r}
-#find the composition of the landuse surrounding each stop
-stop_buff_landuse = all_x2 %>% 
-  group_by(STOP_ID, land_use_x) %>% 
-  summarize(n=sum(as.numeric(shape_area))) %>%
-  mutate(prop_landuse=n/sum(n)) %>%
-  select(STOP_ID, prop_landuse, land_use_x) %>%
-  spread(land_use_x, prop_landuse)
-#drop the na column
-stop_buff_landuse[12] <- NULL
-#fill na with 0
-stop_buff_landuse[is.na(stop_buff_landuse)] <- 0
-```
-
-```{r}
-# neighborhood as fixed effect
-stop_nhood = stops %>% 
-  select(STOP_ID, geometry) %>%
-  st_as_sf() %>%
-  st_transform(2278) %>%
-  st_join(nhood %>% select(label))
-#fill in the na values (outside all the neighborhood boundaries) with "Not Defined"
-stop_nhood$label <- as.character(stop_nhood$label)
-stop_nhood[is.na(stop_nhood)] <- "Not Defined"
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data = nhood) +
-  geom_sf(data = stops) +
-  mapTheme()
-```
-
-```{r}
-# school district as fixed effect
-stop_school = stops %>% 
-  select(STOP_ID, geometry) %>%
-  st_as_sf() %>%
-  st_transform(2278) %>%
-  st_join(TrusteeDist %>% select(TRUSTEE))
-
-#fill in the na values (outside all the neighborhood boundaries) with "Not Defined"
-stop_school$TRUSTEE <- as.character(stop_school$TRUSTEE)
-stop_school[is.na(stop_school)] <- "Not Defined"
-stop_school$TRUSTEE <- as.factor(stop_school$TRUSTEE)
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data = TrusteeDist) +
-  geom_sf(data = stops) +
-  mapTheme()
-```
-
+#### Amenity Distance
 
 ```{r}
 ## k nearest neighbor distance as features
@@ -1656,14 +1165,13 @@ makeXY <- function(original_data, geometry_name) {
 # function that create the knn column ready for join
 amenity_dist <- function(original_data, geometry_name, k, new_name) {
   makeXY <- makeXY(original_data, geometry_name)
-  
   pointDistance <- nn_function(stopsXY, makeXY, k) 
-  
   names(pointDistance) <- new_name
-  
   return(pointDistance)
 }
 ```
+
+##### UT Austin and CBD
 
 ```{r}
 #add point of interest locations
@@ -1671,10 +1179,10 @@ amenity_dist <- function(original_data, geometry_name, k, new_name) {
 UTAustin <- data_frame(name = "UT Austin", lat = 30.285350, lon = -97.734458) %>%
   st_as_sf(coords = c("lon","lat"), crs = 4326, agr = "constant") %>%
   st_transform(2278)
-UTAustin_bound <- st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/UTAustin/POLYGON.shp") %>% 
+UTAustin_bound <- st_read("Data/UTAustin/POLYGON.shp") %>% 
   st_transform(2278)
 #CBD
-CBD_bound <- st_read("C:/Users/HanyongXu/Documents/Me/grad/Spring_2020/MUSA801/Data/CBD/POLYGON.shp") %>% 
+CBD_bound <- st_read("Data/CBD/POLYGON.shp") %>% 
   st_transform(2278)
 #air port
 airport <- data_frame(name = "Airport", lat = 30.202741, lon = -97.666771) %>%
@@ -1684,10 +1192,7 @@ airport <- data_frame(name = "Airport", lat = 30.202741, lon = -97.666771) %>%
 
 ```{r}
 ggplot() + 
-  #geom_sf(data = nhood) +
-  #geom_sf(data = stops, aes(color = as.numeric(st_distance(stops, UTAustin_bound, by_element = TRUE))),size=0.5) +
   geom_sf(data = UTAustin_bound) +
-  #geom_sf(data = stops, aes(color = as.numeric(st_distance(stops, CBD_bound))),size=0.5) +
   #geom_sf(data = CBD_bound) +
   mapTheme()
 ```
@@ -1709,6 +1214,7 @@ CBDDist = st_distance(stops, CBD_bound) %>%
 colnames(CBDDist) = "CBD_dist"
 ```
 
+##### OSM
 
 ```{r}
 # calculate the distance to 3 nearest amenities 
@@ -1727,8 +1233,331 @@ universityDist = amenity_dist(university, geometry, 3, "universityDist")
 airportDist = amenity_dist(airport, geometry, 1, "airportDist")
 ```
 
+### Built Environments
+
+#### land use (use buffer)
 ```{r}
-## spatial lag
+landuse <- 
+  st_read("https://data.austintexas.gov/api/geospatial/fj9m-h5qy?method=export&format=GeoJSON") %>% 
+  st_transform(2278)
+
+ggplot() + 
+  geom_sf(data = landuse) +
+  mapTheme()
+```
+
+```{r}
+# re-categorize the general land use column
+landuse_x = landuse %>% 
+                   select(shape_area, general_land_use, land_use, geometry) %>% 
+                   mutate(land_use_x=case_when(
+                     general_land_use %in% c(100, 113, 200) ~ "residential",
+                     general_land_use == 300 ~ "commercial",
+                     general_land_use == 330 ~ "mixed_use",
+                     general_land_use == 400 ~ "office",
+                     general_land_use == 500 ~ "industrial",
+                     general_land_use == 600 ~ "civic",
+                     general_land_use %in% c(700, 940) ~ "nature",
+                     general_land_use %in% c(800, 860) ~ "transportation",
+                     general_land_use %in% c(870, 900, 999) ~ "others"
+  ))
+```
+
+```{r}
+#find the composition of the landuse surrounding each stop
+stop_buff_landuse = StopBuff %>% 
+  select(STOP_ID) %>% 
+  st_join(landuse_x) %>% 
+  group_by(STOP_ID, land_use_x) %>% 
+  summarize(n=sum(as.numeric(shape_area))) %>%
+  mutate(prop_landuse=n/sum(n)) %>%
+  select(STOP_ID, prop_landuse, land_use_x) %>%
+  spread(land_use_x, prop_landuse)
+#drop the na column
+stop_buff_landuse[12] <- NULL
+#fill na with 0
+stop_buff_landuse[is.na(stop_buff_landuse)] <- 0
+```
+
+#### building density (use buffer)
+```{r}
+#Create the polygon buffer function
+bufferPoly <- function(Buffer, Polygons, Name){
+  if(class(Polygons$geometry) == "sfc_POLYGON"){
+    Poly <- st_join(Buffer%>% select(STOP_ID), Polygons, join = st_intersects)%>%
+      group_by(STOP_ID)%>%
+      summarize(area = sum(Total_area))%>%
+      rename(!!Name := area)
+  }
+}
+```
+
+```{r}
+#Import building footprint shapefile
+Buildings <- 
+  st_read("Data/building_footprints_2017/building_footprints_2017.shp")%>%
+  st_transform(2278) 
+
+#Create columns of the num of floors and total building areas
+Buildings$Floor <- round(Buildings$MAX_HEIGHT/10)
+Buildings$Total_area <- Buildings$Floor * Buildings$SHAPE_AREA
+
+AreaPoly <- bufferPoly(StopBuff, Buildings, 'building_area')
+AreaPoly$geometry <- NULL
+build_dens = AreaPoly
+```
+
+#### neighborhoods
+
+```{r}
+stop_nhood = stops %>% 
+  select(STOP_ID, geometry) %>%
+  st_as_sf() %>%
+  st_transform(2278) %>%
+  st_join(nhood %>% select(label))
+
+#fill in the na values (outside all the neighborhood boundaries) with "Not Defined"
+stop_nhood$label <- as.character(stop_nhood$label)
+stop_nhood[is.na(stop_nhood)] <- "Not Defined"
+```
+
+#### school districts
+
+```{r}
+stop_school = stops %>% 
+  select(STOP_ID, geometry) %>%
+  st_as_sf() %>%
+  st_transform(2278) %>%
+  st_join(TrusteeDist %>% select(TRUSTEE))
+
+#fill in the na values (outside all the neighborhood boundaries) with "Not Defined"
+stop_school$TRUSTEE <- as.character(stop_school$TRUSTEE)
+stop_school[is.na(stop_school)] <- "Not Defined"
+stop_school$TRUSTEE <- as.factor(stop_school$TRUSTEE)
+```
+
+#### typology
+
+```{r}
+########## add codes
+```
+
+### Demographics
+
+```{r}
+######### census #########
+options(tigris_use_cache = TRUE)
+v17 <- load_variables(2017, "acs5", cache = TRUE)
+
+Hays <- get_acs(state = "48", county = "209", geography = "tract", 
+                variables = "B01001_001", geometry = TRUE)
+Travis <- get_acs(state = "48", county = "453", geography = "tract", 
+                  variables = "B01001_001", geometry = TRUE)
+Williamson <- get_acs(state = "48", county = "491", geography = "tract", 
+                      variables = "B01001_001", geometry = TRUE) 
+
+Travis_race <- get_acs(state = "48", county = "453", geography = "tract", 
+                       variables = "B02001_002", geometry = TRUE)
+Williamson_race <- get_acs(state = "48", county = "491", geography = "tract", 
+                           variables = "B02001_002", geometry = TRUE) 
+
+Travis_noveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                        variables = "B08014_002", geometry = TRUE)
+Williamson_noveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                            variables = "B08014_002", geometry = TRUE)
+
+Travis_oneveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                        variables = "B08014_003", geometry = TRUE)
+Williamson_oneveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                            variables = "B08014_003", geometry = TRUE)
+
+Travis_twoveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                         variables = "B08014_004", geometry = TRUE)
+Williamson_twoveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                             variables = "B08014_004", geometry = TRUE)
+
+Travis_threeveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                         variables = "B08014_005", geometry = TRUE)
+Williamson_threeveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                             variables = "B08014_005", geometry = TRUE)
+
+Travis_fourveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                           variables = "B08014_006", geometry = TRUE)
+Williamson_fourveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                               variables = "B08014_006", geometry = TRUE)
+
+Travis_fiveveh <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B08014_007", geometry = TRUE)
+Williamson_fiveveh <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B08014_007", geometry = TRUE)
+
+Travis_poverty <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B06012_002", geometry = TRUE)
+Williamson_poverty <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B06012_002", geometry = TRUE)
+
+Travis_medInc <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B19013_001", geometry = TRUE)
+Williamson_medInc <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B19013_001", geometry = TRUE)
+```
+
+```{r}
+######### buffer deomographics #########
+#population
+Population <- rbind(Travis, Williamson)%>%
+  st_transform(2278)
+Population_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
+                                  output = "sf", extensive = "estimate")
+Population_buff$estimate<- round(Population_buff$estimate)
+
+#race
+Race <- rbind(Travis_race, Williamson_race)%>%
+  st_transform(2278)
+Race_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
+                            output = "sf", extensive = "estimate")
+Race_buff$estimate <- round(Race_buff$estimate)
+
+#vehicle ownership
+NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
+  st_transform(2278)
+NoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = NoVeh, sid = GEOID, weight = "sum",
+                             output = "sf", extensive = "estimate")
+NoVeh_buff$estimate <- round(NoVeh_buff$estimate)
+
+
+OneVeh <- rbind(Travis_oneveh, Williamson_oneveh)%>%
+  st_transform(2278)
+OneVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+OneVeh_buff$estimate <- round(OneVeh_buff$estimate)
+
+
+TwoVeh <- rbind(Travis_twoveh, Williamson_twoveh)%>%
+  st_transform(2278)
+TwoVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = TwoVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+TwoVeh_buff$estimate <- round(TwoVeh_buff$estimate)
+
+
+ThreeVeh <- rbind(Travis_threeveh, Williamson_threeveh)%>%
+  st_transform(2278)
+ThreeVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
+                                output = "sf", extensive = "estimate")
+ThreeVeh_buff$estimate <- round(ThreeVeh_buff$estimate)
+
+
+FourVeh <- rbind(Travis_fourveh, Williamson_fourveh)%>%
+  st_transform(2278)
+FourVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FourVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+FourVeh_buff$estimate <- round(FourVeh_buff$estimate)
+
+
+FiveVeh <- rbind(Travis_fiveveh, Williamson_fiveveh)%>%
+  st_transform(2278)
+
+FiveVeh_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = FiveVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+FiveVeh_buff$estimate <- round(FiveVeh_buff$estimate)
+
+
+#poverty
+Poverty <- rbind(Travis_poverty, Williamson_poverty)%>%
+  st_transform(2278)
+Poverty_buff <- aw_interpolate(StopBuff, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+Poverty_buff$estimate <- round(Poverty_buff$estimate)
+
+
+#MedInc
+medInc <- rbind(Travis_medInc, Williamson_medInc)%>%
+  st_transform(2278)
+medInc_stop <- st_join(stops, medInc, join = st_intersects)
+medInc_stop <- medInc_stop %>%
+  st_drop_geometry() %>%
+  select(STOP_ID, estimate) %>%
+  rename(medInc = estimate)
+```
+
+### Route Network
+
+use datasets after cap remap
+```{r}
+route_stop = disagn2j %>% group_by(ROUTE, TRIP, STOP_ID) %>% slice(1)
+```
+
+```{r}
+# reorganize the direction feature
+capmetro_dir_mod = capmetro %>% 
+                   select(ROUTE_ID, DIRECTION, ROUTETYPE) %>% 
+                   st_drop_geometry() %>%
+                   mutate(DTYPES=case_when(
+                     DIRECTION=="Southbound"~"SouthNorth",
+                     DIRECTION=="Northbound"~"SouthNorth",
+                     DIRECTION=="Westbound"~"WestEast",
+                     DIRECTION=="Eastbound"~"WestEast",
+                     DIRECTION=="Inbound"~"InOut",
+                     DIRECTION=="Outbound"~"InOut",
+                     DIRECTION=="Counterclockwise"~"Counterclockwise",
+                     DIRECTION=="Clockwise"~"Clockwise",
+  ))
+```
+
+```{r}
+dis_cap1 = merge(x = route_stop %>% select(ROUTE, STOP_ID), 
+                 y = capmetro_dir_mod %>%
+                   group_by(ROUTETYPE, DTYPES, ROUTE_ID) %>%
+                   slice(1), 
+                 by.x = 'ROUTE', by.y = 'ROUTE_ID')
+```
+
+```{r}
+# number of shifts (total frequency); route orientation frequency at each stop
+stop_dir_freq = merge(x = dis_cap1 %>% group_by(STOP_ID) %>% summarise(nshifts=n()), 
+      y = dis_cap1 %>% group_by(STOP_ID, DTYPES) %>% summarise(n=n()) %>% 
+        mutate(prop_route=n/sum(n)) %>% subset(select=c("STOP_ID","DTYPES","prop_route")) %>% 
+        spread(DTYPES, prop_route), by = "STOP_ID")
+stop_dir_freq[is.na(stop_dir_freq)] <- 0
+```
+
+```{r}
+# route type frequency at each stop
+stop_type_freq = dis_cap1 %>% group_by(STOP_ID, ROUTETYPE) %>% summarise(n=n()) %>% 
+        mutate(prop_type=n/sum(n)) %>% subset(select=c("STOP_ID","ROUTETYPE","prop_type")) %>% 
+        spread(ROUTETYPE, prop_type)
+stop_type_freq[is.na(stop_type_freq)] <- 0
+stop_type_freq[11] <- NULL # remove NA column
+```
+
+```{r}
+# hotlines frequency dummy
+hotline_dum = as.numeric(dis_cap1$ROUTE %in% hotlines_po$hotlines_po)
+stop_hot = cbind(dis_cap1, hotline_dum)
+stop_hot_freq = stop_hot %>% group_by(STOP_ID, hotline_dum) %>% summarise(n=n()) %>% 
+        mutate(prop_hot=n/sum(n)) %>% subset(select=c("STOP_ID","hotline_dum","prop_hot")) %>% 
+        spread(hotline_dum, prop_hot)
+stop_hot_freq[is.na(stop_hot_freq)] <- 0
+colnames(stop_hot_freq) <- c("STOP_ID", "hotline_0", "hotline_1")
+```
+
+### Stop Characteristics
+
+```{r}
+# load hubs data
+hub_stop <- 
+  st_read("Data/Shapefiles_-_JUNE_2018/Hub_Stops.shp") %>% st_transform(2278)
+```
+
+```{r}
+# hub dummy
+hub_dum <- as.numeric(unique(dis_cap1$STOP_ID) %in% hub_stop$STOP_ID)
+hub_dum = data.frame(STOP_ID = stop_type_freq$STOP_ID, hubs = hub_dum)
+stop_type_freq = merge(stop_type_freq, hub_dum, by = "STOP_ID")
+```
+
+#### spatial lag
+```{r}
 spatial_lag = get.knn(stopsXY, 5)$nn.index %>%
   as.data.frame() %>%
   rownames_to_column(var = "thisPoint") %>%
@@ -1740,23 +1569,20 @@ spatial_lag = get.knn(stopsXY, 5)$nn.index %>%
          spatial_lag5 = rowMeans(.[,7:11], na.rm = TRUE))
 ```
 
+### Calculate the Dependent Variable
 
 ```{r}
-#census rename
-Population_buff$population <- round(Population_buff$estimate)
-Race_buff$race <- round(Race_buff$estimate)
-NoVeh_buff$NoVeh <- round(NoVeh_buff$estimate)
-OneVeh_buff$OneVeh <- round(OneVeh_buff$estimate)
-TwoVeh_buff$TwoVeh <- round(TwoVeh_buff$estimate)
-ThreeVeh_buff$ThreeVeh <- round(ThreeVeh_buff$estimate)
-FourVeh_buff$FourVeh <- round(FourVeh_buff$estimate)
-FiveVeh_buff$FiveVeh <- round(FiveVeh_buff$estimate)
-Poverty_buff$Poverty <- round(Poverty_buff$estimate)
+# ridership calc (import data see Data_Transform_New_agg.R)
+data.2019$STOP_ID = as.numeric(data.2019$STOP_ID) 
+data.2019.mean = data.2019 %>%
+  group_by(STOP_ID) %>%
+  summarise(mean_on = mean(as.numeric(AVERAGE_LOAD)))
 ```
 
-### join all data
+### Join All Features
+
 ```{r}
-all_x1 = CommercialInit %>%  #amenities and route related
+all_x1 <- CommercialInit %>%  #amenities and route related
   left_join(st_drop_geometry(RetailInit), by = "STOP_ID") %>%
   left_join(st_drop_geometry(OfficeInit), by = "STOP_ID") %>%
   left_join(st_drop_geometry(ResidentialInit), by = "STOP_ID") %>%
@@ -1772,34 +1598,102 @@ all_x1 = CommercialInit %>%  #amenities and route related
   left_join(stop_hot_freq, by = "STOP_ID") %>%
   left_join(build_dens, by = "STOP_ID") %>%
   left_join(st_drop_geometry(stop_buff_landuse), by = "STOP_ID") %>%
-  left_join(st_drop_geometry(Race_buff) %>% select(STOP_ID, race) %>% mutate(STOP_ID = as.numeric(STOP_ID), race = as.numeric(race)), by = "STOP_ID") %>% #census data
-  left_join(st_drop_geometry(Population_buff) %>% select(STOP_ID, population) %>% mutate(STOP_ID = as.numeric(STOP_ID), population = as.numeric(population)), by = "STOP_ID") %>% 
-  left_join(st_drop_geometry(NoVeh_buff) %>% select(STOP_ID, NoVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), NoVeh = as.numeric(NoVeh)), by = "STOP_ID") %>%
-  left_join(st_drop_geometry(OneVeh_buff) %>% select(STOP_ID, OneVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), OneVeh = as.numeric(OneVeh)), by = "STOP_ID") %>%
-  left_join(st_drop_geometry(TwoVeh_buff) %>% select(STOP_ID, TwoVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), TwoVeh = as.numeric(TwoVeh)), by = "STOP_ID") %>%
-  left_join(st_drop_geometry(ThreeVeh_buff) %>% select(STOP_ID, ThreeVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), ThreeVeh = as.numeric(ThreeVeh)), by = "STOP_ID") %>%
-  left_join(st_drop_geometry(FourVeh_buff) %>% select(STOP_ID, FourVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), FourVeh = as.numeric(FourVeh)), by = "STOP_ID") %>%
-  left_join(st_drop_geometry(FiveVeh_buff) %>% select(STOP_ID, FiveVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), FiveVeh = as.numeric(FiveVeh)), by = "STOP_ID") %>%
-  left_join(st_drop_geometry(Poverty_buff) %>% select(STOP_ID, Poverty) %>% mutate(STOP_ID = as.numeric(STOP_ID), Poverty = as.numeric(Poverty)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(Race_buff) %>% rename(race = estimate) %>% select(STOP_ID, race) %>% mutate(STOP_ID = as.numeric(STOP_ID), race = as.numeric(race)), by = "STOP_ID") %>% #census data
+  left_join(st_drop_geometry(Population_buff) %>%  rename(population = estimate) %>% select(STOP_ID, population) %>% mutate(STOP_ID = as.numeric(STOP_ID), population = as.numeric(population)), by = "STOP_ID") %>% 
+  left_join(st_drop_geometry(NoVeh_buff) %>%  rename(NoVeh = estimate) %>% select(STOP_ID, NoVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), NoVeh = as.numeric(NoVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(OneVeh_buff) %>%  rename(OneVeh = estimate) %>% select(STOP_ID, OneVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), OneVeh = as.numeric(OneVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(TwoVeh_buff) %>%  rename(TwoVeh = estimate) %>% select(STOP_ID, TwoVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), TwoVeh = as.numeric(TwoVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(ThreeVeh_buff) %>%  rename(ThreeVeh = estimate) %>% select(STOP_ID, ThreeVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), ThreeVeh = as.numeric(ThreeVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(FourVeh_buff) %>%  rename(FourVeh = estimate) %>% select(STOP_ID, FourVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), FourVeh = as.numeric(FourVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(FiveVeh_buff) %>%  rename(FiveVeh = estimate) %>% select(STOP_ID, FiveVeh) %>% mutate(STOP_ID = as.numeric(STOP_ID), FiveVeh = as.numeric(FiveVeh)), by = "STOP_ID") %>%
+  left_join(st_drop_geometry(Poverty_buff) %>%  rename(Poverty = estimate) %>% select(STOP_ID, Poverty) %>% mutate(STOP_ID = as.numeric(STOP_ID), Poverty = as.numeric(Poverty)), by = "STOP_ID") %>%
+  left_join(medInc_stop, by= "STOP_ID") %>%
   left_join(st_drop_geometry(stop_nhood), by = "STOP_ID") %>% # fixed effects
   left_join(st_drop_geometry(stop_school), by = "STOP_ID") %>%
-  select(-c(hotline_0, X)) %>%
+  select(-c(hotline_0)) %>%
   left_join(data.2019.mean, by = "STOP_ID")
 
 #spatial lag, knn dist
-all_x3 = bind_cols(list(all_x1, utaustinDist, CBDDist, commercialDist, retailDist, supermktDist, officeDist, residentialDist, schoolDist, universityDist, parkingDist, stadiumDist, trainstationDist, universityDist, airportDist, spatial_lag %>% select(spatial_lag2, spatial_lag3, spatial_lag5)))
-
-#time lag
+all_x3 = bind_cols(list(all_x1, utaustinDist, CBDDist, commercialDist, retailDist, supermktDist, officeDist, residentialDist, schoolDist, universityDist, parkingDist, stadiumDist, trainstationDist, airportDist, spatial_lag %>% select(spatial_lag2, spatial_lag3, spatial_lag5)))
 ```
 
 ```{r}
 #put ridership to the end
 all_x3 = all_x3 %>% select(-mean_on, mean_on)
-write.csv(st_drop_geometry(all_x3),"all_2.csv", row.names = FALSE)
+#write.csv(st_drop_geometry(all_x3),"all_1_quarter_mile_buffer.csv", row.names = FALSE)
+```
+ 
+```{r}
+#recategorize variables
+all_x4_normalize <-
+  all_x3 %>% 
+  mutate(Clockwise_cat = case_when(
+      Clockwise == 0 ~ "0",
+      Clockwise == 1 ~ "1",
+      Clockwise > 0 & Clockwise <1 ~ "others"),
+    Counterclockwise_cat = case_when(
+      Counterclockwise == 0 ~ "0",
+      Counterclockwise == 1 ~ "1",
+      Counterclockwise > 0 & Counterclockwise <1 ~ "others"),
+    Crosstown_cat = case_when(
+      Crosstown == 0 ~ "0",
+      Crosstown == 1 ~ "1",
+      Crosstown > 0 & Crosstown <1 ~ "others"),
+    Express_cat = case_when(
+      Express == 0 ~ "0",
+      Express == 1 ~ "1",
+      Express > 0 & Express <1 ~ "others"),
+    Feeder_cat = case_when(
+      Feeder == 0 ~ "0",
+      Feeder == 1 ~ "1",
+      Feeder > 0 & Feeder <1 ~ "others"),
+    Flyer_cat = case_when(
+      Flyer == 0 ~ "0",
+      Flyer == 1 ~ "1",
+      Flyer > 0 & Flyer <1 ~ "others"),
+    HighFreq_cat = case_when(
+      `High Frequency` == 0 ~ "0",
+      `High Frequency` == 1 ~ "1",
+      `High Frequency` > 0 & `High Frequency` <1 ~ "others"),
+    hotline_cat = case_when(
+      hotline_1 == 0 ~ "0",
+      hotline_1 == 1 ~ "1",
+      hotline_1 > 0 & hotline_1 <1 ~ "others"),
+    InOut_cat = case_when(
+      InOut == 0 ~ "0",
+      InOut == 1 ~ "1",
+      InOut > 0 & Flyer <1 ~ "others"),
+    Local_cat = case_when(
+      Local == 0 ~ "0",
+      Local == 1 ~ "1",
+      Local > 0 & Local <1 ~ "others"),
+    NightOwl_cat = case_when(
+      `Night Owl` == 0 ~ "0",
+      `Night Owl` == 1 ~ "1",
+      `Night Owl` > 0 & `Night Owl` <1 ~ "others"),
+    SN_cat = case_when(
+      SouthNorth == 0 ~ "0",
+      SouthNorth == 1 ~ "1",
+      SouthNorth > 0 & SouthNorth <1 ~ "others"),
+    Special_cat = case_when(
+      Special == 0 ~ "0",
+      Special == 1 ~ "1",
+      Special > 0 & Special <1 ~ "others"),
+    utshuttle_cat = case_when(
+      `UT Shuttle` == 0 ~ "0",
+      `UT Shuttle` == 1 ~ "1",
+      `UT Shuttle` > 0 & `UT Shuttle` <1 ~ "others"),
+    WE_cat = case_when(
+      WestEast == 0 ~ "0",
+      WestEast == 1 ~ "1",
+      WestEast > 0 & WestEast <1 ~ "others"))
+
 ```
 
-### correlation plots
+### Features Explorations
+
 ```{r}
+# correlation matrix
 all1cor <- 
   all_x3 %>% 
   select(-c(STOP_ID, label, TRUSTEE)) %>%
@@ -1810,13 +1704,46 @@ corrplot(M, number.cex = .7, tl.srt = 90, method = "color", type = "upper", tl.c
 ```
 
 ```{r}
+# simple linear regression
+all_x1_ = all_x3 %>% st_set_geometry(NULL)
+lmreg <- lm(mean_on ~ .,data = all_x1_ %>% select(-STOP_ID)) 
+summary(lmreg)
+
+lm_model <-
+  all_x3 %>%
+  mutate(ridership.Predict = predict(lmreg, all_x1_),
+         ridership.Error = mean_on - ridership.Predict,
+         ridership.AbsError = abs(mean_on - ridership.Predict),
+         ridership.APE = (abs(mean_on - ridership.Predict) / mean_on))
+```
+
+```{r}
+# plot simple linear regression results
+plot_result = lm_model %>%
+  st_drop_geometry() %>%
+  left_join(stops %>% select(STOP_ID)) %>%
+  st_as_sf()
+
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  geom_sf(data = plot_result, aes(color = plot_result$ridership.APE ),size = 1.5) +
+  labs(title = "Ridership Prediction Absolute Percentage Error") +
+  mapTheme()
+
+# plot NA values
+ggplot()+
+  geom_sf(data = nhood) +
+  geom_sf(data = stops %>% filter(STOP_ID %in% apply(is.na(plot_result), 2, which)$ridership.APE)) +
+  mapTheme()
+```
+
+```{r fig.height=30, fig.width= 15}
+# correlation plots
 correlation.long <-
   st_set_geometry(all_x3, NULL) %>%
     select(-c(STOP_ID, label, TRUSTEE)) %>%
     gather(Variable, Value, -mean_on)
-```
 
-```{r fig.height=30, fig.width= 15}
 correlation.cor <-
   correlation.long %>%
     group_by(Variable) %>%
@@ -1831,101 +1758,127 @@ ggplot(correlation.long, aes(Value, mean_on)) +
   labs(title = "Mean Ridership as A Function of Potential Factors")
 ```
 
+
+### change features and see results
+
 ```{r}
-#positive correlation
-correlation.long1 <-
-  st_set_geometry(all_x3 %>% select("High Frequency", hotline_1, nshifts, SouthNorth, spatial_lag5, mean_on), NULL) %>%
-    gather(Variable, Value, -mean_on)
-
-#negative correlation
-correlation.long2 <-
-  st_set_geometry(all_x3 %>% select(trainstationDist, utaustin_dist, WestEast, airportDist, CBD_dist, mean_on), NULL) %>%
-    gather(Variable, Value, -mean_on)
+################ this is the model we use!!! no log
+lmreg <- lm(mean_on ~ .,data = all_x4_normalize%>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on))
+summary(lmreg)
 ```
 
-```{r }
-correlation.cor1 <-
-  correlation.long1 %>%
-    group_by(Variable) %>%
-    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+```{r}
+lmreg.step <- lm(mean_on ~ .,data = all_x4_normalize %>% st_drop_geometry() %>% drop_na() %>% select(-STOP_ID))
 
-correlation.cor2 <-
-  correlation.long2 %>%
-    group_by(Variable) %>%
-    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+step.model <- lmreg.step %>% stepAIC(trace=FALSE)
+summary(step.model)
+#coef(step.model)
 ```
 
-```{r fig.height=3, fig.width= 15}
-ggplot(correlation.long1, aes(Value, mean_on)) +
-  geom_point(size = 0.1) +
-  geom_text(data = correlation.cor1, aes(label = paste("r =", round(correlation, 2))),
-            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
-  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
-  facet_wrap(~Variable, ncol = 5, scales = "free") +
-  labs(title = "Mean Ridership as A Function of Positively Related Factors") + plotTheme()
+```{r}
+# plot original predictions
+lmreg <- lm(mean_on ~ .,data = all_x4_normalize%>% st_drop_geometry() %>% select(-STOP_ID))
+summary(lmreg)
+lm_model0 <-
+  all_x4_normalize %>%
+  mutate(ridership.Predict = predict(lmreg, all_x4_normalize)) %>%
+  select(ridership.Predict) %>%
+  st_drop_geometry()
 ```
 
-```{r  fig.height=3, fig.width= 15}
-ggplot(correlation.long2, aes(Value, mean_on)) +
-  geom_point(size = 0.1) +
-  geom_text(data = correlation.cor2, aes(label = paste("r =", round(correlation, 2))),
-            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
-  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
-  facet_wrap(~Variable, ncol = 5, scales = "free") +
-  labs(title = "Mean Ridership as A Function of Negatively Related Factors") + plotTheme()
+#### output for original dataset
+```{r}
+write.csv(all_x4_normalize %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario0.csv", row.names = FALSE)
+```
+
+
+#### Building area SCENARIO 1:
+```{r}
+# Bldg areas increase in West Campus
+s1_wc1 <- c(599, 5864, 5528, 3512, 5024, 497, 5865, 1042)
+s1_wc2 <- c(4122, 4120, 4099, 498, 2780, 5178)
+s1_wc3 <- c(2003, 5634, 5353, 494, 5373, 5863, 495, 4122, 4123, 4121, 4979, 4120, 4153)
+
+# make a copy
+all5 = all_x4_normalize
+
+# part 1 increase 38%
+all5[all5$STOP_ID %in% s1_wc1,]$building_area <- all5[all5$STOP_ID %in% s1_wc1,]$building_area*1.38
+
+# part 2 increase 71%
+all5[all5$STOP_ID %in% s1_wc2,]$building_area <- all5[all5$STOP_ID %in% s1_wc2,]$building_area*1.71
+
+# part 3 increase 20%
+all5[all5$STOP_ID %in% s1_wc3,]$building_area <- all5[all5$STOP_ID %in% s1_wc3,]$building_area*1.20
+
+write.csv(all5 %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario1_westcampus.csv", row.names = FALSE)
+```
+
+```{r}
+#plot the change in ridership
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  geom_sf(data = st_centroid(all5), aes(color = building_area)) +
+  labs(title = "buildling area 0") +
+  mapTheme()+theme(legend.position="bottom")
+```
+
+
+#### Building area SCENARIO 2:
+```{r}
+# Bldg areas increase in Riverside/East Riverse area
+s1_r1 <- c(5779, 4288, 1005, 4286, 3526, 5774, 1012, 1022, 1021, 4299, 4300, 1013, 1020)
+s1_r2 <- c(1364, 1353, 5065, 4283, 4284, 4285, 4302, 4301, 1014, 1018)
+
+# make a copy
+all5 = all_x4_normalize
+
+# part 1 increase 469950 sqft
+all5[all5$STOP_ID %in% s1_r1,]$building_area <- all5[all5$STOP_ID %in% s1_r1,]$building_area + 469950
+
+# part 2 increase 234975 sqft
+all5[all5$STOP_ID %in% s1_r2,]$building_area <- all5[all5$STOP_ID %in% s1_r2,]$building_area + 234975
+
+write.csv(all5 %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario2_riverside.csv", row.names = FALSE)
+```
+
+```{r}
+#plot the change in ridership
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  geom_sf(data = st_centroid(all5), aes(color = building_area)) +
+  labs(title = "buildling area 0") +
+  mapTheme()+theme(legend.position="bottom")
+```
+
+#### Building area SCENARIO 3:
+```{r}
+# Housing development project East of DT
+s1_edt <- c(2388, 5613, 5455, 5683, 5932, 5794, 5483, 6335, 5926, 5925, 6343, 6303, 6301, 1631, 6300, 1591, 1590, 1632, 6084, 1589, 1633, 1588, 4524, 6091, 6291, 6289, 1636, 5617, 4193, 5616, 3293, 6288, 5436, 6290, 5796, 5669, 5670, 5918, 3291, 3271, 6293, 6292)
+
+# make a copy
+all5 = all_x4_normalize
+
+# Increase 640025 sqft
+all5[all5$STOP_ID %in% s1_edt,]$building_area <- all5[all5$STOP_ID %in% s1_edt,]$building_area + 640025
+
+write.csv(all5 %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario3_eastdt.csv", row.names = FALSE)
+```
+
+```{r}
+#plot the change in ridership
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  geom_sf(data = st_centroid(all5), aes(color = building_area)) +
+  labs(title = "buildling area 0") +
+  mapTheme()+theme(legend.position="bottom")
 ```
 
 ## Modeling and Validation
 
-### simple linear regression
-```{r}
-all_x1_ = all_x3 %>% st_set_geometry(NULL)
-lmreg <- lm(mean_on ~ .,data = all_x1_) 
-summary(lmreg)
-
-lm_model <-
-  all_x3 %>%
-  mutate(ridership.Predict = predict(lmreg, all_x1_),
-         ridership.Error = mean_on - ridership.Predict,
-         ridership.AbsError = abs(mean_on - ridership.Predict),
-         ridership.APE = (abs(mean_on - ridership.Predict) / mean_on))
-```
-
-```{r}
-plot_result = lm_model %>%
-  st_drop_geometry() %>%
-  left_join(stops %>% select(STOP_ID)) %>%
-  st_as_sf()
-
-ggplot()+
-  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data = plot_result, aes(color = plot_result$ridership.APE ),size = 1.5) +
-  labs(title = "Ridership Prediction Absolute Percentage Error") +
-  mapTheme()
-```
-
 ### Use Neighborhood For Validation with Four Types of Models
 
 ```{r}
-load.fun <- function(x) { 
-  x <- as.character(x) 
-  if(isTRUE(x %in% .packages(all.available=TRUE))) { 
-    eval(parse(text=paste("require(", x, ")", sep=""))) 
-    print(paste(c(x, " : already installed; requiring"), collapse=''))
-  } else { 
-    #update.packages()
-    print(paste(c(x, " : not installed; installing"), collapse=''))
-    eval(parse(text=paste("install.packages('", x, "')", sep=""))) 
-    print(paste(c(x, " : installed and requiring"), collapse=''))
-    eval(parse(text=paste("require(", x, ")", sep=""))) 
-  } 
-} 
-packages = c("scales", "digest","colorspace","prodlim","yardstick","dplyr", "bayesplot", "lme4", "rstan", "shinystan", "RcppEigen",
-             "tidyverse", "tidyr", "AmesHousing", "broom", "caret", "dials", "doParallel", "e1071", "earth",
-             "ggrepel", "glmnet", "ipred", "klaR", "kknn", "pROC", "rpart", "randomForest",
-             "sessioninfo", "tidymodels","ranger", "recipes", "workflows", "themis","xgboost",
-             "sf", "nngeo", "mapview","parsnip", "vctrs", "rsample", "tune")
-
 for(i in seq_along(packages)){
   packge <- as.character(packages[i])
   load.fun(packge)
