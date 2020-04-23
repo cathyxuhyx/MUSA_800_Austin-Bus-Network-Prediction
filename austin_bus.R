@@ -416,7 +416,11 @@ stadium <- getOSM('building', 'stadium')
 trainstation <- getOSM('building', 'train_station')
 
 #####buffer#####
-#1/8 mile
+#3/16 mile
+StopBuff4 <- stops%>%
+  st_buffer(990)
+
+#1/16 mile
 StopBuff3 <- stops%>%
   st_buffer(330)
 
@@ -501,6 +505,19 @@ SchoolInit3 <- bufferInit(StopBuff3, school, 'school_count')
 StationInit3 <- bufferInit(StopBuff3, trainstation, 'station_count')
 StadiumInit3 <- bufferInit(StopBuff3, stadium, 'stadium_count')
 
+#3/16 mile buffer OSM data
+CommercialInit4 <- bufferInit(StopBuff4, commercial, 'commercial_count')
+RetailInit4 <- bufferInit(StopBuff4, retail, 'retail_count')
+OfficeInit4 <- bufferInit(StopBuff4, office, 'office_count')
+ResidentialInit4 <- bufferInit(StopBuff4, residential, 'residential_count')
+SupermktInit4 <- bufferInit(StopBuff4, supermkt, 'supermkt_count')
+BarInit4 <- bufferInit(StopBuff4, bar, 'bar_count')
+UniInit4 <- bufferInit(StopBuff4, university, 'university_count')
+ParkingInit4 <- bufferInit(StopBuff4, parking, 'parking_count')
+SchoolInit4 <- bufferInit(StopBuff4, school, 'school_count')
+StationInit4 <- bufferInit(StopBuff4, trainstation, 'station_count')
+StadiumInit4 <- bufferInit(StopBuff4, stadium, 'stadium_count')
+
 
 #plot OSM
 plotOSM <- function(OSM)
@@ -565,7 +582,13 @@ Williamson_fiveveh <- get_acs(state = "48", county = "491", geography = "tract",
 Travis_poverty <- get_acs(state = "48", county = "453", geography = "tract", 
                           variables = "B06012_002", geometry = TRUE)
 Williamson_poverty <- get_acs(state = "48", county = "491", geography = "tract", 
-                              variables = "B06012_002", geometry = TRUE)
+                              variables = "B07011_001", geometry = TRUE)
+
+Travis_medInc <- get_acs(state = "48", county = "453", geography = "tract", 
+                          variables = "B19013_001", geometry = TRUE)
+Williamson_medInc <- get_acs(state = "48", county = "491", geography = "tract", 
+                              variables = "B19013_001", geometry = TRUE)
+
 
 #####buffer deomographics#####
 #population
@@ -588,6 +611,10 @@ Population_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = Population
                                   output = "sf", extensive = "estimate")
 Population_buff3$estimate<- round(Population_buff3$estimate)
 
+Population_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = Population, sid = GEOID, weight = "sum",
+                                   output = "sf", extensive = "estimate")
+Population_buff4$estimate<- round(Population_buff4$estimate)
+
 #race
 Race <- rbind(Travis_race, Williamson_race)%>%
   st_transform(2278)
@@ -607,6 +634,10 @@ Race_buff2$estimate <- round(Race_buff2$estimate)
 Race_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
                             output = "sf", extensive = "estimate")
 Race_buff3$estimate <- round(Race_buff3$estimate)
+
+Race_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = Race, sid = GEOID, weight = "sum",
+                             output = "sf", extensive = "estimate")
+Race_buff4$estimate <- round(Race_buff4$estimate)
 
 #vehicle ownership
 NoVeh <- rbind(Travis_noveh, Williamson_noveh)%>%
@@ -628,6 +659,10 @@ NoVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = NoVeh, sid = GE
                              output = "sf", extensive = "estimate")
 NoVeh_buff3$estimate <- round(NoVeh_buff3$estimate)
 
+NoVeh_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = NoVeh, sid = GEOID, weight = "sum",
+                              output = "sf", extensive = "estimate")
+NoVeh_buff4$estimate <- round(NoVeh_buff4$estimate)
+
 OneVeh <- rbind(Travis_oneveh, Williamson_oneveh)%>%
   st_transform(2278)
 
@@ -646,6 +681,10 @@ OneVeh_buff2$estimate <- round(OneVeh_buff2$estimate)
 OneVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
                               output = "sf", extensive = "estimate")
 OneVeh_buff3$estimate <- round(OneVeh_buff3$estimate)
+
+OneVeh_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = OneVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+OneVeh_buff4$estimate <- round(OneVeh_buff4$estimate)
 
 TwoVeh <- rbind(Travis_twoveh, Williamson_twoveh)%>%
   st_transform(2278)
@@ -666,6 +705,10 @@ TwoVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = TwoVeh, sid = 
                               output = "sf", extensive = "estimate")
 TwoVeh_buff3$estimate <- round(TwoVeh_buff3$estimate)
 
+TwoVeh_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = TwoVeh, sid = GEOID, weight = "sum",
+                               output = "sf", extensive = "estimate")
+TwoVeh_buff4$estimate <- round(TwoVeh_buff4$estimate)
+
 ThreeVeh <- rbind(Travis_threeveh, Williamson_threeveh)%>%
   st_transform(2278)
 
@@ -684,6 +727,10 @@ ThreeVeh_buff2$estimate <- round(ThreeVeh_buff2$estimate)
 ThreeVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
                                 output = "sf", extensive = "estimate")
 ThreeVeh_buff3$estimate <- round(ThreeVeh_buff3$estimate)
+
+ThreeVeh_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = ThreeVeh, sid = GEOID, weight = "sum",
+                                 output = "sf", extensive = "estimate")
+ThreeVeh_buff4$estimate <- round(ThreeVeh_buff4$estimate)
 
 FourVeh <- rbind(Travis_fourveh, Williamson_fourveh)%>%
   st_transform(2278)
@@ -704,6 +751,9 @@ FourVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = FourVeh, sid 
                                output = "sf", extensive = "estimate")
 FourVeh_buff3$estimate <- round(FourVeh_buff3$estimate)
 
+FourVeh_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = FourVeh, sid = GEOID, weight = "sum",
+                                output = "sf", extensive = "estimate")
+FourVeh_buff4$estimate <- round(FourVeh_buff4$estimate)
 
 FiveVeh <- rbind(Travis_fiveveh, Williamson_fiveveh)%>%
   st_transform(2278)
@@ -724,6 +774,11 @@ FiveVeh_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = FiveVeh, sid 
                                output = "sf", extensive = "estimate")
 FiveVeh_buff3$estimate <- round(FiveVeh_buff3$estimate)
 
+FiveVeh_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = FiveVeh, sid = GEOID, weight = "sum",
+                                output = "sf", extensive = "estimate")
+FiveVeh_buff4$estimate <- round(FiveVeh_buff4$estimate)
+
+
 #poverty
 Poverty <- rbind(Travis_poverty, Williamson_poverty)%>%
   st_transform(2278)
@@ -743,6 +798,21 @@ Poverty_buff2$estimate <- round(Poverty_buff2$estimate)
 Poverty_buff3 <- aw_interpolate(StopBuff3, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
                                output = "sf", extensive = "estimate")
 Poverty_buff3$estimate <- round(Poverty_buff3$estimate)
+
+Poverty_buff4 <- aw_interpolate(StopBuff4, tid = STOP_ID, source = Poverty, sid = GEOID, weight = "sum",
+                                output = "sf", extensive = "estimate")
+Poverty_buff4$estimate <- round(Poverty_buff4$estimate)
+
+#MedInc
+medInc <- rbind(Travis_medInc, Williamson_medInc)%>%
+  st_transform(2278)
+
+
+medInc_stop <- st_join(stops, medInc, join = st_intersects)
+
+medInc_stop <- medInc_stop%>%
+  select(STOP_ID,
+         estimate)
 
 #####Time Lag#####
 disagg$ACT_STOP_TIME <- as.character(disagg$ACT_STOP_TIME)
