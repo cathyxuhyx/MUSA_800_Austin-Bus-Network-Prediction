@@ -277,6 +277,8 @@ We tested the model with the
 
 ## 4.2 Web Application
 
+We developed a web application according to our use case: helping planners to evision the potential change to transit ridership with respect to the change in real-estate. The following screenshots demonstrate the prototype. The first three screen shots demonstrate how users can investigate the current ridership patterns, and the last screen shows that the web app can give ridership projections according when the user selects any particular scenarios.
+
 ![](../markdown_img/web1.png)
 
 ![](../markdown_img/web2.png)
