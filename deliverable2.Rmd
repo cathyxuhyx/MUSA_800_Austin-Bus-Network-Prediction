@@ -2308,10 +2308,1240 @@ MAE.nhood%>%
   mapTheme()
 ```
 
-
+### Testing different buffer size for model accuracy and generalizability
+#### Buffer size 1/2 mile
 ```{r}
+#1/2 Buffer Size with Typology Test
+data.half <- join(all_half, typology, type ="left")
+data.half$STOP_ID <- NULL
+data.half<-data.half %>%
+  drop_na()
+data.half$universityDist1<-NULL
+#Slipt the data into training and testing sets
+data_split.half <- rsample::initial_split(data.half, strata = "mean_on", prop = 0.75)
+
+bus_train.half <- rsample::training(data_split.half)
+bus_test.half  <- rsample::testing(data_split.h)
+names(bus_train.half)
+
+
+cv_splits_geo.half <- rsample::group_vfold_cv(bus_train.half,  strata = "mean_on", group = "typology")
+
+#Create recipe
+model_rec.half <- recipe(mean_on ~ ., data = bus_train.half) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+?step_cv
+model_rec.half
+
+#Build the model
+lm_plan <- 
+  parsnip::linear_reg() %>% 
+  parsnip::set_engine("lm")
+
+glmnet_plan <- 
+  parsnip::linear_reg() %>% 
+  parsnip::set_args(penalty  = tune()) %>%
+  parsnip::set_args(mixture  = tune()) %>%
+  parsnip::set_engine("glmnet")
+
+rf_plan <- parsnip::rand_forest() %>%
+  parsnip::set_args(mtry  = tune()) %>%
+  parsnip::set_args(min_n = tune()) %>%
+  parsnip::set_args(trees = 1000) %>% 
+  parsnip::set_engine("ranger", importance = "impurity") %>% 
+  parsnip::set_mode("regression")
+
+XGB_plan <- parsnip::boost_tree() %>%
+  parsnip::set_args(mtry  = tune()) %>%
+  parsnip::set_args(min_n = tune()) %>%
+  parsnip::set_args(trees = 100) %>% 
+  parsnip::set_engine("xgboost") %>% 
+  parsnip::set_mode("regression")
+
+#
+glmnet_grid <- expand.grid(penalty = seq(0, 1, by = .25), 
+                           mixture = seq(0,1,0.25))
+
+rf_grid <- expand.grid(mtry = c(2,5), 
+                       min_n = c(1,5))
+xgb_grid <- expand.grid(mtry = c(3,5), 
+                        min_n = c(1,5))
+#Create workflow
+lm_wf.half <-
+  workflows::workflow() %>% 
+  add_recipe(model_rec.half) %>% 
+  add_model(lm_plan)
+
+glmnet_wf.half <-
+  workflow() %>% 
+  add_recipe(model_rec.half) %>% 
+  add_model(glmnet_plan)
+
+rf_wf.half <-
+  workflow() %>% 
+  add_recipe(model_rec.half) %>% 
+  add_model(rf_plan)
+xgb_wf.half <-
+  workflow() %>% 
+  add_recipe(model_rec.half) %>% 
+  add_model(XGB_plan)
+# fit model to workflow and calculate metrics
+control <- tune::control_resamples(save_pred = TRUE, verbose = TRUE)
+library(tune)
+library(yardstick)
+?tune_grid
+?metric_set
+
+lm_tuned.half <- lm_wf.half %>%
+  fit_resamples(.,
+                resamples = cv_splits_geo.half,
+                control   = control,
+                metrics   = metric_set(rmse, rsq))
+glmnet_tuned.half <- glmnet_wf.half %>%
+  tune_grid(.,
+            resamples = cv_splits_geo.half,
+            grid      = glmnet_grid,
+            control   = control,
+            metrics   = metric_set(rmse, rsq))
+
+rf_tuned.half <- rf_wf.half %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.half,
+                  grid      = rf_grid,
+                  control   = control,
+                  metrics   = metric_set(rmse, rsq))
+
+xgb_tuned.half <- xgb_wf.half %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.half,
+                  grid      = xgb_grid,
+                  control   = control,
+                  metrics   = metric_set(rmse, rsq))
+
+show_best(lm_tuned.half, metric = "rmse", n = 15, maximize = FALSE)
+show_best(glmnet_tuned.half, metric = "rmse", n = 15, maximize = FALSE)
+show_best(rf_tuned.half, metric = "rmse", n = 15, maximize = FALSE)
+show_best(xgb_tuned.half, metric = "rmse", n = 15, maximize = FALSE)
+
+lm_best_params.half     <- select_best(lm_tuned.half, metric = "rmse", maximize = FALSE)
+glmnet_best_params.half <- select_best(glmnet_tuned.half, metric = "rmse", maximize = FALSE)
+rf_best_params.half     <- select_best(rf_tuned.half, metric = "rmse", maximize = FALSE)
+xgb_best_params.half    <- select_best(xgb_tuned.half, metric = "rmse", maximize = FALSE)
+#Final workflow
+lm_best_wf.half     <- finalize_workflow(lm_wf.half, lm_best_params.half)
+glmnet_best_wf.half <- finalize_workflow(glmnet_wf.half, glmnet_best_params.half)
+rf_best_wf.half     <- finalize_workflow(rf_wf.half, rf_best_params.half)
+xgb_best_wf.half    <- finalize_workflow(xgb_wf.half, xgb_best_params.half)
+
+lm_val_fit_geo.half <- lm_best_wf.half %>% 
+  last_fit(split     = data_split.half,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+glmnet_val_fit_geo.half <- glmnet_best_wf.half %>% 
+  last_fit(split     = data_split.half,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+rf_val_fit_geo.half <- rf_best_wf.half %>% 
+  last_fit(split     = data_split.half,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+xgb_val_fit_geo.half <- xgb_best_wf.half %>% 
+  last_fit(split     = data_split.half,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+####################################Model Validation
+# Pull best hyperparam preds from out-of-fold predictions
+lm_best_OOF_preds.half <- collect_predictions(lm_tuned.half) 
+glmnet_best_OOF_preds.half <- collect_predictions(glmnet_tuned.half) %>% 
+  filter(penalty  == glmnet_best_params.half$penalty[1] & mixture == glmnet_best_params.half$mixture[1])
+rf_best_OOF_preds.half <- collect_predictions(rf_tuned.half) %>% 
+  filter(mtry  == rf_best_params.half$mtry[1] & min_n == rf_best_params.half$min_n[1])
+
+xgb_best_OOF_preds.half <- collect_predictions(xgb_tuned.half) %>% 
+  filter(mtry  == xgb_best_params.half$mtry[1] & min_n == xgb_best_params.half$min_n[1])
+# collect validation set predictions from last_fit model
+lm_val_pred_geo.half     <- collect_predictions(lm_val_fit_geo.half)
+glmnet_val_pred_geo.half <- collect_predictions(glmnet_val_fit_geo.half)
+rf_val_pred_geo.half     <- collect_predictions(rf_val_fit_geo.half)
+xgb_val_pred_geo.half    <- collect_predictions(xgb_val_fit_geo.half)
+# Aggregate OOF predictions (they do not overlap with Validation prediction set)
+OOF_preds.half <- rbind(data.frame(dplyr::select(lm_best_OOF_preds.half, .pred, mean_on), model = "lm"),
+                           data.frame(dplyr::select(glmnet_best_OOF_preds.half, .pred, mean_on), model = "glmnet"),
+                           data.frame(dplyr::select(rf_best_OOF_preds.half, .pred, mean_on), model = "RF"),
+                           data.frame(dplyr::select(xgb_best_OOF_preds.half, .pred, mean_on), model = "xgb")) %>% 
+  group_by(model) %>% 
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         #RSQUARE = yardstick::rsq(mean_on, .pred),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         #SD_RMSE = sd(yardstick::rmse_vec(mean_on, .pred)),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         #SD_MAE = sd(yardstick::mae_vec(mean_on, .pred)),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  #SD_MAPE = sd(yardstick::mape_vec(mean_on, .pred))) %>% 
+  ungroup()
+
+
+# Aggregate predictions from Validation set
+library(tidyverse)
+library(yardstick)
+#lm_val_pred_geo
+val_preds.half <- rbind(data.frame(lm_val_pred_geo.half, model = "lm"),
+                   data.frame(glmnet_val_pred_geo.half, model = "glmnet"),
+                   data.frame(rf_val_pred_geo.half, model = "rf"),
+                   data.frame(xgb_val_pred_geo.half, model = "xgb")) %>% 
+  left_join(., data.half %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(model) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+
+summary(lm_val_pred_geo.half$MAE)
+summary(glmnet_val_pred_geo.half$MAE)
+summary(rf_val_pred_geo.half$MAE)
+summary(xgb_val_pred_geo.half$MAE)
+summary(lm_val_pred_geo.half$MAPE)
+summary(glmnet_val_pred_geo.half$MAPE)
+summary(rf_val_pred_geo.half$MAPE)
+summary(xgb_val_pred_geo.half$MAPE)
+summary(lm_val_pred_geo.half$RMSE)
+summary(glmnet_val_pred_geo.half$RMSE)
+summary(rf_val_pred_geo.half$RMSE)
+summary(xgb_val_pred_geo.half$RMSE)
+?group_by
+#Rsquared
+1- sum((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred) ^ 2)/sum((lm_val_pred_geo$mean_on - mean(lm_val_pred_geo$mean_on)) ^ 2)
+rsq(lm_val_pred_geo.half, mean_on, .pred)
+sd(rsq(lm_val_pred_geo, mean_on, .pred))
+rsq(glmnet_val_pred_geo.half, mean_on, .pred)
+rsq(rf_val_pred_geo.half, mean_on, .pred)
+rsq(xgb_val_pred_geo.half, mean_on, .pred)
+#MAE and MAPE
+mean(abs(lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred))
+sd(abs(lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred))
+mean(abs((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)/lm_val_pred_geo$mean_on))
+sd(abs((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)/lm_val_pred_geo$mean_on))
+sd(abs(lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred))
+
+mean(abs(glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred))
+sd(abs(glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred))
+mean(abs((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)/glmnet_val_pred_geo$mean_on))
+sd(abs((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)/glmnet_val_pred_geo$mean_on))
+
+mean(abs(rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred))
+sd(abs(rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred))
+mean(abs((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)/rf_val_pred_geo$mean_on))
+sd(abs((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)/rf_val_pred_geo$mean_on))
+
+mean(abs(xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred))
+sd(abs(xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred))
+mean(abs((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)/xgb_val_pred_geo$mean_on))
+sd(abs((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)/xgb_val_pred_geo$mean_on))
+#RMSE
+sqrt(mean((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)^2))
+sqrt(mean((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)^2))
+sqrt(mean((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)^2))
+sqrt(mean((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)^2))
+sqrt(sd((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)^2))
+sqrt(sd((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)^2))
+sqrt(sd((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)^2))
+sqrt(sd((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)^2))
+
+yardstick::rmse_vec(lm_val_pred_geo$mean_on, lm_val_pred_geo$.pred)
+yardstick::mape_vec(lm_val_pred_geo$mean_on, lm_val_pred_geo$.pred)
+###################################Modelling part ends here, below are the visualizations##############
+#MAPE chart
+ggplot(data = val_preds.half %>% 
+         dplyr::select(model, MAPE) %>% 
+         distinct() , 
+       aes(x = model, y = MAPE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(MAPE,1),"%"))) +
+  labs(title= "1/2-mi Buffer, MAPE of each model on the testing set with typology")
+theme_bw()
+#MAE chart
+ggplot(data = val_preds.half%>% 
+         dplyr::select(model, MAE) %>% 
+         distinct() , 
+       aes(x = model, y = MAE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(MAE,1)))) +
+  labs(title= "1/2 mi Buffer, MAE of each model on the testing set with typology")
+theme_bw()  
+#RMSE
+ggplot(data = val_preds.half%>% 
+         dplyr::select(model, RMSE) %>% 
+         distinct() , 
+       aes(x = model, y = RMSE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(RMSE,1)))) +
+  labs(title= "1/2 mi Buffer, RMSE of each model on the testing set with typology")
+theme_bw() 
+#Predicted vs Observed
+ggplot(val_preds.half, aes(x =.pred, y = mean_on, group = model)) +
+  geom_point() +
+  geom_abline(linetype = "dashed", color = "red") +
+  geom_smooth(method = "lm", color = "blue") +
+  coord_equal() +
+  facet_wrap(~model, nrow = 2) +
+  labs(title="1/2 Mile: Predicted vs Observed on the testing set", subtitle= "blue line is predicted value") 
+theme_bw()
+
+#Neighborhood validation
+val_MAPE_by_typology.half <- val_preds.half %>% 
+  group_by(typology, model) %>% 
+  summarise(RMSE = yardstick::rmse_vec(mean_on, .pred),
+            MAE  = yardstick::mae_vec(mean_on, .pred),
+            MAPE = yardstick::mape_vec(mean_on, .pred)) %>% 
+  ungroup() 
+#Barchart of the MAE in each neighborhood
+plotTheme <- function(base_size = 10) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 20,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=20),
+    axis.title = element_text(size=20),
+    axis.text = element_text(size=15),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic", size= 20),
+    legend.text = element_text(colour = "black", face = "italic",size = 20),
+    strip.text.x = element_text(size = 15)
+  )
+}
+palette4 <- c("#eff3ff", "#bdd7e7","#6baed6","#2171b5")
+
+
+as.data.frame(val_MAPE_by_typology.half)%>%
+  dplyr::select(typology, model, MAE) %>%
+  #gather(Variable, MAE, -model, -typology) %>%
+  ggplot(aes(typology, MAE)) + 
+  geom_bar(aes(fill = model), position = "dodge", stat="identity") +
+  ylim(0, 300)+
+  scale_fill_manual(values = palette4) +
+  facet_wrap(~typology, scale= "free", ncol=4)+
+  labs(title = "1/2 mile: Mean Absolute Errors by model specification") +
+  plotTheme()
+```
+
+#### Buffer size: 1/4 mile
+```{r}
+#1/4 mile buffer with ridership: data.quarter
+#typology
+sum(is.na(All_3))
+sum(is.na(all_2))
+All_3$typology
+summary(all_2$parkingDist)
+typology<- All_3 %>%
+  dplyr::select(STOP_ID, typology)
+typology$typology <- ifelse(typology$typology == "CBD" , 'CBD',
+                                ifelse(typology$typology == "UT", 'UT',
+                                       ifelse(typology$typology == "UT&CBD", 'CBD', 'Rest')))
+
+#write.csv(typology, "C:/Upenn/Practicum/Data/Typology_withSTOP_ID.csv")
+?join
+names(all_2)
+data.quarter <- plyr::join(all_2, typology, type ="left")
+data.quarter$STOP_ID <- NULL
+
+data.quarter<-data.quarter %>%
+  drop_na()
+data.quarter$universityDist1<-NULL
+#Slipt the data into training and testing sets
+data_split.quarter <- rsample::initial_split(data.quarter, strata = "mean_on", prop = 0.75)
+
+bus_train.quarter <- rsample::training(data_split.quarter)
+bus_test.quarter  <- rsample::testing(data_split.quarter)
+names(bus_train.quarter)
+
+
+cv_splits_geo.quarter <- rsample::group_vfold_cv(bus_train.quarter,  strata = "mean_on", group = "typology")
+print(cv_splits_geo)
+
+#Create recipe
+model_rec.quarter <- recipe(mean_on ~ ., data = bus_train.quarter) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+?step_cv
+model_rec.quarter
+
+#Build the model
+lm_plan <- 
+  parsnip::linear_reg() %>% 
+  parsnip::set_engine("lm")
+
+glmnet_plan <- 
+  parsnip::linear_reg() %>% 
+  parsnip::set_args(penalty  = tune()) %>%
+  parsnip::set_args(mixture  = tune()) %>%
+  parsnip::set_engine("glmnet")
+
+rf_plan <- parsnip::rand_forest() %>%
+  parsnip::set_args(mtry  = tune()) %>%
+  parsnip::set_args(min_n = tune()) %>%
+  parsnip::set_args(trees = 1000) %>% 
+  parsnip::set_engine("ranger", importance = "impurity") %>% 
+  parsnip::set_mode("regression")
+
+XGB_plan <- parsnip::boost_tree() %>%
+  parsnip::set_args(mtry  = tune()) %>%
+  parsnip::set_args(min_n = tune()) %>%
+  parsnip::set_args(trees = 100) %>% 
+  parsnip::set_engine("xgboost") %>% 
+  parsnip::set_mode("regression")
+
+#
+glmnet_grid <- expand.grid(penalty = seq(0, 1, by = .25), 
+                           mixture = seq(0,1,0.25))
+
+rf_grid <- expand.grid(mtry = c(2,5), 
+                       min_n = c(1,5))
+xgb_grid <- expand.grid(mtry = c(3,5), 
+                        min_n = c(1,5))
+#Create workflow
+lm_wf.quarter <-
+  workflows::workflow() %>% 
+  add_recipe(model_rec.quarter) %>% 
+  add_model(lm_plan)
+
+glmnet_wf.quarter <-
+  workflow() %>% 
+  add_recipe(model_rec.quarter) %>% 
+  add_model(glmnet_plan)
+
+rf_wf.quarter <-
+  workflow() %>% 
+  add_recipe(model_rec.quarter) %>% 
+  add_model(rf_plan)
+xgb_wf.quarter <-
+  workflow() %>% 
+  add_recipe(model_rec.quarter) %>% 
+  add_model(XGB_plan)
+# fit model to workflow and calculate metrics
+control <- tune::control_resamples(save_pred = TRUE, verbose = TRUE)
+library(tune)
+library(yardstick)
+?tune_grid
+?metric_set
+
+lm_tuned.quarter <- lm_wf.quarter %>%
+  fit_resamples(.,
+                resamples = cv_splits_geo.quarter,
+                control   = control,
+                metrics   = metric_set(rmse, rsq))
+glmnet_tuned.quarter <- glmnet_wf.quarter %>%
+  tune_grid(.,
+            resamples = cv_splits_geo.quarter,
+            grid      = glmnet_grid,
+            control   = control,
+            metrics   = metric_set(rmse, rsq))
+
+rf_tuned.quarter <- rf_wf.quarter %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.quarter,
+                  grid      = rf_grid,
+                  control   = control,
+                  metrics   = metric_set(rmse, rsq))
+
+xgb_tuned.quarter <- xgb_wf.quarter %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.quarter,
+                  grid      = xgb_grid,
+                  control   = control,
+                  metrics   = metric_set(rmse, rsq))
+
+show_best(lm_tuned.quarter, metric = "rmse", n = 15, maximize = FALSE)
+show_best(glmnet_tuned.quarter, metric = "rmse", n = 15, maximize = FALSE)
+show_best(rf_tuned.quarter, metric = "rmse", n = 15, maximize = FALSE)
+show_best(xgb_tuned.quarter, metric = "rmse", n = 15, maximize = FALSE)
+
+lm_best_params.quarter     <- select_best(lm_tuned.quarter, metric = "rmse", maximize = FALSE)
+glmnet_best_params.quarter <- select_best(glmnet_tuned.quarter, metric = "rmse", maximize = FALSE)
+rf_best_params.quarter     <- select_best(rf_tuned.quarter, metric = "rmse", maximize = FALSE)
+xgb_best_params.quarter    <- select_best(xgb_tuned.quarter, metric = "rmse", maximize = FALSE)
+#Final workflow
+lm_best_wf.quarter     <- finalize_workflow(lm_wf.quarter, lm_best_params.quarter)
+glmnet_best_wf.quarter <- finalize_workflow(glmnet_wf.quarter, glmnet_best_params.quarter)
+rf_best_wf.quarter     <- finalize_workflow(rf_wf.quarter, rf_best_params.quarter)
+xgb_best_wf.quarter    <- finalize_workflow(xgb_wf.quarter, xgb_best_params.quarter)
+
+lm_val_fit_geo.quarter <- lm_best_wf.quarter %>% 
+  last_fit(split     = data_split.quarter,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+glmnet_val_fit_geo.quarter <- glmnet_best_wf.quarter %>% 
+  last_fit(split     = data_split.quarter,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+rf_val_fit_geo.quarter <- rf_best_wf.quarter %>% 
+  last_fit(split     = data_split.quarter,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+xgb_val_fit_geo.quarter <- xgb_best_wf.quarter %>% 
+  last_fit(split     = data_split.quarter,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+####################################Model Validation
+# Pull best hyperparam preds from out-of-fold predictions
+lm_best_OOF_preds.quarter <- collect_predictions(lm_tuned.quarter) 
+glmnet_best_OOF_preds.quarter <- collect_predictions(glmnet_tuned.quarter) %>% 
+  filter(penalty  == glmnet_best_params.quarter$penalty[1] & mixture == glmnet_best_params.quarter$mixture[1])
+rf_best_OOF_preds.quarter <- collect_predictions(rf_tuned.quarter) %>% 
+  filter(mtry  == rf_best_params.quarter$mtry[1] & min_n == rf_best_params.quarter$min_n[1])
+
+xgb_best_OOF_preds.quarter <- collect_predictions(xgb_tuned.quarter) %>% 
+  filter(mtry  == xgb_best_params.quarter$mtry[1] & min_n == xgb_best_params.quarter$min_n[1])
+# collect validation set predictions from last_fit model
+lm_val_pred_geo.quarter     <- collect_predictions(lm_val_fit_geo.quarter)
+glmnet_val_pred_geo.quarter <- collect_predictions(glmnet_val_fit_geo.quarter)
+rf_val_pred_geo.quarter     <- collect_predictions(rf_val_fit_geo.quarter)
+xgb_val_pred_geo.quarter    <- collect_predictions(xgb_val_fit_geo.quarter)
+# Aggregate OOF predictions (they do not overlap with Validation prediction set)
+lm_best_OOF_preds$mean_on <- as.numeric(lm_best_OOF_preds$mean_on)
+glmnet_best_OOF_preds$mean_on <- as.numeric(glmnet_best_OOF_preds$mean_on)
+rf_best_OOF_preds$mean_on <- as.numeric(rf_best_OOF_preds$mean_on)
+xgb_best_OOF_preds$mean_on <- as.numeric(xgb_best_OOF_preds$mean_on)
+
+OOF_preds.quarter <- rbind(data.frame(dplyr::select(lm_best_OOF_preds.quarter, .pred, mean_on), model = "lm"),
+                   data.frame(dplyr::select(glmnet_best_OOF_preds.quarter, .pred, mean_on), model = "glmnet"),
+                   data.frame(dplyr::select(rf_best_OOF_preds.quarter, .pred, mean_on), model = "RF"),
+                   data.frame(dplyr::select(xgb_best_OOF_preds.quarter, .pred, mean_on), model = "xgb")) %>% 
+  group_by(model) %>% 
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         #RSQUARE = yardstick::rsq(mean_on, .pred),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         #SD_RMSE = sd(yardstick::rmse_vec(mean_on, .pred)),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         #SD_MAE = sd(yardstick::mae_vec(mean_on, .pred)),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+         #SD_MAPE = sd(yardstick::mape_vec(mean_on, .pred))) %>% 
+  ungroup()
+
+
+# Aggregate predictions from Validation set
+library(tidyverse)
+library(yardstick)
+#lm_val_pred_geo
+val_preds.quarter <- rbind(data.frame(lm_val_pred_geo.quarter, model = "lm"),
+                   data.frame(glmnet_val_pred_geo.quarter, model = "glmnet"),
+                   data.frame(rf_val_pred_geo.quarter, model = "rf"),
+                   data.frame(xgb_val_pred_geo.quarter, model = "xgb")) %>% 
+  left_join(., data.quarter %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(model) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+
+summary(rf_val_pred_geo.quarter$MAE)
+summary(xgb_val_pred_geo.quarter$MAE)
+summary(lm_val_pred_geo.quarter$MAPE)
+summary(glmnet_val_pred_geo.quarter$MAPE)
+summary(rf_val_pred_geo.quarter$MAPE)
+summary(xgb_val_pred_geo.quarter$MAPE)
+summary(lm_val_pred_geo.quarter$RMSE)
+summary(glmnet_val_pred_geo.quarter$RMSE)
+summary(rf_val_pred_geo.quarter$RMSE)
+summary(xgb_val_pred_geo.quarter$RMSE)
+?group_by
+#Rsquared
+1- sum((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred) ^ 2)/sum((lm_val_pred_geo$mean_on - mean(lm_val_pred_geo$mean_on)) ^ 2)
+rsq(lm_val_pred_geo.quarter, mean_on, .pred)
+sd(rsq(lm_val_pred_geo, mean_on, .pred))
+rsq(glmnet_val_pred_geo.quarter, mean_on, .pred)
+rsq(rf_val_pred_geo.quarter, mean_on, .pred)
+rsq(xgb_val_pred_geo.quarter, mean_on, .pred)
+#MAE and MAPE
+mean(abs(lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred))
+sd(abs(lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred))
+mean(abs((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)/lm_val_pred_geo$mean_on))
+sd(abs((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)/lm_val_pred_geo$mean_on))
+sd(abs(lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred))
+
+mean(abs(glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred))
+sd(abs(glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred))
+mean(abs((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)/glmnet_val_pred_geo$mean_on))
+sd(abs((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)/glmnet_val_pred_geo$mean_on))
+
+mean(abs(rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred))
+sd(abs(rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred))
+mean(abs((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)/rf_val_pred_geo$mean_on))
+sd(abs((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)/rf_val_pred_geo$mean_on))
+
+mean(abs(xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred))
+sd(abs(xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred))
+mean(abs((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)/xgb_val_pred_geo$mean_on))
+sd(abs((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)/xgb_val_pred_geo$mean_on))
+#RMSE
+sqrt(mean((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)^2))
+sqrt(mean((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)^2))
+sqrt(mean((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)^2))
+sqrt(mean((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)^2))
+sqrt(sd((lm_val_pred_geo$mean_on - lm_val_pred_geo$.pred)^2))
+sqrt(sd((glmnet_val_pred_geo$mean_on - glmnet_val_pred_geo$.pred)^2))
+sqrt(sd((rf_val_pred_geo$mean_on - rf_val_pred_geo$.pred)^2))
+sqrt(sd((xgb_val_pred_geo$mean_on - xgb_val_pred_geo$.pred)^2))
+
+yardstick::rmse_vec(lm_val_pred_geo$mean_on, lm_val_pred_geo$.pred)
+yardstick::mape_vec(lm_val_pred_geo$mean_on, lm_val_pred_geo$.pred)
+###################################Modelling part ends here, below are the visualizations##############
+#MAPE chart
+ggplot(data = val_preds.quarter %>% 
+         dplyr::select(model, MAPE) %>% 
+         distinct() , 
+       aes(x = model, y = MAPE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(MAPE,1),"%"))) +
+  labs(title= "1/4-mi Buffer, MAPE of each model on the testing set with typology")
+theme_bw()
+#MAE chart
+ggplot(data = val_preds.quarter%>% 
+         dplyr::select(model, MAE) %>% 
+         distinct() , 
+       aes(x = model, y = MAE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(MAE,1)))) +
+  labs(title= "1/4 mi Buffer, MAE of each model on the testing set with typology")
+theme_bw()  
+#RMSE
+ggplot(data = val_preds.quarter %>% 
+         dplyr::select(model, RMSE) %>% 
+         distinct() , 
+       aes(x = model, y = RMSE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(RMSE,1)))) +
+  labs(title= "1/4 mi Buffer, RMSE of each model on the testing set with typology")
+theme_bw() 
+#Predicted vs Observed
+ggplot(val_preds.quarter, aes(x =.pred, y = mean_on, group = model)) +
+  geom_point() +
+  geom_abline(linetype = "dashed", color = "red") +
+  geom_smooth(method = "lm", color = "blue") +
+  coord_equal() +
+  facet_wrap(~model, nrow = 2) +
+  labs(title="1/4 Mile: Predicted vs Observed on the testing set", subtitle= "blue line is predicted value") 
+theme_bw()
+
+#Neighborhood validation
+val_MAPE_by_typology.quarter <- val_preds.quarter %>% 
+  group_by(typology, model) %>% 
+  summarise(RMSE = yardstick::rmse_vec(mean_on, .pred),
+            MAE  = yardstick::mae_vec(mean_on, .pred),
+            MAPE = yardstick::mape_vec(mean_on, .pred)) %>% 
+  ungroup() 
+#Barchart of the MAE in each neighborhood
+plotTheme <- function(base_size = 10) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 20,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=20),
+    axis.title = element_text(size=20),
+    axis.text = element_text(size=15),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic", size= 20),
+    legend.text = element_text(colour = "black", face = "italic",size = 20),
+    strip.text.x = element_text(size = 15)
+  )
+}
+palette4 <- c("#eff3ff", "#bdd7e7","#6baed6","#2171b5")
+
+
+as.data.frame(val_MAPE_by_typology.quarter)%>%
+  dplyr::select(typology, model, MAE) %>%
+  #gather(Variable, MAE, -model, -typology) %>%
+  ggplot(aes(typology, MAE)) + 
+  geom_bar(aes(fill = model), position = "dodge", stat="identity") +
+  ylim(0, 300)+
+  scale_fill_manual(values = palette4) +
+  facet_wrap(~typology, scale= "free", ncol=4)+
+  labs(title = "1/4 mile: Mean Absolute Errors by model specification") +
+  plotTheme()
+```
+
+#### Buffer size: 1/2 mile
+```{r}
+#1/8-mile buffer
+data.eighth <- join(all_eighth, typology, type ="left")
+data.eighth$STOP_ID <- NULL
+
+data.eighth<-data.eighth %>%
+  drop_na()
+data.eighth$universityDist1<-NULL
+#Slipt the data into training and testing sets
+data_split.eighth <- rsample::initial_split(data.eighth, strata = "mean_on", prop = 0.75)
+
+bus_train.eighth <- rsample::training(data_split.eighth)
+bus_test.eighth  <- rsample::testing(data_split.eighth)
+names(bus_train.eighth)
+
+
+cv_splits_geo.eighth <- rsample::group_vfold_cv(bus_train.eighth,  strata = "mean_on", group = "typology")
+print(cv_splits_geo)
+
+#Create recipe
+model_rec.eighth <- recipe(mean_on ~ ., data = bus_train.eighth) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+?step_cv
+model_rec.eighth
+
+#Build the model
+lm_plan <- 
+  parsnip::linear_reg() %>% 
+  parsnip::set_engine("lm")
+
+glmnet_plan <- 
+  parsnip::linear_reg() %>% 
+  parsnip::set_args(penalty  = tune()) %>%
+  parsnip::set_args(mixture  = tune()) %>%
+  parsnip::set_engine("glmnet")
+
+rf_plan <- parsnip::rand_forest() %>%
+  parsnip::set_args(mtry  = tune()) %>%
+  parsnip::set_args(min_n = tune()) %>%
+  parsnip::set_args(trees = 1000) %>% 
+  parsnip::set_engine("ranger", importance = "impurity") %>% 
+  parsnip::set_mode("regression")
+
+XGB_plan <- parsnip::boost_tree() %>%
+  parsnip::set_args(mtry  = tune()) %>%
+  parsnip::set_args(min_n = tune()) %>%
+  parsnip::set_args(trees = 100) %>% 
+  parsnip::set_engine("xgboost") %>% 
+  parsnip::set_mode("regression")
+
+#
+glmnet_grid <- expand.grid(penalty = seq(0, 1, by = .25), 
+                           mixture = seq(0,1,0.25))
+
+rf_grid <- expand.grid(mtry = c(2,5), 
+                       min_n = c(1,5))
+xgb_grid <- expand.grid(mtry = c(3,5), 
+                        min_n = c(1,5))
+#Create workflow
+lm_wf.eighth <-
+  workflows::workflow() %>% 
+  add_recipe(model_rec.eighth) %>% 
+  add_model(lm_plan)
+
+glmnet_wf.eighth <-
+  workflow() %>% 
+  add_recipe(model_rec.eighth) %>% 
+  add_model(glmnet_plan)
+
+rf_wf.eighth <-
+  workflow() %>% 
+  add_recipe(model_rec.eighth) %>% 
+  add_model(rf_plan)
+xgb_wf.eighth <-
+  workflow() %>% 
+  add_recipe(model_rec.eighth) %>% 
+  add_model(XGB_plan)
+# fit model to workflow and calculate metrics
+control <- tune::control_resamples(save_pred = TRUE, verbose = TRUE)
+library(tune)
+library(yardstick)
+?tune_grid
+?metric_set
+
+lm_tuned.eighth <- lm_wf.eighth %>%
+  fit_resamples(.,
+                resamples = cv_splits_geo.eighth,
+                control   = control,
+                metrics   = metric_set(rmse, rsq))
+glmnet_tuned.eighth <- glmnet_wf.eighth %>%
+  tune_grid(.,
+            resamples = cv_splits_geo.eighth,
+            grid      = glmnet_grid,
+            control   = control,
+            metrics   = metric_set(rmse, rsq))
+
+rf_tuned.eighth <- rf_wf.eighth %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.eighth,
+                  grid      = rf_grid,
+                  control   = control,
+                  metrics   = metric_set(rmse, rsq))
+
+xgb_tuned.eighth <- xgb_wf.eighth %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.eighth,
+                  grid      = xgb_grid,
+                  control   = control,
+                  metrics   = metric_set(rmse, rsq))
+
+show_best(lm_tuned.eighth, metric = "rmse", n = 15, maximize = FALSE)
+show_best(glmnet_tuned.eighth, metric = "rmse", n = 15, maximize = FALSE)
+show_best(rf_tuned.eighth, metric = "rmse", n = 15, maximize = FALSE)
+show_best(xgb_tuned.eighth, metric = "rmse", n = 15, maximize = FALSE)
+
+lm_best_params.eighth     <- select_best(lm_tuned.eighth, metric = "rmse", maximize = FALSE)
+glmnet_best_params.eighth <- select_best(glmnet_tuned.eighth, metric = "rmse", maximize = FALSE)
+rf_best_params.eighth     <- select_best(rf_tuned.eighth, metric = "rmse", maximize = FALSE)
+xgb_best_params.eighth    <- select_best(xgb_tuned.eighth, metric = "rmse", maximize = FALSE)
+#Final workflow
+lm_best_wf.eighth     <- finalize_workflow(lm_wf.eighth, lm_best_params.eighth)
+glmnet_best_wf.eighth <- finalize_workflow(glmnet_wf.eighth, glmnet_best_params.eighth)
+rf_best_wf.eighth     <- finalize_workflow(rf_wf.eighth, rf_best_params.eighth)
+xgb_best_wf.eighth    <- finalize_workflow(xgb_wf.eighth, xgb_best_params.eighth)
+
+lm_val_fit_geo.eighth <- lm_best_wf.eighth %>% 
+  last_fit(split     = data_split.eighth,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+glmnet_val_fit_geo.eighth <- glmnet_best_wf.eighth %>% 
+  last_fit(split     = data_split.eighth,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+rf_val_fit_geo.eighth <- rf_best_wf.eighth %>% 
+  last_fit(split     = data_split.eighth,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+xgb_val_fit_geo.eighth <- xgb_best_wf.eighth %>% 
+  last_fit(split     = data_split.eighth,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+####################################Model Validation
+# Pull best hyperparam preds from out-of-fold predictions
+lm_best_OOF_preds.eighth <- collect_predictions(lm_tuned.eighth) 
+glmnet_best_OOF_preds.eighth <- collect_predictions(glmnet_tuned.eighth) %>% 
+  filter(penalty  == glmnet_best_params.eighth$penalty[1] & mixture == glmnet_best_params.eighth$mixture[1])
+rf_best_OOF_preds.eighth <- collect_predictions(rf_tuned.eighth) %>% 
+  filter(mtry  == rf_best_params.eighth$mtry[1] & min_n == rf_best_params.eighth$min_n[1])
+
+xgb_best_OOF_preds.eighth <- collect_predictions(xgb_tuned.eighth) %>% 
+  filter(mtry  == xgb_best_params.eighth$mtry[1] & min_n == xgb_best_params.eighth$min_n[1])
+# collect validation set predictions from last_fit model
+lm_val_pred_geo.eighth     <- collect_predictions(lm_val_fit_geo.eighth)
+glmnet_val_pred_geo.eighth <- collect_predictions(glmnet_val_fit_geo.eighth)
+rf_val_pred_geo.eighth     <- collect_predictions(rf_val_fit_geo.eighth)
+xgb_val_pred_geo.eighth    <- collect_predictions(xgb_val_fit_geo.eighth)
+# Aggregate OOF predictions (they do not overlap with Validation prediction set)
+OOF_preds.eighth <- rbind(data.frame(dplyr::select(lm_best_OOF_preds.eighth, .pred, mean_on), model = "lm"),
+                           data.frame(dplyr::select(glmnet_best_OOF_preds.eighth, .pred, mean_on), model = "glmnet"),
+                           data.frame(dplyr::select(rf_best_OOF_preds.eighth, .pred, mean_on), model = "RF"),
+                           data.frame(dplyr::select(xgb_best_OOF_preds.eighth, .pred, mean_on), model = "xgb")) %>% 
+  group_by(model) %>% 
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         #RSQUARE = yardstick::rsq(mean_on, .pred),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         #SD_RMSE = sd(yardstick::rmse_vec(mean_on, .pred)),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         #SD_MAE = sd(yardstick::mae_vec(mean_on, .pred)),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  #SD_MAPE = sd(yardstick::mape_vec(mean_on, .pred))) %>% 
+  ungroup()
+
+
+# Aggregate predictions from Validation set
+library(tidyverse)
+library(yardstick)
+#lm_val_pred_geo
+detach(package:plyr)
+val_preds.eighth <- rbind(data.frame(lm_val_pred_geo.eighth, model = "lm"),
+                   data.frame(glmnet_val_pred_geo.eighth, model = "glmnet"),
+                   data.frame(rf_val_pred_geo.eighth, model = "rf"),
+                   data.frame(xgb_val_pred_geo.eighth, model = "xgb")) %>% 
+  left_join(., data.eighth %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  group_by(model) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = mean(abs(mean_on - .pred)),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+
+lm_val_pred_geo.eighth<- lm_val_pred_geo.eighth%>%
+  left_join(., data.eighth %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row")%>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on))
+
+
+lm_val_pred_geo.eighth%>%
+  group_by(typology)%>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         Error = abs(mean_on, .pred),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         #MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAE = mean(Error),
+         MAPE = yardstick::mape_vec(mean_on, .pred))
+
+glmnet_val_pred_geo.eighth<- glmnet_val_pred_geo.eighth%>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))
+
+rf_val_pred_geo.eighth<- rf_val_pred_geo.eighth%>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))
+
+xgb_val_pred_geo.eighth<- xgb_val_pred_geo.eighth%>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))
+
+val_preds.eighth <- rbind(data.frame(lm_val_pred_geo.eighth, model = "lm"),
+                           data.frame(glmnet_val_pred_geo.eighth, model = "glmnet"),
+                           data.frame(rf_val_pred_geo.eighth, model = "rf"),
+                           data.frame(xgb_val_pred_geo.eighth, model = "xgb"))%>%
+  left_join(., data.eighth %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row")
+summary(lm_val_pred_geo.eighth$MAE)
+summary(glmnet_val_pred_geo.eighth$MAE)
+summary(rf_val_pred_geo.eighth$MAE)
+summary(xgb_val_pred_geo.eighth$MAE)
+summary(lm_val_pred_geo.eighth$MAPE)
+summary(glmnet_val_pred_geo.eighth$MAPE)
+summary(rf_val_pred_geo.eighth$MAPE)
+summary(xgb_val_pred_geo.eighth$MAPE)
+summary(lm_val_pred_geo.eighth$RMSE)
+summary(glmnet_val_pred_geo.eighth$RMSE)
+summary(rf_val_pred_geo.eighth$RMSE)
+summary(xgb_val_pred_geo.eighth$RMSE)
+
+#Rsquared
+rsq(lm_val_pred_geo.eighth, mean_on, .pred)
+sd(rsq(lm_val_pred_geo, mean_on, .pred))
+rsq(glmnet_val_pred_geo.eighth, mean_on, .pred)
+rsq(rf_val_pred_geo.eighth, mean_on, .pred)
+rsq(xgb_val_pred_geo.eighth, mean_on, .pred)
+
+###################################Modelling part ends here, below are the visualizations##############
+#MAPE chart
+ggplot(data = val_preds.eighth %>% 
+         dplyr::select(model, MAPE) %>% 
+         distinct() , 
+       aes(x = model, y = MAPE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(MAPE,1),"%"))) +
+  labs(title= "1/8-mi Buffer, MAPE of each model on the testing set with typology")
+theme_bw()
+#MAE chart
+ggplot(data = val_preds.eighth%>% 
+         dplyr::select(model, MAE) %>% 
+         distinct() , 
+       aes(x = model, y = MAE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(MAE,1)))) +
+  labs(title= "1/8 mi Buffer, MAE of each model on the testing set with typology")
+theme_bw()  
+#RMSE
+ggplot(data = val_preds.eighth %>% 
+         dplyr::select(model, RMSE) %>% 
+         distinct() , 
+       aes(x = model, y = RMSE, group = 1)) +
+  geom_path(color = "blue") +
+  geom_label(aes(label = paste0(round(RMSE,1)))) +
+  labs(title= "1/8 mi Buffer, RMSE of each model on the testing set with typology")
+theme_bw() 
+#Predicted vs Observed
+ggplot(val_preds.eighth, aes(x =.pred, y = mean_on, group = model)) +
+  geom_point() +
+  geom_abline(linetype = "dashed", color = "red") +
+  geom_smooth(method = "lm", color = "blue") +
+  coord_equal() +
+  facet_wrap(~model, nrow = 2) +
+  labs(title="1/8 Mile: Predicted vs Observed on the testing set", subtitle= "blue line is predicted value") 
+theme_bw()
+
+val_MAPE_by_typology.eighth <- val_preds.eighth %>% 
+  group_by(typology, model) %>% 
+  summarise(RMSE = yardstick::rmse_vec(mean_on, .pred),
+            MAE  = yardstick::mae_vec(mean_on, .pred),
+            MAPE = yardstick::mape_vec(mean_on, .pred)) %>% 
+  ungroup() 
+#Barchart of the MAE in each neighborhood
+plotTheme <- function(base_size = 10) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 20,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=20),
+    axis.title = element_text(size=20),
+    axis.text = element_text(size=15),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic", size= 20),
+    legend.text = element_text(colour = "black", face = "italic",size = 20),
+    strip.text.x = element_text(size = 15)
+  )
+}
+palette4 <- c("#eff3ff", "#bdd7e7","#6baed6","#2171b5")
+
+
+as.data.frame(val_MAPE_by_typology.eighth)%>%
+  dplyr::select(typology, model, MAE) %>%
+  #gather(Variable, MAE, -model, -typology) %>%
+  ggplot(aes(typology, MAE)) + 
+  geom_bar(aes(fill = model), position = "dodge", stat="identity") +
+  ylim(0, 300)+
+  scale_fill_manual(values = palette4) +
+  facet_wrap(~typology, scale= "free", ncol=4)+
+  labs(title = "1/8 mile: Mean Absolute Errors by model specification") +
+  plotTheme()
 
 ```
 
+### Build the kitchen sink model using selected variables
+```{r}
+sum(is.na(sce0))
+library(dplyr)
+install.packages("mltools")
+library(mltools)
+sce0<-sce %>% drop_na()
 
+sce0 <- plyr::join(sce0, typology, type= "left")
+
+library(data.table)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "SN_cat",
+          dropCols = TRUE)
+names(sce0)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Crosstown_cat",
+          dropCols = TRUE)
+
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Express_cat",
+          dropCols = TRUE)
+
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Local_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Flyer_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "NightOwl_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "HighFreq_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "InOut_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Clockwise_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "utshuttle_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Special_cat",
+          dropCols = TRUE)
+
+sce0 <- sce0 %>%dplyr::select(-STOP_ID)
+data_split.sce0 <- rsample::initial_split(sce0, strata = "mean_on", prop = 0.75)
+
+bus_train.sce0 <- rsample::training(data_split.sce0)
+bus_test.sce0  <- rsample::testing(data_split.sce0)
+names(bus_train.quarter)
+
+cv_splits_geo.sce0 <- rsample::group_vfold_cv(bus_train.sce0,  strata = "mean_on", group = "typology")
+print(cv_splits_geo)
+
+model_rec.sce0 <- recipe(mean_on ~ ., data = bus_train.sce0) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+
+
+#Create workflow
+
+rf_wf.sce0 <-
+  workflow() %>% 
+  add_recipe(model_rec.sce0) %>% 
+  add_model(rf_plan)
+
+# fit model to workflow and calculate metrics
+#Metrics are changes from rmse + rsq to only rsq
+rf_tuned.sce0 <- rf_wf.sce0 %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.sce0,
+                  grid      = rf_grid,
+                  control   = control,
+                  metrics   = metric_set(rsq))
+
+?tune_grid
+show_best(rf_tuned.sce0, metric = "rsq", n = 15, maximize = FALSE)
+
+
+
+rf_best_params.sce0     <- select_best(rf_tuned.sce0, metric = "rsq", maximize = FALSE)
+
+#Final workflow
+rf_best_wf.sce0     <- finalize_workflow(rf_wf.sce0, rf_best_params.sce0)
+
+rf_val_fit_geo.sce0 <- rf_best_wf.sce0 %>% 
+  last_fit(split     = data_split.sce0,
+           control   = control,
+           metrics   = metric_set(rsq))
+
+####################################Model Validation
+# Pull best hyperparam preds from out-of-fold predictions
+rf_best_OOF_preds.sce0 <- collect_predictions(rf_tuned.sce0) %>% 
+  filter(mtry  == rf_best_params.sce0$mtry[1] & min_n == rf_best_params.sce0$min_n[1])
+# collect validation set predictions from last_fit model
+rf_val_pred_geo.sce0     <- collect_predictions(rf_val_fit_geo.sce0)
+# Aggregate predictions from Validation set
+library(tidyverse)
+library(yardstick)
+#lm_val_pred_geo
+rf_best_OOF_preds.sce0 <- rf_best_OOF_preds.sce0 %>% dplyr::select(-min_n, -mtry)
+val_preds.sce0 <- rbind(data.frame(rf_val_pred_geo.sce0), data.frame(rf_best_OOF_preds.sce0) )%>% 
+  left_join(., sce0 %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(typology) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+val_MAPE_by_typology.sce0 <- val_preds.sce0 %>% 
+  group_by(typology) %>% 
+  summarise(RMSE = yardstick::rmse_vec(mean_on, .pred),
+            MAE  = yardstick::mae_vec(mean_on, .pred),
+            MAPE = yardstick::mape_vec(mean_on, .pred)) %>% 
+  ungroup() 
+#Barchart of the MAE in each neighborhood
+plotTheme <- function(base_size = 10) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 20,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=20),
+    axis.title = element_text(size=20),
+    axis.text = element_text(size=15),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic", size= 20),
+    legend.text = element_text(colour = "black", face = "italic",size = 20),
+    strip.text.x = element_text(size = 15)
+  )
+}
+palette4 <- c("#eff3ff", "#bdd7e7","#6baed6","#2171b5")
+
+
+as.data.frame(val_MAPE_by_typology.sce0)%>%
+  dplyr::select(typology,MAPE) %>%
+  #gather(Variable, MAE, -model, -typology) %>%
+  ggplot(aes(typology, MAPE)) + 
+  geom_bar(aes(fill = typology), position = "dodge", stat="identity") +
+  ylim(0, 120)+
+  scale_fill_manual(values = palette4) +
+  facet_wrap(~typology, scale= "free", ncol=4)+
+  labs(title = "MAPE of the random forest model") +
+  plotTheme()
+```
 
