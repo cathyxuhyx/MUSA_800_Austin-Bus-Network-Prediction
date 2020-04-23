@@ -45,14 +45,7 @@ In 2018, Capital Metropoitan Transportation Authority (CapMetro), a public trans
 Given the renewed interest in bus transit in US cities, such as Austin, there is an opportunity to streamline the bus planning process using modern data science methods. Currently, cities have to gather all the information, such as land use, built environment, demographics etc., from different sources, to gain understanding of bus ridership change in the future. This method is usually time consuming and requires a lot of human resources. Oftentimes, cities have to outsource those analysis to third parties, which inevitably leads to higher project cost. The goal of this article, therefore, is to present a scenario planning tool for planners to test how changes in local land uses and characteristics of bus routes predict bus ridership. If such a predictive model proves robust, planners can use it to evaluate a series of possible pictures regarding the development of different land use and change of bus routes in the future and make strategic decisions efficiently in Austin.
 This report is broken into four sections. Section 1 presents an exploratory analysis of the Cap Remap to further understand the trends, patterns, and characteristics of the ridership in Austin, which helps to determine the important features to be incorporated in the predictive model. Section 2 explains the process of model building and model evaluation. Section 3 demonstrates the user interface of the bus network planning application, which is supported by the model developed in Section 2. The last section will be an appendix showing the codes and additional information about the model and application development. 
 
-# 2. Exploratory Analysis
-Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
-How did ridership change before and after the implementation of CapRemap (06/03/2018)?
-How does the ridership change across the city?
-What types of route characteristics have influences on ridership?
-What are the popular bus routes in Austin and what are their attributes?
-
-## 2.1 What Data Are We Using?
+## 1.3 What Data Are We Using?
 
 The ridership data we used come from the Automated Passenger Counter(APC), which counts the number of boarding and alighting on any given bus. The image below illustrate the APC system at work.
 ![](../markdown_img/Passenger-bus-APC-1024x576.jpg)
@@ -70,9 +63,16 @@ We use the disaggregated data to study the relationship between route characteri
 
 ![](../markdown_img/disagg.PNG)
 
-## 2.2 Annual Citywide Ridership Trend
+# 2. Exploratory Analysis
+Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
+How did ridership change before and after the implementation of CapRemap (06/03/2018)?
+How does the ridership change across the city?
+What types of route characteristics have influences on ridership?
+What are the popular bus routes in Austin and what are their attributes?
 
-How did ridership change before and after CapRemap (06/03, 2018)?
+## 2.1 Annual Citywide Ridership Trend
+
+How did ridership change before and after CapRemap (06/03, 2018)? Did it increase after the redesign?
 
 Current available data from Capital Metro allows us to observe the trend in ridership change before and after Cap Remap. The first important part of exploratory analysis is to see the city-wide change in ridership brought by CapRemap. With the stop-level data from Janurary 207 to November 2019, the aggregated city-wide ridership change is shown in the chart below.
 
@@ -83,7 +83,7 @@ From the trend in 2018, it is clear that ridership fluctuated between months. Ye
 
 ![](../markdown_img/AnnualTrend.png)
 
-## 2.3 Ridership Pattern in Subdivisions
+## 2.2 Ridership Pattern in Subdivisions
 
 After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. Neighborhoods in Austin are used here to show the spatial trend here. 
 
@@ -105,9 +105,9 @@ But there are also neighborhoods exepriencing ridership decrease on the east-wes
 
 ![](../markdown_img/zilker_change.png)
 
-## 2.4 Route Analysis
+## 2.3 Route Analysis
 
-### 2.4.1 Route Type
+### 2.3.1 Route Type
 
 What could potentially influence ridership in terms of route information?
 
@@ -131,7 +131,7 @@ Feeder: Capital Metro's Feeder routes are local services between a neighborhood 
 
 ![](../markdown_img/routetypePNG.png)
 
-### 2.4.2 Hotlines
+### 2.3.2 Hotlines
 
 What makes a good bus system? What's so special about the 'hotlines'?
 
