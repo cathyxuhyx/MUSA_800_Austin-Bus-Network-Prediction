@@ -221,6 +221,20 @@ To take a closer look at the neighborhoods, maps of MAPE are plotted to show the
 
 ### 3.3.2 Selecting the Best Buffer
 
+**********(we select three buffer sizes to test according our domain knowledge)
+
+1/2 mile Buffer
+![](../markdown_img/22/21_half.JPG){width=600px}
+
+1/4 mile Buffer
+![](../markdown_img/22/18_quarter.JPG){width=600px}
+
+1/8 mile Buffer
+![](../markdown_img/22/19_eight.JPG){width=600px}
+
+![](../markdown_img/22/22_half.JPG){width=500px}
+![](../markdown_img/22/20_quarter.JPG){width=500px}
+![](../markdown_img/22/23_eighth.JPG){width=500px}
 
 # 4. Application
 
@@ -231,17 +245,35 @@ To take a closer look at the neighborhoods, maps of MAPE are plotted to show the
 ### 4.1.1 Improving the Model and Check Generalizability
 
 **********(Selected features with more predictive power to building area)
+![](../markdown_img/22/Gene_rf.JPG){width=500px}
 
 ### 4.1.2 Scenario 1: What is the effect of UT Austin West Campus Development?
 
+![](../markdown_img/s1_1.png)
+
+![](../markdown_img/s1_2.png){width=500px}
+
 ### 4.1.3 Scenario 2: What is the effect of East Riverside Development?
+
+![](../markdown_img/s2_1.png)
+
+![](../markdown_img/s2_2.png){width=500px}
 
 ### 4.1.4 Scenario 3: What is the effect of Mueller Austin Housing Project?
 
+![](../markdown_img/s3_1.png)
+
+![](../markdown_img/s3_2.png){width=500px}
+
 ## 4.2 Web Application
 
+![](../markdown_img/web1.png)
 
+![](../markdown_img/web2.png)
 
+![](../markdown_img/web3.png)
+
+![](../markdown_img/web4.png)
 
 # 5. Appendix
 
@@ -1877,7 +1909,7 @@ all5[all5$STOP_ID %in% s1_wc3,]$building_area <- all5[all5$STOP_ID %in% s1_wc3,]
 # write.csv(all5 %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario1_westcampus.csv", row.names = FALSE)
 ```
 
-```{r fig.height=10}
+```{r}
 # plot sce1 predictions
 lmreg <- lm(mean_on ~ .,data = all5 %>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on))
 summary(lmreg)
@@ -1887,12 +1919,21 @@ lm_model1 <-
   mutate(ridership.Predict1 = predict(lmreg, all5)) %>%
   mutate(err = ridership.Predict1-ridership.Predict)
 
+grid.arrange(
 ggplot()+
   geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 4)+
-  geom_sf(data = st_centroid(na.omit(lm_model1)), aes(color = err),size=2) +
+  geom_sf(data = st_centroid(na.omit(lm_model3)),color = "grey40", size=0.5) +
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 1)+
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 1)+
+  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 1)+
+  labs(title = "Ridership Prediction Scenario 1 Location") +
+  mapTheme(),
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 1.5)+
+  geom_sf(data = st_centroid(na.omit(lm_model1)), aes(color = err),size=0.8) +
   labs(title = "Ridership Prediction Scenario 1: \nBuilding areas increase in West Campus") +
-  mapTheme()
+  mapTheme(),ncol=2)
 ```
 
 ```{r}
@@ -1934,7 +1975,7 @@ all5[all5$STOP_ID %in% s1_r2,]$building_area <- all5[all5$STOP_ID %in% s1_r2,]$b
 # write.csv(all5 %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario2_riverside.csv", row.names = FALSE)
 ```
 
-```{r fig.height=10}
+```{r}
 # plot sce2 predictions
 lmreg <- lm(mean_on ~ .,data = all5 %>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1, utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on))
 summary(lmreg)
@@ -1944,12 +1985,22 @@ lm_model2 <-
   mutate(ridership.Predict1 = predict(lmreg, all5)) %>%
   mutate(err = ridership.Predict1-ridership.Predict)
 
+
+grid.arrange(
 ggplot()+
   geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 4)+
-  geom_sf(data = st_centroid(na.omit(lm_model2)), aes(color = err),size=2) +
+  geom_sf(data = st_centroid(na.omit(lm_model3)),color = "grey40", size=0.5) +
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 1)+
+  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 1)+
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 1)+
+  labs(title = "Ridership Prediction Scenario 2 Location") +
+  mapTheme(),
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  #geom_sf(data =  st_centroid(lm_model2[lm_model2$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 4)+
+  geom_sf(data = st_centroid(na.omit(lm_model2)), aes(color = err),size=0.8) +
   labs(title = "Ridership Prediction Scenario 2: \nBuilding areas increase in East Riverside") +
-  mapTheme()
+  mapTheme(), ncol=2)
 ```
 
 ```{r}
@@ -1986,7 +2037,7 @@ all5[all5$STOP_ID %in% s1_edt,]$building_area <- all5[all5$STOP_ID %in% s1_edt,]
 # write.csv(all5 %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario3_eastdt.csv", row.names = FALSE)
 ```
 
-```{r fig.height=10}
+```{r}
 # plot sce3 predictions
 lmreg <- lm(mean_on ~ .,data = all5 %>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1, utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on))
 summary(lmreg)
@@ -1996,12 +2047,22 @@ lm_model3 <-
   mutate(ridership.Predict1 = predict(lmreg, all5)) %>%
   mutate(err = ridership.Predict1-ridership.Predict)
 
+grid.arrange(
 ggplot()+
   geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 4)+
-  geom_sf(data = st_centroid(na.omit(lm_model3)), aes(color = err),size = 2) +
+  geom_sf(data = st_centroid(na.omit(lm_model3)),color = "grey40", size=0.5) +
+  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 1)+
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 1)+
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 1)+
+  labs(title = "Ridership Prediction Scenario 3 Location") +
+  mapTheme(),
+
+ggplot()+
+  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
+  #geom_sf(data =  st_centroid(lm_model3[lm_model3$STOP_ID %in% s1_edt,]), color = "red", size = 4)+
+  geom_sf(data = st_centroid(na.omit(lm_model3)), aes(color = err),size = 0.8) +
   labs(title = "Ridership Prediction Scenario 3: \nHousing development project East of DT") +
-  mapTheme()
+  mapTheme(), ncol=2)
 ```
 
 ```{r}
@@ -2024,15 +2085,15 @@ ggplot()+
   mapTheme()
 ```
 
-```{r fig.height=10}
+```{r}
 #3 scenarios
 ggplot()+
   geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data = st_centroid(na.omit(lm_model3)),color = "grey40") +
-  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 3)+
-  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 3)+
-  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 3)+
-  #labs(title = "3 Scenarios: \nHousing development project East of DT") +
+  geom_sf(data = st_centroid(na.omit(lm_model3)),color = "grey40", size=0.5) +
+  geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 1)+
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 1)+
+  #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 1)+
+  labs(title = "Ridership Prediction Scenario 3 Location") +
   mapTheme()
 ```
 
