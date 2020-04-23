@@ -51,21 +51,21 @@ The ridership data we used come from the Automated Passenger Counter(APC), which
 ![](../markdown_img/Passenger-bus-APC-1024x576.jpg)
 [source](https://www.tsomobile.com/tso-public-transportation/shuttle-bus-resources/)
 
-There are two sets of ridership data that we have used - aggregated and disaggregated. 
-Aggregated data presents average ridership data of every single bus stop in the system on weekdays in all the months from 2017 to 2019. We used the aggregated data to explore the annual ridership trend of the bus system and the neighborhood and school district effect on ridership. And these fixed effects are used later in the model. 
-
-
+Thanks to the Cap Remap project and the ridership and bus system collected for it, we were able to get the average weekday daily ridership data in 2019 and use that as the dependent variable.
 ![](../markdown_img/ds1.jpg)
 
+The dataset also provides info on route characteristics, such as route types and high ridership lines, which we call hotlines. 
+ 
 ![](../markdown_img/ds2.jpg)
+
+From multiple open data platforms, we were also able to retrieve built environment data, such as building areas, and amenities. 
 
 ![](../markdown_img/ds3.jpg)
 
+Then, US census provides comprehensive demographics data, such as population, vehicle ownerships, and median income. 
+
 ![](../markdown_img/ds4.jpg)
 
-Disaggregated data contains more detailed ridership data. It is detailed to each trip within a time period of a week. Therefore, besides the ridership information at a specific bus stop during a specific trip, disaggregated data also provides the trip's route numbers and route directions so that we can associate those route characteristics with the ridership. 
-The data used here are disaggregated data in May 21-25th and June 11-15th in 2018, which are one week before and after the CapRemap. As mentioned above, the disaggregated data consist of passenger and bus information for each route, each shift, and each stop. Basically, the number of passenger boarding, alighting, and other related ridership information are recorded at each stop for each shift of each bus route.
-We use the disaggregated data to study the relationship between route characteristics, such as route type, route orientations, and riderships, and further identify popular routes and unpopular routes and create additional route-related features for modelling. 
 
 # 2. Exploratory Analysis
 Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
