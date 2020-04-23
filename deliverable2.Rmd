@@ -38,15 +38,19 @@ options(scipen=99)
 
 ## 1.1 Background
 
-In 2018, Capital Metropoitan Transportation Authority (CapMetro), a public transportation agency serving Austin, Travis and parts of Williamson Counties, launched the "Cap Remap" by redesigning the bus network of the city as part of its transit development plan, Connections 2025. Cap Remap adjusted the transit network according to internal analysis and community outreach and aims to provide more fewquent, more reliable, and better connected bus system. Specifically, it remapped certain routes, tripled the number of bus routes that operate every 15 minutes, and made sure the frequency meets the need on weekends.
+In 2018, Capital Metropoitan Transportation Authority (CapMetro), a public transportation agency serving Austin, Travis and parts of Williamson Counties, launched the “Cap Remap”, a bus system redesign project, as part of its transit development plan, Connections 2025. Cap Remap adjusted the transit network according to internal analysis and community outreach and aims to provide a more frequent, more reliable, and better connected bus system. Specifically, it remapped certain routes, tripled the number of bus routes that operate every 15 minutes, and made sure the frequency meets the need on weekends. This project brings an opportunity to understand what factors influence bus ridership.
 
 ## 1.2 Use Case
 
-Given the renewed interest in bus transit in US cities, we think there is an opportunity to innovate in the realm of bus planning using modern data science methods. The goal of this article is to present a tool for planners to test how changes of built environment and/or bus route information impact bus ridership in Austin.
-
-We will start with an evaluation of the Cap Remap to further understand the trend, pattern, and charateristics of the ridership in Austin. Then, we will use the Automated Passenger Counter data and other open data to develope a machine learning model, followed with accuracy result and validation across different regions.
+Given the renewed interest in bus transit in US cities, such as Austin, there is an opportunity to streamline the bus planning process using modern data science methods. Currently, cities have to gather all the information, such as land use, built environment, demographics etc., from different sources, to gain understanding of bus ridership change in the future. This method is usually time consuming and requires a lot of human resources. Oftentimes, cities have to outsource those analysis to third parties, which inevitably leads to higher project cost. The goal of this article, therefore, is to present a scenario planning tool for planners to test how changes in local land uses and characteristics of bus routes predict bus ridership. If such a predictive model proves robust, planners can use it to evaluate a series of possible pictures regarding the development of different land use and change of bus routes in the future and make strategic decisions efficiently in Austin.
+This report is broken into four sections. Section 1 presents an exploratory analysis of the Cap Remap to further understand the trends, patterns, and characteristics of the ridership in Austin, which helps to determine the important features to be incorporated in the predictive model. Section 2 explains the process of model building and model evaluation. Section 3 demonstrates the user interface of the bus network planning application, which is supported by the model developed in Section 2. The last section will be an appendix showing the codes and additional information about the model and application development. 
 
 # 2. Exploratory Analysis
+Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
+How did ridership change before and after the implementation of CapRemap (06/03/2018)?
+How does the ridership change across the city?
+What types of route characteristics have influences on ridership?
+What are the popular bus routes in Austin and what are their attributes?
 
 ## 2.1 What Data Are We Using?
 
@@ -532,7 +536,68 @@ grid.arrange(UTShuttle, special, nightowl, ncol = 2)
 ### Ridership Typology
 
 ```{r}
-############ need to add more code here
+#create stop shapefile
+agg_sf <- agg%>%
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)%>%
+  st_transform(2278)
+
+agg_sf19 <- agg_sf%>%
+  filter(YEAR_ID == 2019)%>%
+  group_by(STOP_ID)%>%
+  summarize(avg_on = mean(AVERAGE_ON))
+
+#Read UT and CBD shapefiles
+UT <- st_read("D:/Spring20/Practicum/data/UTAustin/UT.shp")%>%
+  st_transform(2278)
+CBD <- st_read("D:/Spring20/Practicum/data/CBD/CBD.shp")%>%
+  st_transform(2278)
+
+#create shapefile of area outside of CBD
+nhood_CBD <- st_difference(nhood_merge, CBD)
+
+#ST_DIFFERENCE didnt work for UT; created in Arcmap
+nhood_UT <- st_read("D:/Spring20/Practicum/data/nhood_UT.shp")%>%
+  st_as_sf()%>%
+  st_transform(2278)
+
+#Create CBD typology
+agg_sf19_CBD <- st_join(CBD, agg_sf19, join = st_contains)%>%
+  mutate(typology = "CBD")
+
+agg_sf19_oCBD <- st_join(nhood_CBD, agg_sf19, join = st_contains)%>%
+  mutate(typology = "oCBD")%>%
+  rename(geometry = x)
+
+agg_sf19_oCBD <- agg_sf19_oCBD%>%
+  group_by(Id)%>%
+  summarize(avg_on = mean(avg_on))%>%
+  mutate(label = "The Rest of Austin")
+
+agg_CBD_typology <- rbind(agg_sf19_CBD,agg_sf19_oCBD)
+
+#Create UT typology
+agg_sf19_UT <- st_join(UT, agg_sf19, join = st_contains)%>%
+  mutate(typology = "UT")
+
+agg_sf19_UT <- agg_sf19_UT%>%
+  group_by(Id)%>%
+  summarize(avg_on = mean(na.omit(avg_on)))%>%
+  mutate(label = "UT Austin")
+
+agg_sf19_oUT <- st_join(nhood_UT, agg_sf19, join = st_contains)%>%
+  mutate(typology = "oUT")%>%
+  select(STOP_ID,
+         avg_on,
+         typology,
+         geometry)
+
+agg_sf19_oUT <- agg_sf19_oUT%>%
+  group_by(Id)%>%
+  summarize(avg_on = mean(na.omit(avg_on)))%>%
+  mutate(label = "The Rest of Austin")
+
+agg_UT_typology <- rbind(agg_sf19_UT,agg_sf19_oUT)
+
 ```
 
 
