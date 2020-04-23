@@ -93,7 +93,7 @@ After knowing the trend of city-wide ridership change, the next question is how 
 
 We first plotted thea average ridership by typology map. UT and CBD region have higher ridership than the rest of the city.
 
-![](../markdown_img/typo.png)![](../markdown_img/typo_map.png)
+![](../markdown_img/typo.png){width=400px}![](../markdown_img/typo_map.png){width=400px}
 
 Then we looked at the ridership by neighborhood map. As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
 
