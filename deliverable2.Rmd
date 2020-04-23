@@ -55,13 +55,17 @@ There are two sets of ridership data that we have used - aggregated and disaggre
 Aggregated data presents average ridership data of every single bus stop in the system on weekdays in all the months from 2017 to 2019. We used the aggregated data to explore the annual ridership trend of the bus system and the neighborhood and school district effect on ridership. And these fixed effects are used later in the model. 
 
 
-![](../markdown_img/agg.PNG)
+![](../markdown_img/ds1.jpg)
+
+![](../markdown_img/ds2.jpg)
+
+![](../markdown_img/ds3.jpg)
+
+![](../markdown_img/ds4.jpg)
 
 Disaggregated data contains more detailed ridership data. It is detailed to each trip within a time period of a week. Therefore, besides the ridership information at a specific bus stop during a specific trip, disaggregated data also provides the trip's route numbers and route directions so that we can associate those route characteristics with the ridership. 
 The data used here are disaggregated data in May 21-25th and June 11-15th in 2018, which are one week before and after the CapRemap. As mentioned above, the disaggregated data consist of passenger and bus information for each route, each shift, and each stop. Basically, the number of passenger boarding, alighting, and other related ridership information are recorded at each stop for each shift of each bus route.
 We use the disaggregated data to study the relationship between route characteristics, such as route type, route orientations, and riderships, and further identify popular routes and unpopular routes and create additional route-related features for modelling. 
-
-![](../markdown_img/disagg.PNG)
 
 # 2. Exploratory Analysis
 Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
@@ -211,8 +215,6 @@ In terms of predicted value and actual values, simple linear regression tends to
 ![](../markdown_img/PreVSObs_nhood.JPG){width=350px}
 
 In order to test the the generaliability of the models on neighborhoods, the following bar chart reveals each model's MAE in the neighborhoods. The charts demonstrate most of the MAEs are below 100. There are several neighborhoods appear to have a higher MAE among which most of them gathered around UT.
-
-![](../markdown_img/Bar_Neighborhood_MAE.JPG){width=1200px}
 
 To take a closer look at the neighborhoods, maps of MAPE are plotted to show the generalizability. As mentioned before, the model's acuuracy is lower in the neighborhoods around University of Texas. 
 
@@ -2193,8 +2195,6 @@ theme_set(theme_bw())
 "%!in%" <- Negate("%in%")
 g <- glimpse
 ```
-
-### Use Neighborhood For Validation
 
 ```{r}
 #Slipt the data into training and testing sets
