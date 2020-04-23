@@ -238,13 +238,23 @@ To take a closer look at the neighborhoods, maps of MAPE are plotted to show the
 
 # 4. Application
 
-**********(Final model will be built with Random Forest algorithm, but for now, we will be showcasing results from linear regression.)
+(Final model will be built with Random Forest algorithm, but for now, we will be showcasing results from linear regression.)
 
 ## 4.1 What is the impact on transit ridership with new real estate development?
 
 ### 4.1.1 Improving the Model and Check Generalizability
 
-**********(Selected features with more predictive power to building area)
+We want to build a model that has high predictive power according to building density change. Previously, our model includes all the features engineered. Including every feature in a model might be cause certain features to have less predictive power. Thus, we subsetted a collection of features that gives the highest accuracy while keeping the building density feature having strong influence to the result. The original model with all features has an R squared of 0.7885 but the building density feature is not significant in the model. Even though our current model only has an R squared of 0.6927, we gained the significance of the building density feature in the model. 
+
+To check the predicting accuracy of the model, we looked at the predicting error by neighborhood.
+
+![](../markdown_img/pred_err.png)
+
+![](../markdown_img/pred_err_nhood.png)
+
+It is evident that in terms of the error percentage, our model is already pretty good with low error percentage accorss the whole city. In terms of the absolute values of the prediction errors, we see that there are certain regions that are prone to higher errors, which we suspect relates to the total riderships of the regions. If we switch to Random Foreset model in the future, we will see a better accuracy.
+
+We tested the model with the 
 ![](../markdown_img/22/Gene_rf.JPG){width=500px}
 
 ### 4.1.2 Scenario 1: What is the effect of UT Austin West Campus Development?
@@ -1865,19 +1875,44 @@ lmreg <- lm(mean_on ~ .,data = all_x4_normalize%>% st_drop_geometry() %>% select
 summary(lmreg)
 ```
 
-```{r fig.height=10}
+```{r fig.width=8}
 # plot original predictions
 lmreg <- lm(mean_on ~ .,data = all_x4_normalize %>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on))
 summary(lmreg)
 
 lm_model0 <-
   all_x4_normalize %>%
-  mutate(ridership.Predict = predict(lmreg, all_x4_normalize))
+  mutate(ridership.Predict = predict(lmreg, all_x4_normalize)) %>%
+  mutate(pred_err = ridership.Predict-mean_on,
+         pred_err_p = (ridership.Predict-mean_on)/mean_on)
+
+grid.arrange(
+ggplot()+
+  geom_sf(data = nhood, color = 'grey40',fill = 'grey40') +
+  geom_sf(data = st_centroid(na.omit(lm_model0)), aes(color = pred_err),size = 0.9) +
+  scale_color_gradientn(colors = c("#b2182b", "#ef8a62", "#fddbc7","#d1d1d1","#67a9cf", "#2166ac"), limits = c(-750,500))+
+  labs(title = "Ridership Prediction Error") +
+  mapTheme(),
 
 ggplot()+
-  geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data = st_centroid(na.omit(lm_model0)), aes(color = ridership.Predict),size = 2) +
-  labs(title = "Ridership Prediction Original") +
+  geom_sf(data = nhood, color = 'grey40',fill = 'grey40') +
+  geom_sf(data = st_centroid(na.omit(lm_model0)), aes(color = pred_err_p),size = 0.9) +
+  scale_color_gradientn(colors = c("#b2182b","#ef8a62", "#d1d1d1","#67a9cf","#2166ac"), limits = c(-40,40))+
+  labs(title = "Ridership Prediction Error Percentage") +
+  mapTheme(),ncol=2)
+
+#agg nhood
+nhood0 <- nhood %>% left_join(lm_model0 %>% 
+            na.omit() %>%
+            group_by(label) %>% 
+            summarise(Pred.err.sum = sum(pred_err)) %>% 
+            select(label, Pred.err.sum) %>%
+            st_drop_geometry(), by = "label")
+
+ggplot()+
+  geom_sf(data = nhood0, aes(fill = Pred.err.sum)) +
+  labs(title = "Prediction Error by Neighborhood") +
+  scale_fill_gradientn(colors = c("#b2182b", "#f4a582", "#f7f7f7", "#2166ac"), limits = c(-5600,3000))+
   mapTheme()
 ```
 
