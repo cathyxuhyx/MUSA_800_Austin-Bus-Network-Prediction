@@ -257,21 +257,28 @@ It is evident that in terms of the error percentage, our model is already pretty
 We tested the model with the 
 ![](../markdown_img/22/Gene_rf.JPG){width=500px}
 
-### 4.1.2 Scenario 1: What is the effect of UT Austin West Campus Development?
+### 4.1.2 Scenario 1: What is the effect of UT Austin West Campus Upzone on the bus ridership?
+In May 2019, the West Campus neighborhood, just west of UT Austin, passed an up-zoning change, which allows the buildings in the area to be increase their heights. We assumed that the existing buildings all build to the maximum heights.
 
 ![](../markdown_img/s1_1.png)
+As shown on the maps, the ridership is predicted to change in the West Campus area. However, in the CBD,  the ridership dropped drastically and the ridership across the city barely moved. So it looks like the model can reflect how building area increase influences the ridership in an area, yet still needs to be improved in system-wide prediction. This issue also appears in the next two scenarios.
 
 ![](../markdown_img/s1_2.png){width=500px}
 
-### 4.1.3 Scenario 2: What is the effect of East Riverside Development?
+### 4.1.3 Scenario 2: What is the effect of East Riverside Development on the bus ridership?
+The 4700 East Riverside Drive development, which is a 97-acre mixed use development that just got a green light from the city council in October 2019. This development will construct 4,709 multifamily units, 600 hotel rooms, 4 million square feet of office space and 435,000 square feet of ground-floor commercial space.
 
 ![](../markdown_img/s2_1.png)
 
+In this scenario, the prediction again, surged in the development area. And the CBD also experiences ridership increase. However, the ridership change over the entire city still seem to be a subject to be further examined.
+
 ![](../markdown_img/s2_2.png){width=500px}
 
-### 4.1.4 Scenario 3: What is the effect of Mueller Austin Housing Project?
+### 4.1.4 Scenario 3: What is the effect of Mueller Austin Housing Project on the bus ridership?
+In the last scenario, we chose the Mueller Austin development, which is 711-acre planned community with transit-oriented and mixed use development northeast of CBD. This development project comprise 4.2 million square feet of non-residential development, 650,000 square feet of retail space, 4,600 homes, and 140 acres of open space. An estimated 10,000 permanent jobs within the development will have been created by the time it is complete.
 
 ![](../markdown_img/s3_1.png)
+The outcome of this model shows similar result as the previous two, which is the ridership increases majorly in the development area yet seems to drag down ridership in other parts of the city and lead to the decrease in the overall ridership. There almost seems to be a trade-off between the riderhisp in different areas.
 
 ![](../markdown_img/s3_2.png){width=500px}
 
