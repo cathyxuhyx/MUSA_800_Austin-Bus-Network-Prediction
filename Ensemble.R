@@ -2979,7 +2979,8 @@ sum(is.na(medInc$estimate))
 
 write.csv(data.quarter, "C:/Upenn/Practicum/Data/quarter.csv")
 names(data.quarter)
-sum(is.na(data.quarter$medInc))
+
+sum(is.na(data.quarter))
 data.quarter2 <- data.quarter %>%
   drop_na()
 
@@ -3267,6 +3268,7 @@ final_preds.ame2 <- final_preds.ame %>%
 names(final_preds.ame2)[2]<- ".pred_ame"
 final_preds <- plyr::join(final_preds.lu, final_preds.ame2)
 
+sum(is.na(final_preds))
 final_preds.route2 <- final_preds.route %>%
   dplyr::select(mean_on, .pred)
 names(final_preds.route2)[2]<- ".pred_route"
@@ -3274,13 +3276,16 @@ final_preds <- plyr::join(final_preds, final_preds.route2)
 
 final_preds.demo2 <- final_preds.demo %>%
   dplyr::select(mean_on, .pred)
+sum(is.na(final_preds.demo2$.pred_demo))
 names(final_preds.demo2)[2]<- ".pred_demo"
-final_preds <- plyr::join(final_preds, final_preds.demo2)
+final_preds.1 <- plyr::join(final_preds, final_preds.demo2,type="left")
+
+sum(is.na(final_preds.1))
 
 names(final_preds)[1]<- ".pred_lu"
 final_preds <- final_preds %>%
   dplyr::select(mean_on, .pred_ame, .pred_demo, .pred_route, .pred_lu, typology)
-
+names(final_preds)
 #Correlation Matrix
 final_preds2 <- final_preds %>%
   dplyr::select(mean_on, .pred_ame, .pred_demo, .pred_route, .pred_lu)%>%
@@ -3532,3 +3537,488 @@ as.data.frame(val_MAPE_by_typology.route)%>%
   labs(title = "Route Model: Mean Absolute Errors by model specification") +
   plotTheme()
 
+###################Test on Scenarios
+Scen1 <- Scen1%>%
+  drop_na()
+Scen1 <- plyr::join(Scen1, typology)
+
+Scen1 <- Scen1 %>%
+  dplyr::select(building_area,commercial,residential,civic,transportation,industrial,label,typology,mean_on)
+
+data_split.scen1 <- rsample::initial_split(Scen1, strata = "mean_on", prop = 0.75)
+model_rec.scen1 <- recipe(mean_on ~ ., data = Scen1) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+xgb_wf.scen1.lu <-
+  workflow() %>% 
+  add_recipe(model_rec.scen1) %>% 
+  add_model(XGB_plan)
+
+xgb_best_wf.scen1.lu    <- finalize_workflow(xgb_wf.scen1.lu, xgb_best_params.lu)
+xgb_val_fit_geo.scen1.lu<- xgb_best_wf.scen1.lu %>% 
+  last_fit(split     = data_split.scen1,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+xgb_val_pred_geo.scen1.lu    <- collect_predictions(xgb_val_fit_geo.scen1.lu)
+
+final_xgb_val_pred_geo.scen1.lu <- xgb_val_pred_geo.scen1.lu %>%
+  dplyr::select(.pred,mean_on,.row)
+final_preds.scen1.lu <- rbind(data.frame(final_xgb_best_OOF_preds.lu),data.frame(final_xgb_val_pred_geo.scen1.lu))%>%
+  left_join(., Scen1 %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(typology) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+
+scen1_prediction <- final_preds.scen1.lu %>%
+  dplyr::select(.pred, mean_on)
+
+names(my_data)[1] <- "sepal_length"
+names(scen1_prediction)[1]<- "new"
+test <- plyr::join(scen1_prediction,final_preds.lu, type="left")
+sum(test$new)
+sum(test$.pred)
+
+#Test on the ensemble model
+sum(is.na(final_preds$.pred_demo))
+final_preds.scen1 <- plyr::join(scen1_prediction, final_preds)
+names(final_preds.scen1)
+final_preds.scen1$.pred_lu<- NULL
+sum(is.na())
+sum(is.na(final_preds.scen1$.pred_demo))
+data_split.final.scen1 <- rsample::initial_split(final_preds.scen1, strata = "mean_on", prop = 0.75)
+model_rec.final.scen1 <- recipe(mean_on ~ ., data = final_preds.scen1) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+rf_wf.scen1.ens <-
+  workflow() %>% 
+  add_recipe(model_rec.final.scen1) %>% 
+  add_model(rf_plan)
+
+rf_best_wf.scen1.ens    <- finalize_workflow(rf_wf.scen1.ens, rf_best_params.ens)
+rf_val_fit_geo.scen1.ens<- rf_best_wf.scen1.ens %>% 
+  last_fit(split     = data_split.final.scen1,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
+rf_val_pred_geo.scen1.ens    <- collect_predictions(rf_val_fit_geo.scen1.ens)
+
+final_rf_val_pred_geo.scen1.ens <- rf_val_pred_geo.scen1.ens %>%
+  dplyr::select(.pred,mean_on,.row)
+
+final_preds.scen1.ens <- rbind(data.frame(rf_best_OOF_preds.ens),data.frame(final_rf_val_pred_geo.scen1.ens))%>%
+  left_join(., final_preds.scen1 %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(typology) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+####################Create the kitchen sink model with selected variables using random forest
+sum(is.na(sce0))
+library(dplyr)
+install.packages("mltools")
+library(mltools)
+sce0<-sce %>% drop_na()
+
+sce0 <- plyr::join(sce0, typology, type= "left")
+
+library(data.table)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "SN_cat",
+          dropCols = TRUE)
+names(sce0)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Crosstown_cat",
+          dropCols = TRUE)
+
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Express_cat",
+          dropCols = TRUE)
+
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Local_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Flyer_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "NightOwl_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "HighFreq_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "InOut_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Clockwise_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "utshuttle_cat",
+          dropCols = TRUE)
+sce0 <- 
+  as.data.table(sce0)%>%
+  one_hot(cols = "Special_cat",
+          dropCols = TRUE)
+
+sce0 <- sce0 %>%dplyr::select(-STOP_ID)
+data_split.sce0 <- rsample::initial_split(sce0, strata = "mean_on", prop = 0.75)
+
+bus_train.sce0 <- rsample::training(data_split.sce0)
+bus_test.sce0  <- rsample::testing(data_split.sce0)
+names(bus_train.quarter)
+
+cv_splits_geo.sce0 <- rsample::group_vfold_cv(bus_train.sce0,  strata = "mean_on", group = "typology")
+print(cv_splits_geo)
+
+model_rec.sce0 <- recipe(mean_on ~ ., data = bus_train.sce0) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+
+
+#Create workflow
+
+rf_wf.sce0 <-
+  workflow() %>% 
+  add_recipe(model_rec.sce0) %>% 
+  add_model(rf_plan)
+
+# fit model to workflow and calculate metrics
+#Metrics are changes from rmse + rsq to only rsq
+rf_tuned.sce0 <- rf_wf.sce0 %>%
+  tune::tune_grid(.,
+                  resamples = cv_splits_geo.sce0,
+                  grid      = rf_grid,
+                  control   = control,
+                  metrics   = metric_set(rsq))
+
+?tune_grid
+show_best(rf_tuned.sce0, metric = "rsq", n = 15, maximize = FALSE)
+
+
+
+rf_best_params.sce0     <- select_best(rf_tuned.sce0, metric = "rsq", maximize = FALSE)
+
+#Final workflow
+rf_best_wf.sce0     <- finalize_workflow(rf_wf.sce0, rf_best_params.sce0)
+
+rf_val_fit_geo.sce0 <- rf_best_wf.sce0 %>% 
+  last_fit(split     = data_split.sce0,
+           control   = control,
+           metrics   = metric_set(rsq))
+
+####################################Model Validation
+# Pull best hyperparam preds from out-of-fold predictions
+rf_best_OOF_preds.sce0 <- collect_predictions(rf_tuned.sce0) %>% 
+  filter(mtry  == rf_best_params.sce0$mtry[1] & min_n == rf_best_params.sce0$min_n[1])
+# collect validation set predictions from last_fit model
+rf_val_pred_geo.sce0     <- collect_predictions(rf_val_fit_geo.sce0)
+# Aggregate predictions from Validation set
+library(tidyverse)
+library(yardstick)
+#lm_val_pred_geo
+rf_best_OOF_preds.sce0 <- rf_best_OOF_preds.sce0 %>% dplyr::select(-min_n, -mtry)
+val_preds.sce0 <- rbind(data.frame(rf_val_pred_geo.sce0), data.frame(rf_best_OOF_preds.sce0) )%>% 
+  left_join(., sce0 %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(typology) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+val_MAPE_by_typology.sce0 <- val_preds.sce0 %>% 
+  group_by(typology) %>% 
+  summarise(RMSE = yardstick::rmse_vec(mean_on, .pred),
+            MAE  = yardstick::mae_vec(mean_on, .pred),
+            MAPE = yardstick::mape_vec(mean_on, .pred)) %>% 
+  ungroup() 
+#Barchart of the MAE in each neighborhood
+plotTheme <- function(base_size = 10) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 20,colour = "black"),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2),
+    strip.background = element_rect(fill = "grey80", color = "white"),
+    strip.text = element_text(size=20),
+    axis.title = element_text(size=20),
+    axis.text = element_text(size=15),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "italic", size= 20),
+    legend.text = element_text(colour = "black", face = "italic",size = 20),
+    strip.text.x = element_text(size = 15)
+  )
+}
+palette4 <- c("#eff3ff", "#bdd7e7","#6baed6","#2171b5")
+
+
+as.data.frame(val_MAPE_by_typology.sce0)%>%
+  dplyr::select(typology,MAPE) %>%
+  #gather(Variable, MAE, -model, -typology) %>%
+  ggplot(aes(typology, MAPE)) + 
+  geom_bar(aes(fill = typology), position = "dodge", stat="identity") +
+  ylim(0, 120)+
+  scale_fill_manual(values = palette4) +
+  facet_wrap(~typology, scale= "free", ncol=4)+
+  labs(title = "MAPE of the random forest model") +
+  plotTheme()
+
+rsq(rf_val_pred_geo.sce0, mean_on, .pred)
+#Test on the first scenario: adding building area at West Campus
+data.west <- data.west %>% drop_na()
+data.west<- plyr::join(data.west, typology, type = "left")
+#One hot encoding
+data.west<- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "SN_cat",
+          dropCols = TRUE)
+
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "Crosstown_cat",
+          dropCols = TRUE)
+
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "Express_cat",
+          dropCols = TRUE)
+
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "Local_cat",
+          dropCols = TRUE)
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "Flyer_cat",
+          dropCols = TRUE)
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "NightOwl_cat",
+          dropCols = TRUE)
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "HighFreq_cat",
+          dropCols = TRUE)
+data.west<- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "InOut_cat",
+          dropCols = TRUE)
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "Clockwise_cat",
+          dropCols = TRUE)
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "utshuttle_cat",
+          dropCols = TRUE)
+data.west <- 
+  as.data.table(data.west)%>%
+  one_hot(cols = "Special_cat",
+          dropCols = TRUE)
+data.west <- data.west %>%dplyr::select(-STOP_ID)
+data_split.west <- rsample::initial_split(data.west, strata = "mean_on", prop = 0.75)
+
+model_rec.west <- recipe(mean_on ~ ., data = data.west) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+rf_wf.west <-
+  workflow() %>% 
+  add_recipe(model_rec.west) %>% 
+  add_model(rf_plan)
+
+rf_best_wf.west    <- finalize_workflow(rf_wf.west, rf_best_params.sce0)
+
+rf_val_fit_geo.west<- rf_best_wf.west %>% 
+  last_fit(split     = data_split.west,
+           control   = control,
+           metrics   = metric_set(rsq))
+?last_fit
+?collect_predictions
+rf_val_pred_geo.west    <- collect_predictions(rf_val_fit_geo.west)
+
+final_rf_val_pred_geo.west <- rf_val_pred_geo.west %>%
+  dplyr::select(.pred,mean_on,.row)
+
+rf_best_OOF_preds.sce0.1 <- rf_best_OOF_preds.sce0%>% dplyr::select(-id)
+final_preds.west <- rbind(data.frame(final_rf_val_pred_geo.west),data.frame(rf_best_OOF_preds.sce0.1))%>%
+  left_join(., data.west %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(typology) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+
+val_preds.sce0.1 <- val_preds.sce0 %>% dplyr::select(mean_on, .pred)
+names(val_preds.sce0.1)[2]<- ".pred.origin"
+final_west <- plyr::join(final_preds.west, val_preds.sce0.1)
+sum(final_west$.pred)
+sum(final_west$.pred.origin)
+ridership<- sce%>% drop_na()%>%dplyr::select(STOP_ID, mean_on)
+ridership$mean_on <- exp(log(ridership$mean_on))
+final_west2 <- plyr::join(final_west, ridership, type = "left")
+names(final_west2)[1]<- ".pred.westcampus"
+
+#Test the second scenario: adding building area at RiverSide
+data.river <- data.river %>% drop_na()
+data.river<- plyr::join(data.river, typology, type = "left")
+#One hot encoding
+data.river<- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "SN_cat",
+          dropCols = TRUE)
+
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "Crosstown_cat",
+          dropCols = TRUE)
+
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "Express_cat",
+          dropCols = TRUE)
+
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "Local_cat",
+          dropCols = TRUE)
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "Flyer_cat",
+          dropCols = TRUE)
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "NightOwl_cat",
+          dropCols = TRUE)
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "HighFreq_cat",
+          dropCols = TRUE)
+data.river<- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "InOut_cat",
+          dropCols = TRUE)
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "Clockwise_cat",
+          dropCols = TRUE)
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "utshuttle_cat",
+          dropCols = TRUE)
+data.river <- 
+  as.data.table(data.river)%>%
+  one_hot(cols = "Special_cat",
+          dropCols = TRUE)
+data.river <- data.river %>%dplyr::select(-STOP_ID)
+data_split.river <- rsample::initial_split(data.river, strata = "mean_on", prop = 0.75)
+
+model_rec.river <- recipe(mean_on ~ ., data = data.river) %>% #the "." means using every variable we have in the training dataset
+  update_role(typology, new_role = "typology") %>% #This is more like to keep the neighborhood variable out of the model
+  step_other(typology, threshold = 0.005) %>%
+  step_dummy(all_nominal(), -typology) %>%
+  step_log(mean_on) %>% 
+  step_zv(all_predictors()) %>%
+  step_center(all_predictors(), -mean_on) %>%
+  step_scale(all_predictors(), -mean_on) #%>% #put on standard deviation scale
+#step_ns(Latitude, Longitude, options = list(df = 4))
+rf_wf.river <-
+  workflow() %>% 
+  add_recipe(model_rec.river) %>% 
+  add_model(rf_plan)
+
+rf_best_wf.river    <- finalize_workflow(rf_wf.river, rf_best_params.sce0)
+
+rf_val_fit_geo.river<- rf_best_wf.river %>% 
+  last_fit(split     = data_split.river,
+           control   = control,
+           metrics   = metric_set(rsq))
+
+rf_val_pred_geo.river    <- collect_predictions(rf_val_fit_geo.river)
+
+final_rf_val_pred_geo.river <- rf_val_pred_geo.river %>%
+  dplyr::select(.pred,mean_on,.row)
+
+final_preds.river <- rbind(data.frame(final_rf_val_pred_geo.river),data.frame(rf_best_OOF_preds.sce0.1))%>%
+  left_join(., data.river %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(typology, .row), 
+            by = ".row") %>% 
+  dplyr::group_by(typology) %>%
+  mutate(.pred = exp(.pred),
+         mean_on = exp(mean_on),
+         RMSE = yardstick::rmse_vec(mean_on, .pred),
+         MAE  = yardstick::mae_vec(mean_on, .pred),
+         MAPE = yardstick::mape_vec(mean_on, .pred))%>%
+  ungroup()
+final_preds.river2 <- final_preds.river %>% 
+  dplyr::select(.pred, mean_on)
+names(final_preds.river2)[1]<-".pred.Riverside"
+final_preds.river2 <- plyr::join(final_west2, final_preds.river2, type = "left")
+
+?join
+sum(final_west2$.pred.origin)
+sum(final_preds.river$.pred)
