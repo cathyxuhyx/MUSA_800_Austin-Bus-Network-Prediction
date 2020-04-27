@@ -89,9 +89,13 @@ From the trend in 2018, it is clear that ridership fluctuated between months. Ye
 
 ## 2.2 Ridership Pattern in Subdivisions
 
-After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. Neighborhoods in Austin are used here to show the spatial trend here. 
+After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. We first look at the riderhsip patterns according to general typology to understand the general trend, and then use neighborhoods in Austin are used here to show the spatial trend here. 
 
-As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
+We first plotted thea average ridership by typology map. UT and CBD region have higher ridership than the rest of the city.
+
+![](../markdown_img/typo.png){width=400px}![](../markdown_img/typo_map.png){width=400px}
+
+Then we looked at the ridership by neighborhood map. As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
 
 ![](../markdown_img/plot2.png)
 
@@ -158,9 +162,9 @@ In conclusion, hotlines have the following characteristics:
 
 - In terms of bus route types, Local, MetroRapid, and High Frequency routes have high ridership
 - In terms of geographical distribution:
-* Go through Hubs (UT, DT, Pleasant Valley)
-* Mostly North-South direction (Following the shape / geography of the city)
-* Going across the a large portion of the city
+  + Go through Hubs (UT, DT, Pleasant Valley)
+  + Mostly North-South direction (Following the shape / geography of the city)
+  + Going across the a large portion of the city
 - In terms of temporal trend, we know that more Shifts were added in the day time and rush hours, which might increase ridership.
 
 # 3. Modeling
@@ -226,15 +230,19 @@ It is hard to arbitrarily decide what the best buffer size is in capturing most 
 
 #### 1/2 mile Buffer
 In each buffer size, four types of models are compared.For each buffer size, the model with the best performance will be picked and enter the final comparison.  In 1/2 mile buffer size test, the random forest model has the largest r-square of 0.81 and lowest MAE of 64 and MAPE of 30.4%. Among the four models, this rf model has the best performance. 
+
 ![](../markdown_img/22/21_half.JPG){width=600px}
 
 #### 1/4 mile Buffer
 In 1/4 mile buffer size test, the random forest model has the largest r-square of 0.79 and lowest MAE of 69.3 and MAPE of 28.8%. This rf model has the best performance among the four models here. 
+
 ![](../markdown_img/22/18_quarter.JPG){width=600px}
 
 #### 1/8 mile Buffer
-In 1/8 mile buffer size test, the random forest model has the largest r-square of 0.72 and lowest MAE of 77.8 and MAPE of 33.6%. This rf model has the best performance among the four models here. 
+In 1/8 mile buffer size test, the random forest model has the largest r-square of 0.72 and lowest MAE of 77.8 and MAPE of 33.6%. This rf model has the best performance among the four models here.
+
 ![](../markdown_img/22/19_eight.JPG){width=600px}
+
 After the above comparison, the largest r-square is from 1/2-mile buffer while the least MAPE is from 1/4-mile. The possible reason for the lose of 1/8-mile buffer is it cannot sucessfully capture enough variation within the limited radius of the stops. Especially for the areas where ridership is high, such as CBD or UT, there can be a lot of variances outside the 1/8 mile. 
 
 Then if we take a look at the generalizability of the three buffer sizes on their performance in CBD, UT and the rest areas, it is clear that 1/8 mile buffer fails to achieve generaliability as well as other two buffer sizes. the MAE in CBD and UT are very high. For the comparison between 1/2 mile buffer and 1/4 mile buffer, the MAE demonstrates a better generalizability for 1/2 mile buffer for its smaller value in UT. However, considering our use case where we allow planners to test different development at specific locations, a smaller buffer size would more accurately reflect real development in the world. Thus, the final buffer radius is settled to 1/4 mile.
@@ -682,6 +690,16 @@ agg_UT_typology <- rbind(agg_sf19_UT,agg_sf19_oUT)
 ```
 
 
+```{r}
+######### more typology code
+ggplot() +
+  geom_sf(data =st_union(nhood), fill = "steelblue1", color="transparent") +
+  geom_sf(data = CBD_bound, fill = "steelblue" , color="transparent") +
+  geom_sf(data = UTAustin_bound, fill = "steelblue4", color="transparent")+
+  mapTheme()
+``` 
+
+
 ### How did ridership change before and after CapRemap (06/03, 2018)?
 
 ```{r}
@@ -897,10 +915,6 @@ Map.Zilker<-
 ```{r}
 print(plot.Zilker)
 print(Map.Zilker, vp=viewport(.85,.72,.4,.42))
-```
-
-```{r}
-############ data.2019, new data code
 ```
 
 ### Identify the Hotlines
