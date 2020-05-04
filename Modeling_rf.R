@@ -53,6 +53,8 @@ set.seed(717)
 
 theme_set(theme_bw())
 
+write.csv(sce0_, "D:/Spring20/Practicum/data/bldg_sce0.csv")
+
 ### Initial Split for Training and Test
 data_split_sce0 <- initial_split(sce0_, strata = "mean_on", prop = 0.75)
 
@@ -71,6 +73,8 @@ cv_splits_geo_sce0 <- group_vfold_cv(sce0_train,  strata = "mean_on", group = "l
 model_rec_sce0 <- recipe(mean_on ~ ., data = sce0_train) %>% #the "." means using every variable we have in the training dataset
   update_role(label, new_role = "label") %>% #This is more like to keep the neighborhood variable out of the model
   step_other(label, threshold = 0.005) %>%
+  step_rm(STOP_ID,
+          X)%>%
   step_dummy(all_nominal(), -label) %>%
   step_log(mean_on) %>% 
   step_zv(all_predictors()) %>%
@@ -102,9 +106,8 @@ rf_plan <- rand_forest() %>%
 rf_plan1 <- rand_forest() %>%
   set_args(mtry  = tune()) %>%
   set_args(min_n = tune()) %>%
-  set_args(max.depth = tune())%>%
-  set_args(trees = 1000) %>% 
-  set_engine("ranger", importance = "impurity") %>% 
+  set_args(trees = 100) %>% 
+  set_engine("ranger", importance = "impurity", max.depth = 20) %>% 
   set_mode("regression")
 
 XGB_plan <- boost_tree() %>%
@@ -118,10 +121,9 @@ XGB_plan <- boost_tree() %>%
 glmnet_grid <- expand.grid(penalty = seq(0, 1, by = .25), 
                            mixture = seq(0,1,0.25))
 rf_grid <- expand.grid(mtry = c(2,5), 
-                       min_n = c(1,5))
+                       min_n = c(2,5))
 rf_grid1 <- expand.grid(mtry = c(2,5), 
-                       min_n = c(1,5),
-                       max.depth = 20)
+                       min_n = c(2,5))
 xgb_grid <- expand.grid(mtry = c(3,5), 
                         min_n = c(1,5))
 
@@ -186,12 +188,14 @@ xgb_tuned_sce0 <- xgb_wf_sce0 %>%
 lm_best_params_sce0     <- select_best(lm_tuned_sce0, metric = "rmse", maximize = FALSE)
 glmnet_best_params_sce0 <- select_best(glmnet_tuned_sce0, metric = "rmse", maximize = FALSE)
 rf_best_params_sce0     <- select_best(rf_tuned_sce0, metric = "rmse", maximize = FALSE)
+rf_best_params_sce0_1     <- select_best(rf_tuned_sce0_1, metric = "rmse", maximize = FALSE)
 xgb_best_params_sce0    <- select_best(xgb_tuned_sce0, metric = "rmse", maximize = FALSE)
 
 ## Final workflow
 lm_best_wf_sce0     <- finalize_workflow(lm_wf_sce0, lm_best_params_sce0)
 glmnet_best_wf_sce0 <- finalize_workflow(glmnet_wf_sce0, glmnet_best_params_sce0)
 rf_best_wf_sce0     <- finalize_workflow(rf_wf_sce0, rf_best_params_sce0)
+rf_best_wf_sce0_1     <- finalize_workflow(rf_wf_sce0_1, rf_best_params_sce0_1)
 xgb_best_wf_sce0    <- finalize_workflow(xgb_wf_sce0, xgb_best_params_sce0)
 
 # last_fit() emulates the process where, after determining the best model, the final fit on the entire training set is needed and is then evaluated on the test set.
@@ -210,19 +214,16 @@ rf_val_fit_geo_sce0 <- rf_best_wf_sce0 %>%
            control   = control,
            metrics   = metric_set(rmse, rsq))
 
+rf_val_fit_geo_sce0_1 <- rf_best_wf_sce0_1 %>% 
+  last_fit(split     = data_split_sce0,
+           control   = control,
+           metrics   = metric_set(rmse, rsq))
+
 xgb_val_fit_geo_sce0 <- xgb_best_wf_sce0 %>% 
   last_fit(split     = data_split_sce0,
            control   = control,
            metrics   = metric_set(rmse, rsq))
-getNodesize <- function(x) {
-  look <- pmatch(names(x$call), "nodesize")
-  if(any(!is.na(look)))
-    x$call[!is.na(look)][[1]]
-  else if (!is.null(x$y) && !is.factor(x$y))
-    5
-  else
-    1
-}
+
 
 
 # Pull best hyperparam preds from out-of-fold predictions
@@ -437,6 +438,7 @@ val_MAPE_by_hood_sce0_xgb%>%
 #####fit the full dataset to the model#####
 #fit the model to best workflow
 full_fit_model_rf0 <- fit(rf_best_wf_sce0, data = sce0_)
+full_fit_model_rf0_1 <- fit(rf_best_wf_sce0_1, data = sce0_)
 
 
 #mueller
@@ -450,7 +452,7 @@ sce_mueller<- left_join(sce_mueller, nhood, by = "STOP_ID")
 sce_mueller$pred_rf <- exp(predict(full_fit_model_rf0, sce_mueller))
 
 sce_mueller <- sce_mueller%>%
-  mutate(diff = as.numeric(unlist(pred_rf)) - mean_on)
+  mutate(diff = as.numeric(unlist(pred_rf_1)) - mean_on)
 
 sce_mueller_sf <- left_join(sce_mueller, stops, by = "STOP_ID")
 
@@ -470,6 +472,20 @@ sce_west<- left_join(sce_west, nhood, by = "STOP_ID")
 
 sce_west$pred_rf <- exp(predict(full_fit_model_rf0, sce_west))
 
+sce_west <- sce_west%>%
+  mutate(diff = as.numeric(unlist(pred_rf)) - mean_on)
+
+sce_west_sf <- left_join(sce_west, stops, by = "STOP_ID")
+
+sce_west_sf <- sce_west_sf%>%
+  st_as_sf()
+
+ggplot()+
+  geom_sf(data = sce_west_sf, aes(color = diff))+
+  scale_color_gradient2(low = "darkred",
+                       mid = "white",
+                       high = "darkblue")
+
 #westcampus
 sce_r <- read.csv("D:/Spring20/Practicum/data/building_scenario2_riverside.csv")
 
@@ -478,7 +494,15 @@ sce_riverside <- sce_r%>%
 
 sce_riverside <- left_join(sce_riverside, nhood, by = "STOP_ID")
 
-sce_riverside$pred_rf <- exp(predict(full_fit_model, sce_riverside))
+sce_riverside$pred_rf <- exp(predict(full_fit_model_rf0, sce_riverside))
+
+sce_riverside <- sce_riverside%>%
+  mutate(diff = as.numeric(unlist(pred_rf)) - mean_on)
+
+#####landuse scenarios#####
+
+
+
 
 ##### minus residential data due to correlation#####
 
@@ -784,3 +808,24 @@ val_MAPE_by_hood_sce0_xgb%>%
                     name="Quintile\nBreaks, (%)") +
   labs(title="MAPE of xgb in Neighborhoods") +
   mapTheme()
+
+
+model_rf <- extract_model(full_fit_model_rf0)
+var_imp_sce0 <- as.data.frame(model_rf$variable.importance)
+
+var_imp_sce0 <- tibble::rownames_to_column(var_imp_sce0, "VARIABLES")
+var_imp_sce0 <- order(var_imp_sce0$VARIABLES)
+var_imp_sce0 <- var_imp_sce0[order(var_imp_sce0$`model_rf$variable.importance`),]
+rownames(var_imp_sce0) <- 1:nrow(var_imp_sce0)
+ggplot(var_imp_sce0, aes(x = reorder(var_imp_sce0$VARIABLES, -var_imp_sce0$`model_rf$variable.importance`), y = var_imp_sce0$`model_rf$variable.importance`))+
+  geom_col(aes(fill = var_imp_sce0$`model_rf$variable.importance`), width = 0.7)+
+  xlab("Variables")+
+  ylab("Feature Importance")+
+  scale_fill_gradient2(name = "Feature Importance",
+                       low = "deepskyblue", 
+                       high = "dodgerblue4",
+                       midpoint = median(var_imp_sce0$`model_rf$variable.importance`))+
+  coord_flip()
+
+write.csv(var_imp_sce0, "D:/Spring20/Practicum/data/var_imp_sce0.csv")
+
