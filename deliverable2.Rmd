@@ -226,7 +226,8 @@ To take a closer look at the neighborhoods, maps of MAPE are plotted to show the
 ![](../markdown_img/Map_nhood_MAPE_rf.JPG){width=400px}![](../markdown_img/Map_nhood_MAPE_xgb.JPG){width=400px}
 
 ### 3.3.2 Selecting the Best Buffer Size
-It is hard to arbitrarily decide what the best buffer size is in capturing most of the variations of the dataset. As the bus stops are relatively densely distributed in Austin, we start from 1/2 mile and gradually reduce the size to 1/4 mile and 1/8 mile. By comparing the r square, RMSE, MAE and MAPE of each model with different buffer size, and further testing the generalizability of the models, we will get the best buffer size.
+
+It is hard to arbitrarily decide what the best buffer size is in capturing most of the variations of the dataset. As the bus stops are relatively densely distributed in Austin, we used our knowledge for walkable distances and start testing from 1/2 mile and gradually reduce the size to 1/4 mile and 1/8 mile. By comparing the r square, RMSE, MAE and MAPE of each model with different buffer size, and further testing the generalizability of the models, we will get the best buffer size.
 
 #### 1/2 mile Buffer
 In each buffer size, four types of models are compared.For each buffer size, the model with the best performance will be picked and enter the final comparison.  In 1/2 mile buffer size test, the random forest model has the largest r-square of 0.81 and lowest MAE of 64 and MAPE of 30.4%. Among the four models, this rf model has the best performance. 
@@ -1681,6 +1682,12 @@ stop_hot_freq[is.na(stop_hot_freq)] <- 0
 colnames(stop_hot_freq) <- c("STOP_ID", "hotline_0", "hotline_1")
 ```
 
+```{r}
+# bus frequency
+bus_count = disagn2 %>% group_by(STOP_ID) %>% summarise(count = n()/5)
+```
+
+
 ### Stop Characteristics
 
 ```{r}
@@ -1719,6 +1726,36 @@ data.2019.mean = data.2019 %>%
   summarise(mean_on = mean(as.numeric(AVERAGE_LOAD)))
 ```
 
+```{r}
+# ridership calc morning trips
+morning = disagn2 %>% 
+  filter(TRIP>600 & TRIP<1200) %>% 
+  group_by(STOP_ID) %>% 
+  summarize(morning_on =( sum(PSGR_ON))/5, morning_off = (sum(PSGR_OFF))/5, morning_load = (sum(PSGR_LOAD))/5)
+
+afternoon = disagn2 %>% 
+  filter(TRIP>1200 & TRIP<1700) %>% 
+  group_by(STOP_ID) %>% 
+  summarize(afternoon_on =( sum(PSGR_ON))/5,afternoon_off =( sum(PSGR_OFF))/5, afternoon_load = (sum(PSGR_LOAD))/5)
+
+evening = disagn2 %>% 
+  filter(TRIP>1700 & TRIP<2100) %>% 
+  group_by(STOP_ID) %>% 
+  summarize(eve_on = (sum(PSGR_ON))/5,eve_off = (sum(PSGR_OFF))/5, eve_load = (sum(PSGR_LOAD))/5)
+```
+
+```{r}
+# route fixed effect
+route_fix0 <- dcast(disagn2 %>% group_by(STOP_ID, ROUTE) %>% summarise(count = n()), STOP_ID ~ ROUTE, value.var = "count") 
+route_fix <- (route_fix0[,-1] != 0)*1
+route_fix <- cbind(route_fix0$STOP_ID, route_fix)
+route_fix[is.na(route_fix)] <- 0
+colnames(route_fix) <- paste("r", colnames(route_fix), sep = "")
+route_fix <- route_fix %>% as.data.frame()
+```
+
+
+
 ### Join All Features
 
 ```{r}
@@ -1751,7 +1788,12 @@ all_x1 <- CommercialInit %>%  #amenities and route related
   left_join(st_drop_geometry(stop_nhood), by = "STOP_ID") %>% # fixed effects
   left_join(st_drop_geometry(stop_school), by = "STOP_ID") %>%
   select(-c(hotline_0)) %>%
-  left_join(data.2019.mean, by = "STOP_ID")
+  left_join(data.2019.mean, by = "STOP_ID") %>%
+  left_join(morning, by = "STOP_ID")%>%
+  #left_join(afternoon, by = "STOP_ID")%>%
+  left_join(evening, by = "STOP_ID") %>%
+  left_join(route_fix, by = c("STOP_ID" = "r")) %>%
+  left_join(bus_count, by = "STOP_ID")
 
 #spatial lag, knn dist
 all_x3 = bind_cols(list(all_x1, utaustinDist, CBDDist, commercialDist, retailDist, supermktDist, officeDist, residentialDist, schoolDist, universityDist, parkingDist, stadiumDist, trainstationDist, airportDist, spatial_lag %>% select(spatial_lag2, spatial_lag3, spatial_lag5)))
@@ -1760,7 +1802,9 @@ all_x3 = bind_cols(list(all_x1, utaustinDist, CBDDist, commercialDist, retailDis
 ```{r}
 #put ridership to the end
 all_x3 = all_x3 %>% select(-mean_on, mean_on)
-#write.csv(st_drop_geometry(all_x3),"all_1_quarter_mile_buffer.csv", row.names = FALSE)
+write.csv(st_drop_geometry(all_x4_normalize),"with_route_fix_new.csv", row.names = FALSE)
+
+#write.csv(route_fix,"route_fixed_effect.csv", row.names = FALSE)
 ```
  
 ```{r}
@@ -1832,6 +1876,50 @@ all_x4_normalize <-
 
 ### Features Explorations
 
+
+```{r}
+#plot dependent variable distribution
+ggplot()+
+  geom_sf(data = nhood, color = 'grey30',fill = 'grey40') +
+  geom_sf(data = st_centroid(na.omit(all_x4_normalize)), aes(color = q5(morning_on)),size = 0.9) +
+  labs(title = "Morning Boarding") +
+  scale_color_brewer(palette="Blues")+
+  mapTheme()
+```
+
+
+```{r}
+#check ridership distribution
+summary(all_x4_normalize$morning_on)
+summary(all_x4_normalize$morning_off)
+summary(all_x4_normalize$morning_load)
+
+summary(all_x4_normalize$afternoon_on)
+summary(all_x4_normalize$afternnon_off)
+summary(all_x4_normalize$afternoon_load)
+
+summary(all_x4_normalize$eve_on)
+summary(all_x4_normalize$eve_off)
+summary(all_x4_normalize$eve_load)
+```
+
+
+```{r}
+ggplot(all_x4_normalize, aes(nshifts, mean_on))+ 
+  geom_point() + 
+  labs(x = "nshifts", y = "mean_on") + 
+  geom_smooth(method="lm") +
+  labs(title = paste("r =", cor(all_x4_normalize$nshifts, all_x4_normalize$mean_on, use = "complete.obs")))
+```
+
+```{r}
+ggplot(all_x4_normalize, aes(count, mean_on))+ 
+  geom_point() + 
+  labs(x = "count", y = "mean_on") + 
+  geom_smooth(method="lm") +
+  labs(title = paste("r =", cor(all_x4_normalize$count, all_x4_normalize$mean_on, use = "complete.obs")))
+```
+
 ```{r}
 # correlation matrix
 all1cor <- 
@@ -1901,9 +1989,26 @@ ggplot(correlation.long, aes(Value, mean_on)) +
 
 ### change features and see results
 
+
 ```{r}
 ################ this is the model we use!!! no log
-lmreg <- lm(mean_on ~ .,data = all_x4_normalize%>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on))
+lmreg <- lm(mean_on ~ .,data = all_x4_normalize%>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, population, mean_on, all_of(route_names)))
+summary(lmreg)
+```
+
+
+
+```{r}
+route_names <- colnames(subset(route_fix, select = -c(r)))
+#, r1,r2,r3,r4,r5,r6,r7
+```
+
+```{r}
+
+#all_of(route_names)
+#, r7, r10, r20, r300, r801, r803
+################ edit
+lmreg <- lm(mean_on ~ .,data = all_x4_normalize%>% st_drop_geometry() %>% select(building_area, civic, industrial, SN_cat, Crosstown_cat, Express_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, hotline_1, Special_cat, school_count, medInc, nshifts, population, mean_on, all_of(route_names)))
 summary(lmreg)
 ```
 
@@ -1994,7 +2099,7 @@ lm_model1 <-
 grid.arrange(
 ggplot()+
   geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data = st_centroid(na.omit(lm_model3)),color = "grey40", size=0.5) +
+  geom_sf(data = st_centroid(na.omit(lm_model1)),color = "grey40", size=0.5) +
   #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 1)+
   #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 1)+
   geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 1)+
@@ -2024,7 +2129,7 @@ nhood1 <- nhood %>% left_join(lm_model1 %>%
 ggplot()+
   geom_sf(data = nhood1, aes(fill = ridership.change.sum)) +
   labs(title = "Ridership Prediction Scenario 1: \nBuilding areas increase in West Campus") +
-  scale_fill_gradientn(colors = c("#b2182b", "#f4a582", "#f7f7f7", "#2166ac"), limits = c(-170,90))+
+  scale_fill_gradientn(colors = c("#b2182b", "#f4a582", "#f7f7f7", "#2166ac"))+
   mapTheme()
 ```
 
@@ -2061,7 +2166,7 @@ lm_model2 <-
 grid.arrange(
 ggplot()+
   geom_sf(data = nhood, color = 'grey80',fill = 'grey80') +
-  geom_sf(data = st_centroid(na.omit(lm_model3)),color = "grey40", size=0.5) +
+  geom_sf(data = st_centroid(na.omit(lm_model2)),color = "grey40", size=0.5) +
   #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% s1_edt,]), color = "red", size = 1)+
   geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_r1,s1_r2),]), color = "red", size = 1)+
   #geom_sf(data =  st_centroid(lm_model1[lm_model1$STOP_ID %in% c(s1_wc1,s1_wc2, s1_wc3),]), color = "red", size = 1)+
