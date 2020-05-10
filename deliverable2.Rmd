@@ -48,23 +48,23 @@ This report is broken into four sections. Section 1 presents an exploratory anal
 ## 1.3 What Data Are We Using?
 
 The ridership data we used come from the Automated Passenger Counter(APC), which counts the number of boarding and alighting on any given bus. The image below illustrate the APC system at work.
-![](../markdown_img/Passenger-bus-APC-1024x576.jpg)
+![](C:/Upenn/Practicum/markdown_img/Passenger-bus-APC-1024x576.jpg)
 [source](https://www.tsomobile.com/tso-public-transportation/shuttle-bus-resources/)
 
 Thanks to the Cap Remap project and the ridership and bus system collected for it, we were able to get the average weekday daily ridership data in 2019 and use that as the dependent variable.
-![](../markdown_img/ds1.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds1.jpg)
 
 The dataset also provides info on route characteristics, such as route types and high ridership lines, which we call hotlines. 
  
-![](../markdown_img/ds2.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds2.jpg)
 
 From multiple open data platforms, we were also able to retrieve built environment data, such as building areas, and amenities. 
 
-![](../markdown_img/ds3.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds3.jpg)
 
 Then, US census provides comprehensive demographics data, such as population, vehicle ownerships, and median income. 
 
-![](../markdown_img/ds4.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds4.jpg)
 
 
 # 2. Exploratory Analysis
@@ -85,7 +85,7 @@ The x-axis represents month, and y-axis repredents the average daily ridership i
 From the trend in 2018, it is clear that ridership fluctuated between months. Year 2017 and 2018 disply similar trend where we see a spike of ridership in June. However, year 2019 seems to have a smoother curve and ridership actually decreased in the same month. We suspect that there might be issues related with data retrieval and will ask for new data. Ridership are generally high in fall and winter in all three years. Our hypothesis is that this could be related with school or university holiday and class schedules. If we ignore the June data and compare the trend across three years, we do see an increasing ridership trend in general, each year has higher ridership than before, which demonstrates the effect of Cap Remap. 
 
 
-![](../markdown_img/AnnualTrend.png)
+![](C:/Upenn/Practicum/markdown_img/AnnualTrend.png)
 
 ## 2.2 Ridership Pattern in Subdivisions
 
@@ -93,25 +93,25 @@ After knowing the trend of city-wide ridership change, the next question is how 
 
 We first plotted thea average ridership by typology map. UT and CBD region have higher ridership than the rest of the city.
 
-![](../markdown_img/typo.png){width=400px}![](../markdown_img/typo_map.png){width=400px}
+![](C:/Upenn/Practicum/markdown_img/typo.png){width=400px}![](C:/Upenn/Practicum/markdown_img/typo_map.png){width=400px}
 
 Then we looked at the ridership by neighborhood map. As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
 
-![](../markdown_img/plot2.png)
+![](C:/Upenn/Practicum/markdown_img/plot2.png)
 
 We then created charts showing the ridership change in each neighborhood in 2018 in June and September. There are 12 neighborhoods experienced ridership decrease from June to September. There are several neighborhoods experienced high ridership increase of more than 10,000 from June to September. Generally, most neighborhoods experienced ridership increase after CapRemap from June to September. Among the 78 neighborhoods in Austin, we identified three neighborhoods that represents different characteristics: neighborhoods with expected ridership increase; neighborhoods with unexpected ridership increase; neighborhoods with unexpected ridership decrease.
 
 UT is the neighborhood with expected ridership increase.The location of UT neighborhood is just above downtown neighborhood. With a lot of university students living around here, the bus network is sensitive to school schedule. There is a relatively clear trend in ridership change according to school seasons.
 
-![](../markdown_img/ut_change.png)
+![](C:/Upenn/Practicum/markdown_img/ut_change.png)
 
 The second neighborhood Govalle is the neighborhood that experiencnig unexpected ridership increase. After CapRemap, the ridership in Govalle nearly increased by 50% to 75%. As Govalle is closer to the outskirts of Austin, this ridership increase might reflects CapRemap'success in strengthening the east-west connection.
 
-![](../markdown_img/govalle_change.png)
+![](C:/Upenn/Practicum/markdown_img/govalle_change.png)
 
 But there are also neighborhoods exepriencing ridership decrease on the east-west direction. Zilker located in the southwest side of Austin's downtown region. Its ridership experienced a gradually slight decrease after CapRemap.
 
-![](../markdown_img/zilker_change.png)
+![](C:/Upenn/Practicum/markdown_img/zilker_change.png)
 
 ## 2.3 Route Analysis
 
@@ -137,7 +137,7 @@ Limited & Flyer: Capital Metro's Limited and Flyer routes are limited stop servi
 
 Feeder: Capital Metro's Feeder routes are local services between a neighborhood and a major transfer point for connecting service.
 
-![](../markdown_img/routetypePNG.png)
+![](C:/Upenn/Practicum/markdown_img/routetypePNG.png)
 
 ### 2.3.2 Hotlines
 
@@ -147,14 +147,14 @@ The following analysis aim to find out what routes are popular, why are they pop
 
 We looked at the Kmeans analysis both before and after the Cap Remap. We get 4 lines labeled as hotlines before the remap, 6 lines labeled as hotlines after the remap. The hotlines before and after the remap are plotted below. Most of the hot routes are north-south direction. There are two new hotlines emerged after the CapRemap, line 10 and line 20, and they are colored in red.
 
-![](../markdown_img/hotlines.png)
+![](C:/Upenn/Practicum/markdown_img/hotlines_ba.png)
 
 To dive deeper into the characteristics of the hot bus lines, we map out the passenger load for each route at each stop for each direction. We also ploted the passenger load versus stop sequence ID as well as average boarding and alighting at each stop along each route. The purpose of this analysis is to first, find out what is so special about the hotlines, and second, see trends before and after the Cap Remap. Note that the Austin bus system has different patterns for each route, and in order to make sure the plots to make sense, we only selected the most used pattern for each plot. Below we chose two Line 20 (type High Frequency) and Line 801(Metro Rapid) to demonstrate detailed route analysis.
 
-![](../markdown_img/line20.png)
+![](C:/Upenn/Practicum/markdown_img/line20.png)
 
 Below is the analysis for Line 801.
-![](../markdown_img/line801.png)
+![](C:/Upenn/Practicum/markdown_img/line801.png)
 
 By mapping and plotting the average passenger number on bus as well as the average boarding and alighting at each stop, we can see better how specific location or neighborhood could potentially contribute to the ridership. These regions will be feature engineered in the following analysis. We also noticed that ridership tends to be higher in the middle portion of the trip, this means a lot of the passengers board from early stops to stops near the ends.
 
@@ -187,16 +187,16 @@ For route information, the percentage of each route type passing each bus stop i
 
 For the internal (stop characteristics) category, we first added a transit hub dummy defined by Capital Metro; we then calculated the spatial lag, which is the average ridership of the surrounding stops.
 
-![](../markdown_img/featuretable.png)
+![](C:/Upenn/Practicum/markdown_img/features.png)
 
 A series of analysis is conducted to see what features are important. We first looked at the correlation between all features and the dependent variable, the mean ridership in 2019. Below are selected features that highly correlate with ridership positively and negatively. We found that the route information, amenity distance, and stop characteristics often correlates highly with ridership.
 
-![](../markdown_img/corpo.png)
+![](C:/Upenn/Practicum/markdown_img/positive.png)
 
-![](../markdown_img/corne.png)
+![](C:/Upenn/Practicum/markdown_img/negative.png)
 
 A correlation matrix is made to see potential collinearity between all features as well as the dependent variable. We found that certain features correlate highly, such as route direction feature SouthNorth versus WestEast, land use feature commercial versus residential, amenity feature distance to CBD versus distance to train stations. It is important to identify these variables when using features in the model.
-![](../markdown_img/cormatrix.png)
+![](C:/Upenn/Practicum/markdown_img/cor_matrix.png)
 
 ## 3.3 Results and Validation
 
@@ -373,16 +373,16 @@ qBr <- function(df, variable, rnd) {
 
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
 
-plotTheme <- theme(
-  plot.title =element_text(size=12),
-  plot.subtitle = element_text(size=8),
-  plot.caption = element_text(size = 6),
-  axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-  axis.text.y = element_text(size = 10),
-  axis.title.y = element_text(size = 10),
-  panel.background=element_blank(),
-  plot.background=element_blank(),
-  axis.ticks=element_blank())
+#plotTheme <- theme(
+#  plot.title =element_text(size=12),
+#  plot.subtitle = element_text(size=8),
+#  plot.caption = element_text(size = 6),
+#  axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+#  axis.text.y = element_text(size = 10),
+#  axis.title.y = element_text(size = 10),
+#  panel.background=element_blank(),
+#  plot.background=element_blank(),
+#  axis.ticks=element_blank())
 
 plotTheme <- function(base_size = 12) {
   theme(
