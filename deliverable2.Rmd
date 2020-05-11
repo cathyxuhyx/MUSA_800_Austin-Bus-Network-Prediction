@@ -37,22 +37,19 @@ options(scipen=99)
 # 1. Introduction
 
 ## 1.1 Background
-While evaluating the performance of a transit system, ridership has been an extremely important aspect helping the transportation planning development. Even in the challenging time brought by the pandemic, when ridership decrease becomes the nightmare for every transit agency in the US, it is still critical to explore transit ridership in relation to built environment, land use, demographics and system dynamics. Using Automatic Passenger Counter data provided by the sensors, Austin bus ridership data offers a great chance in helping planners to assess the system performance with predictions to backup better decisions.
-
-In 2018, Capital Metropoitan Transportation Authority (CapMetro), a public transportation agency serving Austin, Travis and parts of Williamson Counties, launched the “Cap Remap”, a bus system redesign project, as part of its transit development plan, Connections 2025. Cap Remap adjusted the transit network according to internal analysis and community outreach and aims to provide a more frequent, more reliable, and better connected bus system. Specifically, it remapped certain routes, tripled the number of bus routes that operate every 15 minutes, and made sure the frequency meets the need on weekends. This project brings an opportunity to understand what factors influence bus ridership.
-
-## 1.2 Use Case
-
-Given the renewed interest in bus transit in US cities, such as Austin, there is an opportunity to streamline the bus planning process using modern data science methods. Currently, cities have to gather all the information, such as land use, built environment, demographics etc., from different sources, to gain understanding of bus ridership change in the future. This method is usually time consuming and requires a lot of human resources. Oftentimes, cities have to outsource those analysis to third parties, which inevitably leads to higher project cost. The goal of this article, therefore, is to present a scenario planning tool for planners to test how changes in local land uses and characteristics of bus routes predict bus ridership. If such a predictive model proves robust, planners can use it to evaluate a series of possible pictures regarding the development of different land use and change of bus routes in the future and make strategic decisions efficiently in Austin.
-This report is broken into four sections. Section 1 presents an exploratory analysis of the Cap Remap to further understand the trends, patterns, and characteristics of the ridership in Austin, which helps to determine the important features to be incorporated in the predictive model. Section 2 explains the process of model building and model evaluation. Section 3 demonstrates the user interface of the bus network planning application, which is supported by the model developed in Section 2. The last section will be an appendix showing the codes and additional information about the model and application development. 
-
-## 1.3 What Data Are We Using?
-
-The ridership data we used come from the Automated Passenger Counter(APC), which counts the number of boarding and alighting on any given bus. The image below illustrate the APC system at work.
+While evaluating the performance of a transit system, ridership has been an extremely important aspect helping the transportation planning development. Even in the challenging time brought by the pandemic, when ridership decrease becomes the nightmare for every transit agency in the US, it is still critical to explore transit ridership in relation to built environment, land use, demographics and system dynamics. Using Automatic Passenger Counter data provided by the sensors, Austin bus ridership data offers a great chance in helping planners to assess the system performance with predictions to backup better decisions. The following image shows how the data is collected on each bus.
 ![](C:/Upenn/Practicum/markdown_img/Passenger-bus-APC-1024x576.jpg)
 [source](https://www.tsomobile.com/tso-public-transportation/shuttle-bus-resources/)
 
-Thanks to the Cap Remap project and the ridership and bus system collected for it, we were able to get the average weekday daily ridership data in 2019 and use that as the dependent variable.
+
+## 1.2 Use Case
+
+Given the renewed interest in bus transit in US cities, such as Austin, there is an opportunity to streamline the bus planning process using modern data science methods. Currently, cities have to gather all the information, such as land use, built environment, demographics etc., from different sources, to gain understanding of bus ridership change in the future. This method is usually time consuming and requires a lot of human resources. Oftentimes, cities have to outsource those analysis to third parties, which inevitably leads to higher project cost. The goal of this project, therefore, is to present a scenario planning tool for planners to test how changes in local land uses and characteristics of bus routes predict bus ridership. If such a predictive model proves robust, planners can use it to evaluate a series of possible pictures regarding the development of different land use and change of bus routes in the future and make strategic decisions efficiently in Austin. 
+
+
+## 1.3 What Data Are We Using?
+
+The ridership data collected by sensors is calculated into a monthly average format for each stop. This data is going to be our dependent variable in this project.
 ![](C:/Upenn/Practicum/markdown_img/ds1.jpg)
 
 The dataset also provides info on route characteristics, such as route types and high ridership lines, which we call hotlines. 
@@ -70,7 +67,7 @@ Then, US census provides comprehensive demographics data, such as population, ve
 
 # 2. Exploratory Analysis
 Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
-How did ridership change before and after the implementation of CapRemap (06/03/2018)?
+How did ridership change before and after the large-scale system redesign "Cap Remap" (06/03/2018)?
 How does the ridership change across the city?
 What types of route characteristics have influences on ridership?
 What are the popular bus routes in Austin and what are their attributes?
