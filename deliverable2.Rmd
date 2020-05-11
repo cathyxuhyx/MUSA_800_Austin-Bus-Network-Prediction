@@ -37,6 +37,7 @@ options(scipen=99)
 # 1. Introduction
 
 ## 1.1 Background
+While evaluating the performance of a transit system, ridership has been an extremely important aspect helping the transportation planning development. Even in the challenging time brought by the pandemic, when ridership decrease becomes the nightmare for every transit agency in the US, it is still critical to explore transit ridership in relation to built environment, land use, demographics and system dynamics. Using Automatic Passenger Counter data provided by the sensors, Austin bus ridership data offers a great chance in helping planners to assess the system performance with predictions to backup better decisions.
 
 In 2018, Capital Metropoitan Transportation Authority (CapMetro), a public transportation agency serving Austin, Travis and parts of Williamson Counties, launched the “Cap Remap”, a bus system redesign project, as part of its transit development plan, Connections 2025. Cap Remap adjusted the transit network according to internal analysis and community outreach and aims to provide a more frequent, more reliable, and better connected bus system. Specifically, it remapped certain routes, tripled the number of bus routes that operate every 15 minutes, and made sure the frequency meets the need on weekends. This project brings an opportunity to understand what factors influence bus ridership.
 
@@ -48,23 +49,23 @@ This report is broken into four sections. Section 1 presents an exploratory anal
 ## 1.3 What Data Are We Using?
 
 The ridership data we used come from the Automated Passenger Counter(APC), which counts the number of boarding and alighting on any given bus. The image below illustrate the APC system at work.
-![](../markdown_img/Passenger-bus-APC-1024x576.jpg)
+![](C:/Upenn/Practicum/markdown_img/Passenger-bus-APC-1024x576.jpg)
 [source](https://www.tsomobile.com/tso-public-transportation/shuttle-bus-resources/)
 
 Thanks to the Cap Remap project and the ridership and bus system collected for it, we were able to get the average weekday daily ridership data in 2019 and use that as the dependent variable.
-![](../markdown_img/ds1.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds1.jpg)
 
 The dataset also provides info on route characteristics, such as route types and high ridership lines, which we call hotlines. 
  
-![](../markdown_img/ds2.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds2.jpg)
 
 From multiple open data platforms, we were also able to retrieve built environment data, such as building areas, and amenities. 
 
-![](../markdown_img/ds3.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds3.jpg)
 
 Then, US census provides comprehensive demographics data, such as population, vehicle ownerships, and median income. 
 
-![](../markdown_img/ds4.jpg)
+![](C:/Upenn/Practicum/markdown_img/ds4.jpg)
 
 
 # 2. Exploratory Analysis
@@ -78,40 +79,39 @@ What are the popular bus routes in Austin and what are their attributes?
 
 How did ridership change before and after CapRemap (06/03, 2018)? Did it increase after the redesign?
 
-Current available data from Capital Metro allows us to observe the trend in ridership change before and after Cap Remap. The first important part of exploratory analysis is to see the city-wide change in ridership brought by CapRemap. With the stop-level data from Janurary 207 to November 2019, the aggregated city-wide ridership change is shown in the chart below.
+Current available data from Capital Metro allows us to observe the trend in ridership change before and after Cap Remap. The first important part of exploratory analysis is to see the city-wide change in ridership brought by CapRemap. To get the overall trend of ridership change before and after redesign, the monthly ridership data helps to create the system-wide regression discontinuity chart. 
 
-The x-axis represents month, and y-axis repredents the average daily ridership in the given month. The yellow, blue, red lines represents the monthly ridership in year 2017, 2018, 2019, respectively. The vertical line represents month June, which is the month when Cap Remap rolled out in 2018. 
-
-From the trend in 2018, it is clear that ridership fluctuated between months. Year 2017 and 2018 disply similar trend where we see a spike of ridership in June. However, year 2019 seems to have a smoother curve and ridership actually decreased in the same month. We suspect that there might be issues related with data retrieval and will ask for new data. Ridership are generally high in fall and winter in all three years. Our hypothesis is that this could be related with school or university holiday and class schedules. If we ignore the June data and compare the trend across three years, we do see an increasing ridership trend in general, each year has higher ridership than before, which demonstrates the effect of Cap Remap. 
+The x-axis represents months (June has been marked as 0 since redesign happened here), y represents average daily ridership in the given month. As the color distinguish time difference (before or after redesign), the line type further represents years. Comparing year 2018 and year 2019 from month January to June (-6 to 0 in the graphics), it is obvious that system-wide ridership has generally increased after the redesign. However, in terms of the short-term effect of the redesign, the ridership actually declined in June and July in 2018 just after redesign happened. This decrease was reasonable as passengers normally need some time to adjust to the new schedule.
 
 
-![](../markdown_img/AnnualTrend.png)
+![](C:/Upenn/Practicum/markdown_img/AnnualTrend.png)
 
 ## 2.2 Ridership Pattern in Subdivisions
 
-After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. We first look at the riderhsip patterns according to general typology to understand the general trend, and then use neighborhoods in Austin are used here to show the spatial trend here. 
+After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which experienced decrease. To understand whether the changes are significant, we first looked at the existing riderhsip patterns according to the general typology and then use neighborhoods in Austin to see the ridership spatial distribution. 
 
-We first plotted thea average ridership by typology map. UT and CBD region have higher ridership than the rest of the city.
+We defined the general typology according to the two major factors of the city in transportation planning: economic activity and user groups. In general, the downtown district has higher economic activity and provides lots of jobs and business opportunities; on the other hand, universities attract students or staff to commute everyday. Thus, we seperated the city into three major regions: Downtown Central Business District (CBD), UT Austin (UT), and the rest of the Austin (Rest). The map below shows the relative location of each typology. The bar plot below demonstrates the 2019 average ridership of each region. UT and CBD regions have higher ridership than the rest of the city. UT has a particularly high ridership, which means there are many transit users among students, faculties, and university staff.
 
-![](../markdown_img/typo.png){width=400px}![](../markdown_img/typo_map.png){width=400px}
+![](C:/Upenn/Practicum/markdown_img/typo.png){width=400px}![](C:/Upenn/Practicum/markdown_img/typo_map.png){width=400px}
 
-Then we looked at the ridership by neighborhood map. As shown in the map, darker blue represents higher ridership increase, darker red presents lower ridership increase or even ridership decrease. As shown in the map, mostly downtown areas experienced ridership increase from June to September while the outskirts of Austin experienced low ridership increase or even ridership decrease.
+Then we looked at the ridership by neighborhood map. The following maps indicate the average daily ridership in a neighborhood on a given weekday. Within our expectation, downtown and UT Austin neighborhoods (in the middle of the map)are the ones with high ridership in dark blue. Several other neighborhoods to the north side of Austin and southeast side also have high ridership. At the same time, the west side of Austin and the outskirt area of Austin seem to have lower ridership. This is one outcome of a bus system which is mainly focusing on north-south connection. 
 
-![](../markdown_img/plot2.png)
+![](C:/Upenn/Practicum/markdown_img/Ridership.JPG){width=500px}
 
 We then created charts showing the ridership change in each neighborhood in 2018 in June and September. There are 12 neighborhoods experienced ridership decrease from June to September. There are several neighborhoods experienced high ridership increase of more than 10,000 from June to September. Generally, most neighborhoods experienced ridership increase after CapRemap from June to September. Among the 78 neighborhoods in Austin, we identified three neighborhoods that represents different characteristics: neighborhoods with expected ridership increase; neighborhoods with unexpected ridership increase; neighborhoods with unexpected ridership decrease.
 
-UT is the neighborhood with expected ridership increase.The location of UT neighborhood is just above downtown neighborhood. With a lot of university students living around here, the bus network is sensitive to school schedule. There is a relatively clear trend in ridership change according to school seasons.
 
-![](../markdown_img/ut_change.png)
+Among all the neighborhoods, UT is the neighborhood with expected ridership increase.The location of UT neighborhood is just above downtown neighborhood. With a lot of university students living around here, the bus network is sensitive to school schedule. There is a relatively clear trend in ridership change according to school seasons.
 
-The second neighborhood Govalle is the neighborhood that experiencnig unexpected ridership increase. After CapRemap, the ridership in Govalle nearly increased by 50% to 75%. As Govalle is closer to the outskirts of Austin, this ridership increase might reflects CapRemap'success in strengthening the east-west connection.
+![](C:/Upenn/Practicum/markdown_img/ut_change.png)
 
-![](../markdown_img/govalle_change.png)
+The second neighborhood Govalle is the neighborhood that experiencnig unexpected ridership increase. After CapRemap, the ridership in Govalle nearly increased by 50% to 75%. Govalle is a neighborhood locared in the eastside of Austin which is experiencing gentrification in recent years. The artists are developing industrial spaces in the south of the neighborhood into studios and exhibition spaces. The increasing popularity plus the bus redesign together give an explanation for the ridership increase. 
 
-But there are also neighborhoods exepriencing ridership decrease on the east-west direction. Zilker located in the southwest side of Austin's downtown region. Its ridership experienced a gradually slight decrease after CapRemap.
+![](C:/Upenn/Practicum/markdown_img/govalle_change.png)
 
-![](../markdown_img/zilker_change.png)
+But there are also neighborhoods exepriencing ridership decrease on the east-west direction. Zilker located in the southwest side of Austin's downtown region. In Zilker, however, the ridership seems not much impacted by the redesign as it remains stable before and after the redesign. The stable ridership is not surprising since Zilker locates to the south of downtown Austin within a walkable distance. It is a neighborhood with a lot of parks, green spaces and leisures. The demand for bus system is thus not as strong as other neighborhoods. 
+
+![](C:/Upenn/Practicum/markdown_img/zilker_change.png)
 
 ## 2.3 Route Analysis
 
@@ -137,7 +137,7 @@ Limited & Flyer: Capital Metro's Limited and Flyer routes are limited stop servi
 
 Feeder: Capital Metro's Feeder routes are local services between a neighborhood and a major transfer point for connecting service.
 
-![](../markdown_img/routetypePNG.png)
+![](C:/Upenn/Practicum/markdown_img/routetypePNG.png)
 
 ### 2.3.2 Hotlines
 
@@ -147,14 +147,14 @@ The following analysis aim to find out what routes are popular, why are they pop
 
 We looked at the Kmeans analysis both before and after the Cap Remap. We get 4 lines labeled as hotlines before the remap, 6 lines labeled as hotlines after the remap. The hotlines before and after the remap are plotted below. Most of the hot routes are north-south direction. There are two new hotlines emerged after the CapRemap, line 10 and line 20, and they are colored in red.
 
-![](../markdown_img/hotlines.png)
+![](C:/Upenn/Practicum/markdown_img/hotlines_ba.png)
 
 To dive deeper into the characteristics of the hot bus lines, we map out the passenger load for each route at each stop for each direction. We also ploted the passenger load versus stop sequence ID as well as average boarding and alighting at each stop along each route. The purpose of this analysis is to first, find out what is so special about the hotlines, and second, see trends before and after the Cap Remap. Note that the Austin bus system has different patterns for each route, and in order to make sure the plots to make sense, we only selected the most used pattern for each plot. Below we chose two Line 20 (type High Frequency) and Line 801(Metro Rapid) to demonstrate detailed route analysis.
 
-![](../markdown_img/line20.png)
+![](C:/Upenn/Practicum/markdown_img/line20.png)
 
 Below is the analysis for Line 801.
-![](../markdown_img/line801.png)
+![](C:/Upenn/Practicum/markdown_img/line801.png)
 
 By mapping and plotting the average passenger number on bus as well as the average boarding and alighting at each stop, we can see better how specific location or neighborhood could potentially contribute to the ridership. These regions will be feature engineered in the following analysis. We also noticed that ridership tends to be higher in the middle portion of the trip, this means a lot of the passengers board from early stops to stops near the ends.
 
@@ -166,6 +166,24 @@ In conclusion, hotlines have the following characteristics:
   + Mostly North-South direction (Following the shape / geography of the city)
   + Going across the a large portion of the city
 - In terms of temporal trend, we know that more Shifts were added in the day time and rush hours, which might increase ridership.
+
+## 2.4 Other features in Austin
+Besides the route features that are already in the bus system, clearly there are other features related to the built environment itself which determins whether an area will have high riderhsip or not. In this section, three different types of features will be explored to further reveal ridership pattern in Austin.
+### 2.4.1 Amenities
+Amenities in a city normally are key nodes including schools, stadiums,supermarket, etc. These nodes are the destinations that travelers might head to. Thus, they can be an influencer to bus system ridership variation. The amenities we investigated here are offices and schools. Since the ridership data is the average daily ridership on a given weekday, offices and schools, as popular desinations for commuters worth investigation. As the following maps indicate, most offices gather in downtown area while schools are scattered in every neighborhood. Compared with the ridership map, offices are likely to have a large impact on ridership at the north side of Austin, across the Colorado River. As schools are pretty evenly distributed around the neighborhoods, it is hard to measure which area has been impacted more.
+
+![](C:/Upenn/Practicum/markdown_img/Amenities.JPG){width=500px}![](C:/Upenn/Practicum/markdown_img/Ridership.JPG){width=300px}
+
+### 2.4.2 Built Environment
+Many factors in the built environment could have a strong impact on bus ridership. Landuse would no doubt be an important feature to consider according to transit planning experiences. In order to reflect the impact of landuse on ridership, two types of landuse are selected: commercial and civic. As our initial priority is commercial and residential, there are too many residential landuse within Austin which makes the map hard to reveal the pattern. Thus the final landuse types are commercial and civic.
+According to the following maps, commercial landuse is mostly along the main corridors in Austin. As we expected to see more commercial landuse within downtown area, it is actually scatterly distributed. Comparing commercial landuse map with the ridership map, it is clear that in every high-ridership neighborhood,there are relatively more commercial landuse. For civic landuse, some of the areas are noticeable large compared to commercial landuse. In the University of Texas neighborhood, where the civic landuse occupies a large amount of the space, the ridership is very high.
+
+![](C:/Upenn/Practicum/markdown_img/Commercial.JPG){width=250px}![](C:/Upenn/Practicum/markdown_img/Civic.JPG){width=250px}![](C:/Upenn/Practicum/markdown_img/Ridership.JPG){width=300px}
+
+### 2.4.3 Demographics
+Lastly, demographics is the ultimate features that we take into account.In this case, some basic characteristics about the areas might influence the ridership such as race, income and age. Here we will use vehicle ownership, more specifically, households without vehicle, as an exploratory feature.
+Since demographic data has the unit of census tract, it reveals more details than the ridership map. Mostly, in the neighborhoods with high ridership, there are some census tract where more households have no vehicle ownership. In this aspect, it clearly indicates the importance of our application which allows planners to know the ridership change according to demographic features, which can effectively improve resource allocation considering social equity.
+![](C:/Upenn/Practicum/markdown_img/Noveh.JPG){width=300px}![](C:/Upenn/Practicum/markdown_img/Ridership.JPG){width=300px}
 
 # 3. Modeling
 
@@ -179,24 +197,26 @@ The feature table below demonstrates five types of features and the sources of e
 
 In the amenity category, information about where the amenities located is collected from OSM. The examples of the amenities are stadiums, supermarkets, offices, train stations, etc. For amenity, we created buffers of each stop with the size of 1/2 mile, 1/4 mile and 1/8 mile. The number of each type of amenity within the buffer is calculated. In order to capture the distance factor related between stops and amenities, the distance between the stop and the closest 3 amenities are calculated as well. 
 
+![](C:/Upenn/Practicum/markdown_img/Radius.png){width=300px}
+
 In the built environment category, land use types, building area, neighborhood fixed effect and school district fixed effect are included.  Some features are spatially joined with the stops, such as the neighborhood and the school district data. Other features such as land use and building area, the percentage of each type of land use and the total area of buildings within the buffer is calculated as well. Noted here that the three different buffer sizes are all tested here for capturing more variation in the dataset.
 
 In the demographics category, data about population, median income and car ownership is collected. For demographics, we used Areal Weighted Interpolation and joined the weighted census estimates within the buffer to each stop.
 
-For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts going through each stop on a given week is also calculated.
+For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts and number of buses going through each stop on a given week is also calculated. We also included the route fixed effect, i.e. each route number is marked as a new feature for all the stops (For example, for the "route10" column, all stops on route 10 will be marked as 1, all other stops are marked as 0).
 
 For the internal (stop characteristics) category, we first added a transit hub dummy defined by Capital Metro; we then calculated the spatial lag, which is the average ridership of the surrounding stops.
 
-![](../markdown_img/featuretable.png)
+![](C:/Upenn/Practicum/markdown_img/features.png)
 
 A series of analysis is conducted to see what features are important. We first looked at the correlation between all features and the dependent variable, the mean ridership in 2019. Below are selected features that highly correlate with ridership positively and negatively. We found that the route information, amenity distance, and stop characteristics often correlates highly with ridership.
 
-![](../markdown_img/corpo.png)
+![](C:/Upenn/Practicum/markdown_img/positive.png)
 
-![](../markdown_img/corne.png)
+![](C:/Upenn/Practicum/markdown_img/negative.png)
 
 A correlation matrix is made to see potential collinearity between all features as well as the dependent variable. We found that certain features correlate highly, such as route direction feature SouthNorth versus WestEast, land use feature commercial versus residential, amenity feature distance to CBD versus distance to train stations. It is important to identify these variables when using features in the model.
-![](../markdown_img/cormatrix.png)
+![](C:/Upenn/Practicum/markdown_img/cor_matrix.png)
 
 ## 3.3 Results and Validation
 
@@ -212,18 +232,18 @@ We tested the generalizability of the four models mentioned above by holding out
 
 The MAPE and MAE of the four models reveals that, genrally speaking, random forest model is the model with the best accuracy while lasso and ridge model gives prediction less accurately than other three. Lasso and ridge regression has the largest MAPE and MAE while random forest model has the least MAPE and MAE.
 
-![](../markdown_img/MAPE_overall_nhood.JPG){width=400px}![](../markdown_img/MAE_overall_nhood.JPG){width=400px}
+![](C:/Upenn/Practicum/markdown_img/MAPE_overall_nhood.JPG){width=400px}![](C:/Upenn/Practicum/markdown_img/MAE_overall_nhood.JPG){width=400px}
 
 In terms of predicted value and actual values, simple linear regression tends to underpredict ridership when the actual ridership is higher than 300.Lasso and ridge model generally overpredict ridership. Random forest model tends to overpredict ridership when the actual ridership is over 250. Xgboost model generally overpredict ridership but performs better than glmnet model when the actual ridership is low.
 
-![](../markdown_img/PreVSObs_nhood.JPG){width=350px}
+![](C:/Upenn/Practicum/markdown_img/PreVSObs_nhood.JPG){width=350px}
 
 In order to test the the generaliability of the models on neighborhoods, the following bar chart reveals each model's MAE in the neighborhoods. The charts demonstrate most of the MAEs are below 100. There are several neighborhoods appear to have a higher MAE among which most of them gathered around UT.
 
 To take a closer look at the neighborhoods, maps of MAPE are plotted to show the generalizability. As mentioned before, the model's acuuracy is lower in the neighborhoods around University of Texas. 
 
-![](../markdown_img/Map_nhood_MAPE_lm.JPG){width=400px}![](../markdown_img/Map_nhood_MAPE_glm.JPG){width=400px}
-![](../markdown_img/Map_nhood_MAPE_rf.JPG){width=400px}![](../markdown_img/Map_nhood_MAPE_xgb.JPG){width=400px}
+![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_lm.JPG){width=400px}![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_glm.JPG){width=400px}
+![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_rf.JPG){width=400px}![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_xgb.JPG){width=400px}
 
 ### 3.3.2 Selecting the Best Buffer Size
 
@@ -232,85 +252,68 @@ It is hard to arbitrarily decide what the best buffer size is in capturing most 
 #### 1/2 mile Buffer
 In each buffer size, four types of models are compared.For each buffer size, the model with the best performance will be picked and enter the final comparison.  In 1/2 mile buffer size test, the random forest model has the largest r-square of 0.81 and lowest MAE of 64 and MAPE of 30.4%. Among the four models, this rf model has the best performance. 
 
-![](../markdown_img/22/21_half.JPG){width=600px}
+![](C:/Upenn/Practicum/markdown_img/21_half.JPG){width=600px}
 
 #### 1/4 mile Buffer
 In 1/4 mile buffer size test, the random forest model has the largest r-square of 0.79 and lowest MAE of 69.3 and MAPE of 28.8%. This rf model has the best performance among the four models here. 
 
-![](../markdown_img/22/18_quarter.JPG){width=600px}
+![](C:/Upenn/Practicum/markdown_img/18_quarter.JPG){width=600px}
 
 #### 1/8 mile Buffer
 In 1/8 mile buffer size test, the random forest model has the largest r-square of 0.72 and lowest MAE of 77.8 and MAPE of 33.6%. This rf model has the best performance among the four models here.
 
-![](../markdown_img/22/19_eight.JPG){width=600px}
+![](C:/Upenn/Practicum/markdown_img/19_eight.JPG){width=600px}
 
 After the above comparison, the largest r-square is from 1/2-mile buffer while the least MAPE is from 1/4-mile. The possible reason for the lose of 1/8-mile buffer is it cannot sucessfully capture enough variation within the limited radius of the stops. Especially for the areas where ridership is high, such as CBD or UT, there can be a lot of variances outside the 1/8 mile. 
 
 Then if we take a look at the generalizability of the three buffer sizes on their performance in CBD, UT and the rest areas, it is clear that 1/8 mile buffer fails to achieve generaliability as well as other two buffer sizes. the MAE in CBD and UT are very high. For the comparison between 1/2 mile buffer and 1/4 mile buffer, the MAE demonstrates a better generalizability for 1/2 mile buffer for its smaller value in UT. However, considering our use case where we allow planners to test different development at specific locations, a smaller buffer size would more accurately reflect real development in the world. Thus, the final buffer radius is settled to 1/4 mile.
 
-![](../markdown_img/22/22_half.JPG){width=500px}
-![](../markdown_img/22/20_quarter.JPG){width=500px}
-![](../markdown_img/22/23_eighth.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/22_half.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/20_quarter.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/23_eighth.JPG){width=500px}
+
+### 3.3.3 Validation using Poverty Condition
+In order to further examine our model's generalizability, a poverty context has been created according to national poverty rate for metro area: 12.6%. It means that, in the following map, the areas marked as majority poverty have more than 12.6% population in poverty line. From this map it is clear that Austin has been divided into two part: north and west are relatively wealthy while south and east have more population in poverty.
+
+![](C:/Upenn/Practicum/markdown_img/Poverty.JPG){width=500px}
+According to the performance in the following chart, our model is pretty generalizable in terms of MAPE. In the comparison, xgboost model has a better generalizability across different poverty groups. The MAE and MAPE are smaller than random forest model. Although the MAPE for mojority poverty group is smaller than mojority non-poverty group, the higher MAE indicates the possibility to redesign the system with bias. 
+
+![](C:/Upenn/Practicum/markdown_img/Poverty_va.png)
 
 # 4. Application
 
-(Final model will be built with Random Forest algorithm, but for now, we will be showcasing results from linear regression.)
+As we mentioned in the beginning, the current workflow of redesigning a bus system lacks efficiency. Most of the analytical work and modeling on ridership was outsourced and for in-house planners, it is hard to test out different planning scenarios on the fly. This inspired us to create an application that helps planners to have a better understanding of the ridership change through different scenarios. Our model discussed above already can predict ridership based on given inputs including route frequency, building area, land use, etc. In order to see if our model can achieve our goal of scenario prediction, we have tested the model on three different planning scenarios and presented the predicted ridership change in ridership below.
 
-## 4.1 What is the impact on transit ridership with new real estate development?
+## 4.1 Three different scenarios for ridership change
+### 4.1.1 What is the change of transit ridership with route frequency update?
+In this scenario, we changed the route frequency for all the feeder routes to make them becomes high frequency routes (meaning less than 15 min headway). The impact is very obvious that many stops would experience ridership increase while only several stops close to downtown would experience ridership decrease.
+![](C:/Upenn/Practicum/markdown_img/new_scenario1.png)
 
-### 4.1.1 Improving the Model and Check Generalizability
+### 4.1.2 What is the change of transit ridership with new real estate development?
+In this scenario, we suppose real estate development on the outskirt area of Austin. With the impact of new development, there are basically no stop with declining ridership.
+![](C:/Upenn/Practicum/markdown_img/new_scenarios2.png)
 
-We want to build a model that has high predictive power according to building density change. Previously, our model includes all the features engineered. Including every feature in a model might be cause certain features to have less predictive power. Thus, we subsetted a collection of features that gives the highest accuracy while keeping the building density feature having strong influence to the result. The original model with all features has an R squared of 0.7885 but the building density feature is not significant in the model. Even though our current model only has an R squared of 0.6927, we gained the significance of the building density feature in the model. 
+### 4.1.3 What is the change of transit ridership with new landuse update?
+In this scenario, landuse percentage around certain stops are changed. Around these stops, commercial landuse percentage has been increased while residential landuse percentage has been decreased. This change mainly leads to an increase on the ridership for most stops.
+![](C:/Upenn/Practicum/markdown_img/new_scenario3.png)
 
-To check the predicting accuracy of the model, we looked at the predicting error by neighborhood.
 
-![](../markdown_img/pred_err.png)
-
-![](../markdown_img/pred_err_nhood.png)
-
-It is evident that in terms of the error percentage, our model is already pretty good with low error percentage accorss the whole city. In terms of the absolute values of the prediction errors, we see that there are certain regions that are prone to higher errors, which we suspect relates to the total riderships of the regions. If we switch to Random Foreset model in the future, we will see a better accuracy.
-
-### 4.1.2 Scenario 1: What is the effect of UT Austin West Campus Upzone on the bus ridership?
-
-In May 2019, the West Campus neighborhood, just west of UT Austin, passed an up-zoning change, which allows the buildings in the area to be increase their heights. We assumed that the existing buildings all build to the maximum heights.
-
-![](../markdown_img/s1_1.png)
-
-As shown on the maps, the ridership is predicted to change in the West Campus area. However, in the CBD,  the ridership dropped drastically and the ridership across the city barely moved. So it looks like the model can reflect how building area increase influences the ridership in an area, yet still needs to be improved in system-wide prediction. This issue also appears in the next two scenarios.
-
-![](../markdown_img/s1_2.png){width=500px}
-
-### 4.1.3 Scenario 2: What is the effect of East Riverside Development on the bus ridership?
-
-The 4700 East Riverside Drive development, which is a 97-acre mixed use development that just got a green light from the city council in October 2019. This development will construct 4,709 multifamily units, 600 hotel rooms, 4 million square feet of office space and 435,000 square feet of ground-floor commercial space.
-
-![](../markdown_img/s2_1.png)
-
-In this scenario, the prediction again, surged in the development area. And the CBD also experiences ridership increase. However, the ridership change over the entire city still seem to be a subject to be further examined.
-
-![](../markdown_img/s2_2.png){width=500px}
-
-### 4.1.4 Scenario 3: What is the effect of Mueller Austin Housing Project on the bus ridership?
-
-In the last scenario, we chose the Mueller Austin development, which is 711-acre planned community with transit-oriented and mixed use development northeast of CBD. This development project comprise 4.2 million square feet of non-residential development, 650,000 square feet of retail space, 4,600 homes, and 140 acres of open space. An estimated 10,000 permanent jobs within the development will have been created by the time it is complete.
-
-![](../markdown_img/s3_1.png)
-
-The outcome of this model shows similar result as the previous two, which is the ridership increases majorly in the development area yet seems to drag down ridership in other parts of the city and lead to the decrease in the overall ridership. There almost seems to be a trade-off between the riderhisp in different areas.
-
-![](../markdown_img/s3_2.png){width=500px}
 
 ## 4.2 Web Application
 
-We developed a web application according to our use case: helping planners to evision the potential change to transit ridership with respect to the change in real-estate. The following screenshots demonstrate the prototype. The first three screen shots demonstrate how users can investigate the current ridership patterns, and the last screen shows that the web app can give ridership projections according when the user selects any particular scenarios.
+We developed a web application according to our use case mentioned above: helping planners to understand the transit system and evision the potential change to transit ridership with respect to the change in frequency, building area, and land use. The following screenshots demonstrate the prototype. The first four screenshots below demonstrate how users can investigate the current ridership patterns, including ridership by typology, ridership by hot lines, and ridership by stops.
 
-![](../markdown_img/web1.png)
+![](C:/Upenn/Practicum/markdown_img/web1.png)
 
-![](../markdown_img/web2.png)
+![](C:/Upenn/Practicum/markdown_img/web2.png)
 
-![](../markdown_img/web3.png)
+![](C:/Upenn/Practicum/markdown_img/web3.1.png)
 
-![](../markdown_img/web4.png)
+![](C:/Upenn/Practicum/markdown_img/web3.png)
+
+The screenshot below demonstrates how the application predicts the ridership in a given scenario. Although the app only consists of the three scenarios discussed above, the model and the application could be further developed and have a lot of potentials to cope with many more other scenarios for planners to use.
+
+![](C:/Upenn/Practicum/markdown_img/web4.png)
 
 # 5. Appendix
 
@@ -373,16 +376,16 @@ qBr <- function(df, variable, rnd) {
 
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
 
-plotTheme <- theme(
-  plot.title =element_text(size=12),
-  plot.subtitle = element_text(size=8),
-  plot.caption = element_text(size = 6),
-  axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-  axis.text.y = element_text(size = 10),
-  axis.title.y = element_text(size = 10),
-  panel.background=element_blank(),
-  plot.background=element_blank(),
-  axis.ticks=element_blank())
+#plotTheme <- theme(
+#  plot.title =element_text(size=12),
+#  plot.subtitle = element_text(size=8),
+#  plot.caption = element_text(size = 6),
+#  axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+#  axis.text.y = element_text(size = 10),
+#  axis.title.y = element_text(size = 10),
+#  panel.background=element_blank(),
+#  plot.background=element_blank(),
+#  axis.ticks=element_blank())
 
 plotTheme <- function(base_size = 12) {
   theme(
@@ -692,13 +695,46 @@ agg_UT_typology <- rbind(agg_sf19_UT,agg_sf19_oUT)
 
 
 ```{r}
+all_x4_normalize %>% 
+             left_join(typol, by="STOP_ID") %>% 
+             st_drop_geometry() %>% 
+             select(mean_on, typology) %>%
+             group_by(typology) %>%
+             summarise(mean_boarding = mean(na.omit(mean_on)))
+```
+
+
+```{r}
 ######### more typology code
-ggplot() +
-  geom_sf(data =st_union(nhood), fill = "steelblue1", color="transparent") +
-  geom_sf(data = CBD_bound, fill = "steelblue" , color="transparent") +
-  geom_sf(data = UTAustin_bound, fill = "steelblue4", color="transparent")+
-  mapTheme()
+typo_bar <- ggplot(data = all_x4_normalize %>% 
+             left_join(typol, by="STOP_ID") %>% 
+             st_drop_geometry() %>% 
+             select(mean_on, typology) %>%
+             group_by(typology) %>%
+             summarise(mean_boarding = mean(na.omit(mean_on))), aes(x=typology, y=mean_boarding, fill=typology)) +
+  geom_bar(stat="identity") + 
+  geom_text(aes(label=round(mean_boarding,1)), vjust=1.6, color="white", size=5)+
+  scale_fill_manual(values =  c("Rest" = "#bdd7e7", "UT" = "#6baed6", "CBD" = "#2171b5"))+
+  labs(title = "Average Number of Boardings by Typology")+
+  plotTheme()+ theme(legend.position="bottom")
 ``` 
+
+```{r}
+typo_map = ggplot() +
+  geom_sf(data =st_union(nhood), fill = "#bdd7e7", color="transparent") +
+  geom_sf(data = CBD_bound, fill = "#2171b5" , color="transparent") +
+  geom_sf(data = UTAustin_bound, fill = "#6baed6", color="transparent")+
+  mapTheme()
+```
+
+
+```{r}
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(2, 2)))
+vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+print(typo_bar, vp=viewport(0.34,0.5, 0.68,1))
+print(typo_map, vp=viewport(0.83,0.7,0.57,0.57))
+```
 
 
 ### How did ridership change before and after CapRemap (06/03, 2018)?
@@ -1044,27 +1080,44 @@ capmetro0 <-st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")%>%
 
 ```{r}
 grid.arrange(
-
-  ggplot()+
-  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
+  
+ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, fill = 'grey90',color = 'grey100')+
   geom_sf(data = capmetro0 %>%
-  filter(ROUTE_ID %in% c(7,300,801,803)),color = '#e7b800')+
-    labs(title='Hotlines Before:\nLine 7, 300, 801, 803')+ mapTheme(),
+  filter(ROUTE_ID %in% c(7,300,801,803)),color = '#e7b800', size=1)+
+  labs(title='Hotlines Before:\nLine 7, 300, 801, 803')+
+  coord_sf(xlim = c(2313727, 2410189), ylim = c(13964004, 14088914)) + 
+  mapTheme()+ 
+  theme(legend.position = "none"),
+
 
 ggplot()+
-  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, fill = 'grey90',color = 'grey100')+
   geom_sf(data = capmetro %>%
-            filter(ROUTE_ID %in% c(7,10,20,300,801,803)),color = '#e7b800') +
+            filter(ROUTE_ID %in% c(7,10,20,300,801,803)),color = '#e7b800', size=1) +
   geom_sf(data = capmetro %>%
-            filter(ROUTE_ID == 20 | ROUTE_ID == 10), color='red')+
-    labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803')+mapTheme() ,ncol =2)
+            filter(ROUTE_ID == 20 | ROUTE_ID == 10), color='#0072B2', size=1)+
+  labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803')+
+  coord_sf(xlim = c(2313727, 2410189), ylim = c(13964004, 14088914)) + 
+  mapTheme()+ 
+  theme(legend.position = "none"),
+
+ncol =2)
 ```
+
+
 
 ```{r}
 routeplot1 <- function(n,p,p1,d) {
   # line n before map
   t1 = ggplot() +
-  geom_sf(data = nhood, color = 'grey30',fill = 'grey20') +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, color = 'grey100',fill = 'grey90') +
   geom_sf(data = disagn1j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN== p) %>%
             st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
             st_transform(2278) %>%
@@ -1073,6 +1126,7 @@ routeplot1 <- function(n,p,p1,d) {
           aes(color = mean_stop_load))+
   scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
                        breaks = c(0, 5, 10, 15, 20, 25)) +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) + 
   labs(title=paste("Line",n,"Direction 1, Before CapRemap"),
   subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
   
@@ -1105,7 +1159,9 @@ routeplot1 <- function(n,p,p1,d) {
   
   # line n after map
   t2 = ggplot() +
-  geom_sf(data = nhood, color = 'grey30',fill = 'grey20') +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, color = 'grey100',fill = 'grey90') +
   geom_sf(data = disagn2j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN== p1) %>%
             st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
             st_transform(2278) %>%
@@ -1114,6 +1170,7 @@ routeplot1 <- function(n,p,p1,d) {
           aes(color = mean_stop_load))+
   scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
                        breaks = c(0, 5, 10, 15, 20, 25)) +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) + 
   labs(title=paste("Line",n,"Direction 1, After CapRemap"),
   subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
   
@@ -1920,11 +1977,11 @@ ggplot(all_x4_normalize, aes(count, mean_on))+
   labs(title = paste("r =", cor(all_x4_normalize$count, all_x4_normalize$mean_on, use = "complete.obs")))
 ```
 
-```{r}
+```{r fig.width=15}
 # correlation matrix
 all1cor <- 
   all_x3 %>% 
-  select(-c(STOP_ID, label, TRUSTEE)) %>%
+  select(-c(STOP_ID, label, TRUSTEE,all_of(route_names))) %>%
   st_set_geometry(NULL)
 
 M <- cor(na.omit(all1cor))
@@ -1965,11 +2022,53 @@ ggplot()+
   mapTheme()
 ```
 
+```{r fig.height=3, fig.width= 15}
+# correlation plots
+correlation.long <-
+  st_set_geometry(all_x3, NULL) %>%
+    select(population, medInc, Crosstown, Feeder, Flyer, mean_on) %>%
+    gather(Variable, Value, -mean_on)
+
+correlation.cor <-
+  correlation.long %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+    
+ggplot(correlation.long, aes(Value, mean_on)) +
+  geom_point(size = 0.1) +
+  geom_text(data = correlation.cor, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
+  facet_wrap(~Variable, ncol = 5, scales = "free") +
+  labs(title = "Mean Ridership as A Function of Selected Negative Factors")
+```
+
+```{r fig.height=3, fig.width= 15}
+# correlation plots
+correlation.long <-
+  st_set_geometry(all_x3, NULL) %>%
+    select(`High Frequency`, hotline_1, count, SouthNorth, school_count, mean_on) %>%
+    gather(Variable, Value, -mean_on)
+
+correlation.cor <-
+  correlation.long %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+    
+ggplot(correlation.long, aes(Value, mean_on)) +
+  geom_point(size = 0.1) +
+  geom_text(data = correlation.cor, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
+  facet_wrap(~Variable, ncol = 5, scales = "free") +
+  labs(title = "Mean Ridership as A Function of Selected Positive Factors")
+```
+
 ```{r fig.height=30, fig.width= 15}
 # correlation plots
 correlation.long <-
   st_set_geometry(all_x3, NULL) %>%
-    select(-c(STOP_ID, label, TRUSTEE)) %>%
+    select(-c(STOP_ID, label, TRUSTEE, all_of(route_names))) %>%
     gather(Variable, Value, -mean_on)
 
 correlation.cor <-
