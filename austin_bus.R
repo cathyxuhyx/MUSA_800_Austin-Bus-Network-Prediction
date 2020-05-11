@@ -27,22 +27,22 @@ mapTheme <- function(base_size = 12) {
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
     panel.grid.minor = element_blank(),
-    panel.border = element_rect(colour = NA, fill=NA, size=2)
+    panel.border = element_rect(colour = "white", fill=NA, size=2)
   )
 }
 
 # change the directory in order to load the data
 agg <- read.csv('D:/Spring20/Practicum/data/MUSA Data - Stop Ridership Aggregated.csv')
 Routes1801 <- st_read("D:/Spring20/Practicum/data/Jan2018/Routes.shp")
-disagg <- read.csv('D:/Spring20/Practicum/data/MUSA Disagregated Data Sample 01-06-2020 to 01-10-2020.csv')
+disagg <- read.csv('D:/Spring20/Practicum/data/with_morning_trips.csv')
 austin <- st_read('https://data.austintexas.gov/api/geospatial/3pzb-6mbr?method=export&format=GeoJSON')
-serviceArea <- st_read('D:/Spring20/Practicum/data/June2018/Service_Area.shp')%>%
+serviceArea <- st_read('D:/Spring20/Practicum/data/Service_Area.shp')%>%
   st_transform(2278)
 NewRoutes <- st_read('D:/Spring20/Practicum/data/NewRoutes.shp')
 HighFreq <- st_read('D:/Spring20/Practicum/data/HighFrequency.shp')
 Replaced <- st_read('D:/Spring20/Practicum/data/EliminatedReplacement.shp')
 Eliminated <- st_read('D:/Spring20/Practicum/data/Eliminated.shp')
-Routes2001 <- st_read('D:/Spring20/Practicum/data/Routes.shp')
+Routes <- st_read('D:/Spring20/Practicum/data/Routes.shp')
 #stops <- st_read('D:/Spring20/Practicum/data/Stops.shp')
 stops <- st_read("D:/Spring20/Practicum/data/Stops.shp")%>%
   st_transform(2278)
@@ -54,6 +54,8 @@ Routes2001 <- Routes2001%>%
   mutate(capremap = "After Cap Remap")%>%
   st_transform(2278)
 
+Routes <- Routes%>%
+  st_transform(2278)
 #new scale function
 new_scale <- function(new_aes) {
   structure(ggplot2::standardise_aes_names(new_aes), class = "new_aes")
@@ -200,20 +202,65 @@ ggplot()+
   labs(title = "Cap Remap Route Changes",
        subtitle = "City of Austin, June 2018")
 
-
+streets1 <- streets %>% filter(road_class %in% c(0,1,2))
 #types of routes
+#final markdown
+Local <- ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
+  geom_sf(data = subset(Routes, ROUTETYPE == "Local"), color = "#d73027",lwd = 0.5,show.legend = FALSE)+
+  coord_sf(xlim = c(2320000, 2423000), ylim = c(13964100, 14116000)) +
+  mapTheme()
+UTShuttle <- ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
+  geom_sf(data = subset(Routes, ROUTETYPE == "UT Shuttle"), color = "#fc8d59",lwd = 0.5,show.legend = FALSE)+
+  coord_sf(xlim = c(2320000, 2423000), ylim = c(13964100, 14116000)) +
+  mapTheme()
+HighFreq <- ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
+  geom_sf(data = subset(Routes, ROUTETYPE == "High Frequency"), color = "#fee090",lwd = 0.5,show.legend = FALSE)+
+  coord_sf(xlim = c(2320000, 2423000), ylim = c(13964100, 14116000)) +
+  mapTheme()
+Express <- ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
+  geom_sf(data = subset(Routes, ROUTETYPE == "Express"), color = "deepskyblue",lwd = 0.5,show.legend = FALSE)+
+  coord_sf(xlim = c(2320000, 2423000), ylim = c(13964100, 14116000)) +
+  mapTheme()
+Crosstown<- ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
+  geom_sf(data = subset(Routes, ROUTETYPE == "Crosstown"), color = "#91bfdb",lwd = 0.5,show.legend = FALSE)+
+  coord_sf(xlim = c(2320000, 2423000), ylim = c(13964100, 14116000)) +
+  mapTheme()
+Feeder <- ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
+  geom_sf(data = subset(Routes, ROUTETYPE == "Feeder"), color = "#4575b4",lwd = 0.5,show.legend = FALSE)+
+  coord_sf(xlim = c(2320000, 2423000), ylim = c(13964100, 14116000)) + 
+  mapTheme()
+
+routetype <- grid.arrange(Local, UTShuttle, HighFreq, Express,Crosstown,Feeder, ncol=3)
+Express
+Feeder
 #local
 ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
   #geom_sf(data = serviceArea, aes(fill = "Service Areas"))+
-  geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
-  scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
-                    guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
+  #geom_sf(data = subset(serviceArea, NAME == "Austin"), aes(fill = "Austin"))+
+  #scale_fill_manual(values = c("Service Areas" = "gray25", "Austin" = "black"), name = NULL,
+                    #guide = guide_legend("Jurisdictions", override.aes = list(linetype = "blank", shape = NA))) +
   #geom_sf(data = subset(Routes1801, ROUTETYPE == "Local"), color = "lightblue2",lwd = 0.5,show.legend = FALSE)+
-  geom_sf(data = subset(Routes2001, ROUTETYPE == "Local"), color = "lightblue2",lwd = 0.5,show.legend = FALSE)+
+  geom_sf(data = subset(Routes, ROUTETYPE == "Express"), color = "#08519c",lwd = 0.5,show.legend = FALSE)+
   #scale_colour_manual(values = c("Before Cap Remap" = "lightblue2", "After Cap Remap" = "lightblue2"),
                       #guide = guide_legend("Routes", override.aes = list(linetype = c("solid", "solid"))))+
   #facet_grid(~capremap)+
-  labs(title = "Local Routes Before and After Cap Remap")+
+  coord_sf(xlim = c(2313727, 2416000), ylim = c(13964100, 14120000)) + 
+  #coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
+ #labs(title = "Local Routes Before and After Cap Remap")+
   mapTheme()
 
 #HighFrequency

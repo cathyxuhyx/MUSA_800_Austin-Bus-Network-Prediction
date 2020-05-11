@@ -316,14 +316,26 @@ val_preds_sce0 <- rbind(data.frame(lm_val_pred_geo_sce0, model = "lm"),
   ungroup()
 
 # plot MAPE by model type
+
 ggplot(data = val_preds_sce0 %>% 
          dplyr::select(model, MAPE) %>% 
          distinct() , 
        aes(x = model, y = MAPE, group = 1)) +
-  geom_path(color = "blue") +
+  geom_bar(stat = "identity",fill = palette4) +
   geom_label(aes(label = paste0(round(MAPE,1),"%"))) +
   labs(title = "MAPE Comparisons")+
-  theme_bw()
+  plotTheme()
+
+
+
+ggplot(data = val_preds_sce0 %>% 
+         dplyr::select(model, MAPE) %>% 
+         distinct() , 
+       aes(x = model, y = MAPE, group = 1)) +
+  geom_bar(color = "blue") +
+  geom_label(aes(label = paste0(round(MAPE,1),"%"))) +
+  labs(title = "MAPE Comparisons")+
+  plotTheme()
 
 # average error for each model
 ggplot(data = OOF_preds_sce0 %>% 
@@ -339,10 +351,10 @@ ggplot(data = val_preds_sce0 %>%
          dplyr::select(model, MAE) %>% 
          distinct() , 
        aes(x = model, y = MAE, group = 1)) +
-  geom_path(color = "blue") +
+  geom_bar(stat = "identity", fill = palette4) +
   geom_label(aes(label = paste0(round(MAE,1)))) +
   labs(title = "MAE Comparisons")+
-  theme_bw()
+  plotTheme()
 
 # Validation Predicted vs. actual
 ggplot(val_preds_sce0, aes(x =.pred, y = mean_on, group = model)) +
@@ -351,7 +363,9 @@ ggplot(val_preds_sce0, aes(x =.pred, y = mean_on, group = model)) +
   geom_smooth(method = "lm", color = "blue") +
   coord_equal() +
   facet_wrap(~model, nrow = 2) +
-  theme_bw()
+  labs(title = "Predicted vs.Observed on the Testing Set",
+       subtitle = "blue line is predicted value")+
+  plotTheme()
 
 # join test data back to make spatial
 val_pred_sf_sce0 <- left_join(val_preds_sce0, nhood_sf, by = "label")
@@ -401,6 +415,8 @@ val_MAPE_by_hood_sce0_lm <-val_MAPE_by_hood_sce0%>%
 
 val_MAPE_by_hood_sce0_lm%>%
   ggplot() +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = "Blues",
@@ -408,6 +424,7 @@ val_MAPE_by_hood_sce0_lm%>%
                     labels=qBr(val_MAPE_by_hood_sce0_lm,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
   labs(title="MAPE of lm in Neighborhoods") +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
   mapTheme()
 
 #Map: MAPE of glmnet
@@ -416,6 +433,8 @@ val_MAPE_by_hood_sce0_glmnet <-val_MAPE_by_hood_sce0%>%
 
 val_MAPE_by_hood_sce0_glmnet%>%  
   ggplot() +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = "Blues",
@@ -423,13 +442,17 @@ val_MAPE_by_hood_sce0_glmnet%>%
                     labels=qBr(val_MAPE_by_hood_sce0_glmnet,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
   labs(title="MAPE of glmnet in Neighborhoods") +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
   mapTheme()
+
 #MAPE of rf
 val_MAPE_by_hood_sce0_rf <-val_MAPE_by_hood_sce0%>%
   filter(model=="rf") 
 
 val_MAPE_by_hood_sce0_rf%>%  
   ggplot() +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = "Blues",
@@ -437,6 +460,7 @@ val_MAPE_by_hood_sce0_rf%>%
                     labels=qBr(val_MAPE_by_hood_sce0_rf,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
   labs(title="MAPE of rf in Neighborhoods") +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
   mapTheme()
 
 val_MAPE_by_hood_sce0_rf%>%  
@@ -456,6 +480,8 @@ val_MAPE_by_hood_sce0_xgb <-val_MAPE_by_hood_sce0%>%
 
 val_MAPE_by_hood_sce0_xgb%>%
   ggplot() +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets1, color = "grey90")+
   #    geom_sf(data = nhoods, fill = "grey40") +
   geom_sf(aes(fill = q5(MAPE))) +
   scale_fill_brewer(palette = "Blues",
@@ -463,6 +489,7 @@ val_MAPE_by_hood_sce0_xgb%>%
                     labels=qBr(val_MAPE_by_hood_sce0_xgb,"MAPE"),
                     name="Quintile\nBreaks, (%)") +
   labs(title="MAPE of xgb in Neighborhoods") +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
   mapTheme()
 
 #####fit the full dataset to the model#####

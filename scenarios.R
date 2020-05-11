@@ -4,6 +4,10 @@ streets <- st_read('https://data.austintexas.gov/api/geospatial/m5w3-uea6?method
 rivers <- st_read('https://data.austintexas.gov/api/geospatial/p2uq-mkbt?method=export&format=GeoJSON') %>% 
   st_transform(2278)
 
+stops_js <- read.csv("D:/Spring20/Practicum/MUSA801-Web-App/data/js_test1.csv")
+stop_sel <- c("X", "Y", "STOP_ID")
+stops_js <- stops_js[stop_sel]
+
 #####Frequency scenarios#####
 complete_pred <- complete_route%>%
   dplyr::select(-pred_rf,
@@ -156,6 +160,7 @@ sce6_diff <- sce6_diff%>%
   mutate(Differences = unlist(pred_xgb) - unlist(xgb))
 
 sce6_csv <- left_join(complete_route, sce6_diff, by = "STOP_ID")
+sce6_csv <- left_join(sce6_csv, stops_js, by = "STOP_ID")
 
 write.csv(sce6_csv, "D:/Spring20/Practicum/MUSA801-Web-App/data/FQ.csv")
 
@@ -177,6 +182,7 @@ ggplot() +
                         high = "#0571b0")+
   labs(title = "Scenario 1 - All Feeder Routes become High Frequency")+
   coord_sf(xlim = c(2313727, 2415189), ylim = c(13964004, 14128914)) + 
+  #coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
   mapTheme()
 
 # population
@@ -206,6 +212,7 @@ sce8_diff <- sce8_diff%>%
   mutate(Differences = pred_xgb - xgb)
 
 sce8_csv <- left_join(complete_route, sce8_diff, by = "STOP_ID")
+sce8_csv <- left_join(sce8_csv, stops_js, by = "STOP_ID")
 
 write.csv(sce8_csv, "D:/Spring20/Practicum/MUSA801-Web-App/data/BA.csv")
 
@@ -244,6 +251,7 @@ sce9_diff <- sce9_diff%>%
   mutate(Differences = pred_xgb - xgb)
 
 sce9_csv <- left_join(complete_route, sce9_diff, by = "STOP_ID")
+sce9_csv <- left_join(sce9_csv, stops_js, by = "STOP_ID")
 
 write.csv(sce9_csv, "D:/Spring20/Practicum/MUSA801-Web-App/data/LU.csv")
 
@@ -259,7 +267,7 @@ ggplot() +
   #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
   geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 0.5)+
   geom_sf(data = subset(sce9_diff_sf, Differences != 0), aes(color = Differences), size =2)+
-  scale_color_gradient2(low = "#ca0020",
+  scale_color_gradientn(low = "#ca0020",
                         mid = "#e0e0e0",
                         high = "#0571b0")+
   labs(title = "Scenario 3 - Land Use Changes around Stops")+
