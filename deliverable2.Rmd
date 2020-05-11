@@ -63,7 +63,7 @@ From multiple open data platforms, we were also able to retrieve built environme
 Then, US census provides comprehensive demographics data, such as population, vehicle ownerships, and median income. 
 
 ![](C:/Upenn/Practicum/markdown_img/ds4.jpg)
-.
+
 
 # 2. Exploratory Analysis
 Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
@@ -89,26 +89,26 @@ After knowing the trend of city-wide ridership change, the next question is how 
 
 We first plotted thea average ridership by typology map. UT and CBD region have higher ridership than the rest of the city.
 
-![](C:/Upenn/Practicum/markdown_img/typo.png){width=400px}![](C:/Upenn/Practicum/markdown_img/typo_map.png){width=400px}
+![](C:/Upenn/Practicum/markdown_img/typo.png){width=400px}
 
 Then we looked at the ridership by neighborhood map. The following maps indicate the average daily ridership in a neighborhood on a given weekday. Within our expectation, downtown and UT Austin neighborhoods (in the middle of the map)are the ones with high ridership in dark blue. Several other neighborhoods to the north side of Austin and southeast side also have high ridership. At the same time, the west side of Austin and the outskirt area of Austin seem to have lower ridership. This is one outcome of a bus system which is mainly focusing on north-south connection. 
 
-![](C:/Upenn/Practicum/markdown_img/Ridership.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/ridership.PNG){width=500px}
 
 We then created charts showing the ridership change in each neighborhood in 2018 in June and September. There are 12 neighborhoods experienced ridership decrease from June to September. There are several neighborhoods experienced high ridership increase of more than 10,000 from June to September. Generally, most neighborhoods experienced ridership increase after CapRemap from June to September. Among the 78 neighborhoods in Austin, we identified three neighborhoods that represents different characteristics: neighborhoods with expected ridership increase; neighborhoods with unexpected ridership increase; neighborhoods with unexpected ridership decrease.
 
 
 Among all the neighborhoods, UT is the neighborhood with expected ridership increase.The location of UT neighborhood is just above downtown neighborhood. With a lot of university students living around here, the bus network is sensitive to school schedule. There is a relatively clear trend in ridership change according to school seasons.
 
-![](C:/Upenn/Practicum/markdown_img/ut_change.png)
+![](C:/Upenn/Practicum/markdown_img/nhood_UT.png)
 
 The second neighborhood Govalle is the neighborhood that experiencnig unexpected ridership increase. After CapRemap, the ridership in Govalle nearly increased by 50% to 75%. Govalle is a neighborhood locared in the eastside of Austin which is experiencing gentrification in recent years. The artists are developing industrial spaces in the south of the neighborhood into studios and exhibition spaces. The increasing popularity plus the bus redesign together give an explanation for the ridership increase. 
 
-![](C:/Upenn/Practicum/markdown_img/govalle_change.png)
+![](C:/Upenn/Practicum/markdown_img/nhood_Govalle.png)
 
 But there are also neighborhoods exepriencing ridership decrease on the east-west direction. Zilker located in the southwest side of Austin's downtown region. In Zilker, however, the ridership seems not much impacted by the redesign as it remains stable before and after the redesign. The stable ridership is not surprising since Zilker locates to the south of downtown Austin within a walkable distance. It is a neighborhood with a lot of parks, green spaces and leisures. The demand for bus system is thus not as strong as other neighborhoods. 
 
-![](C:/Upenn/Practicum/markdown_img/zilker_change.png)
+![](C:/Upenn/Practicum/markdown_img/nhood_zilker.png)
 
 ## 2.3 Route Analysis
 
@@ -134,7 +134,7 @@ Limited & Flyer: Capital Metro's Limited and Flyer routes are limited stop servi
 
 Feeder: Capital Metro's Feeder routes are local services between a neighborhood and a major transfer point for connecting service.
 
-![](C:/Upenn/Practicum/markdown_img/routetypePNG.png)
+![](C:/Upenn/Practicum/markdown_img/RouteTypes.png)
 
 ### 2.3.2 what is the space/time ridership trends for the most popular bus routes
 
@@ -180,7 +180,7 @@ According to the following maps, commercial landuse is mostly along the main cor
 ### 2.4.3 Demographics
 Lastly, demographics is the ultimate features that we take into account.In this case, some basic characteristics about the areas might influence the ridership such as race, income and age. Here we will use vehicle ownership, more specifically, households without vehicle, as an exploratory feature.
 Since demographic data has the unit of census tract, it reveals more details than the ridership map. Mostly, in the neighborhoods with high ridership, there are some census tract where more households have no vehicle ownership. In this aspect, it clearly indicates the importance of our application which allows planners to know the ridership change according to demographic features, which can effectively improve resource allocation considering social equity.
-![](C:/Upenn/Practicum/markdown_img/Noveh.JPG){width=300px}![](C:/Upenn/Practicum/markdown_img/Ridership.JPG){width=300px}
+![](C:/Upenn/Practicum/markdown_img/noveh.PNG){width=300px}![](C:/Upenn/Practicum/markdown_img/ridership.PNG){width=300px}
 
 # 3. Modeling
 
@@ -225,73 +225,40 @@ With the features created in five categories, there are four types of models bui
 
 Apart from the original 1/4 mile buffer, two more buffers sizes were created during feature engineering. The dataset corresponding to each buffer size will be tested and validated through the generalizability test, and the best buffer size will be selected.
 
-### 3.3.1 Selecting the Best Model
+### Selecting the Best Model
 
 We tested the generalizability of the four models mentioned above by holding out each neighborhood each time, use the rest data to train the model, and compare and calculate the prediction error of the hold-out neighborhood. 
 
 The MAPE and MAE of the four models reveals that, genrally speaking, random forest model is the model with the best accuracy while lasso and ridge model gives prediction less accurately than other three. Lasso and ridge regression has the largest MAPE and MAE while random forest model has the least MAPE and MAE.
 
-![](C:/Upenn/Practicum/markdown_img/MAPE_overall_nhood.JPG){width=400px}![](C:/Upenn/Practicum/markdown_img/MAE_overall_nhood.JPG){width=400px}
+![](C:/Upenn/Practicum/markdown_img/MAPE_Comparison.png){width=400px}![](C:/Upenn/Practicum/markdown_img/MAE_Comparison.png){width=400px}
 
 In terms of predicted value and actual values, simple linear regression tends to underpredict ridership when the actual ridership is higher than 300.Lasso and ridge model generally overpredict ridership. Random forest model tends to overpredict ridership when the actual ridership is over 250. Xgboost model generally overpredict ridership but performs better than glmnet model when the actual ridership is low.
 
-![](C:/Upenn/Practicum/markdown_img/PreVSObs_nhood.JPG){width=350px}
+![](C:/Upenn/Practicum/markdown_img/PredvsActual.png){width=350px}
 
 In order to test the the generaliability of the models on neighborhoods, the following bar chart reveals each model's MAE in the neighborhoods. The charts demonstrate most of the MAEs are below 100. There are several neighborhoods appear to have a higher MAE among which most of them gathered around UT.
 
 To take a closer look at the neighborhoods, maps of MAPE are plotted to show the generalizability. As mentioned before, the model's acuuracy is lower in the neighborhoods around University of Texas. 
 
-![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_lm.JPG){width=400px}![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_glm.JPG){width=400px}
-![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_rf.JPG){width=400px}![](C:/Upenn/Practicum/markdown_img/Map_nhood_MAPE_xgb.JPG){width=400px}
+![](C:/Upenn/Practicum/markdown_img/lm_MAPE_nb.png){width=400px}![](C:/Upenn/Practicum/markdown_img/glmnet_MAPE_nb.png){width=400px}
+![](C:/Upenn/Practicum/markdown_img/rf_MAPE_nb.png){width=400px}![](C:/Upenn/Practicum/markdown_img/xgb_MAPE_nb.png){width=400px}
+Besides selecting the best model type, the best buffer size is also tested among 1/2-mile, 1/4-mile and 1/8-mile. We settled on 1/4 mile as the buffer size. For details in selecting buffer size, please read in Appendix.
 
-### 3.3.2 Selecting the Best Buffer Size
-
-It is hard to arbitrarily decide what the best buffer size is in capturing most of the variations of the dataset. As the bus stops are relatively densely distributed in Austin, we used our knowledge for walkable distances and start testing from 1/2 mile and gradually reduce the size to 1/4 mile and 1/8 mile. By comparing the r square, RMSE, MAE and MAPE of each model with different buffer size, and further testing the generalizability of the models, we will get the best buffer size.
-
-#### 1/2 mile Buffer
-In each buffer size, four types of models are compared.For each buffer size, the model with the best performance will be picked and enter the final comparison.  In 1/2 mile buffer size test, the random forest model has the largest r-square of 0.81 and lowest MAE of 64 and MAPE of 30.4%. Among the four models, this rf model has the best performance. 
-
-![](C:/Upenn/Practicum/markdown_img/21_half.JPG){width=600px}
-
-#### 1/4 mile Buffer
-In 1/4 mile buffer size test, the random forest model has the largest r-square of 0.79 and lowest MAE of 69.3 and MAPE of 28.8%. This rf model has the best performance among the four models here. 
-
-![](C:/Upenn/Practicum/markdown_img/18_quarter.JPG){width=600px}
-
-#### 1/8 mile Buffer
-In 1/8 mile buffer size test, the random forest model has the largest r-square of 0.72 and lowest MAE of 77.8 and MAPE of 33.6%. This rf model has the best performance among the four models here.
-
-![](C:/Upenn/Practicum/markdown_img/19_eight.JPG){width=600px}
-
-After the above comparison, the largest r-square is from 1/2-mile buffer while the least MAPE is from 1/4-mile. The possible reason for the lose of 1/8-mile buffer is it cannot sucessfully capture enough variation within the limited radius of the stops. Especially for the areas where ridership is high, such as CBD or UT, there can be a lot of variances outside the 1/8 mile. 
-
-Then if we take a look at the generalizability of the three buffer sizes on their performance in CBD, UT and the rest areas, it is clear that 1/8 mile buffer fails to achieve generaliability as well as other two buffer sizes. the MAE in CBD and UT are very high. For the comparison between 1/2 mile buffer and 1/4 mile buffer, the MAE demonstrates a better generalizability for 1/2 mile buffer for its smaller value in UT. However, considering our use case where we allow planners to test different development at specific locations, a smaller buffer size would more accurately reflect real development in the world. Thus, the final buffer radius is settled to 1/4 mile.
-
-![](C:/Upenn/Practicum/markdown_img/22_half.JPG){width=500px}
-![](C:/Upenn/Practicum/markdown_img/20_quarter.JPG){width=500px}
-![](C:/Upenn/Practicum/markdown_img/23_eighth.JPG){width=500px}
-
-### 3.3.3 Validation using Poverty Condition
-In order to further examine our model's generalizability, a poverty context has been created according to national poverty rate for metro area: 12.6%. It means that, in the following map, the areas marked as majority poverty have more than 12.6% population in poverty line. From this map it is clear that Austin has been divided into two part: north and west are relatively wealthy while south and east have more population in poverty.
-
-![](C:/Upenn/Practicum/markdown_img/Poverty.JPG){width=500px}
-According to the performance in the following chart, our model is pretty generalizable in terms of MAPE. In the comparison, xgboost model has a better generalizability across different poverty groups. The MAE and MAPE are smaller than random forest model. Although the MAPE for mojority poverty group is smaller than mojority non-poverty group, the higher MAE indicates the possibility to redesign the system with bias. 
-
-![](C:/Upenn/Practicum/markdown_img/Poverty_va.png)
 # 4. Application
 
 ## 4.1 Three different scenarios for ridership change
 ### 4.1.1 What is the change of transit ridership with route frequency update?
 In this scenario, we changed the route frequency for all the feeder routes to make them becomes high frequency routes (meaning less than 15 min headway). The impact is very obvious that many stops would experience ridership increase while only several stops close to downtown would experience ridership decrease.
-![](C:/Upenn/Practicum/markdown_img/new_scenario1.png)
+![](C:/Upenn/Practicum/markdown_img/scenario1.png)
 
 ### 4.1.2 What is the change of transit ridership with new real estate development?
 In this scenario, we suppose real estate development on the outskirt area of Austin. With the impact of new development, there are basically no stop with declining ridership.
-![](C:/Upenn/Practicum/markdown_img/new_scenarios2.png)
+![](C:/Upenn/Practicum/markdown_img/Scenario2.png)
 
 ### 4.1.3 What is the change of transit ridership with new landuse update?
 In this scenario, landuse percentage around certain stops are changed. Around these stops, commercial landuse percentage has been increased while residential landuse percentage has been decreased. This change mainly leads to an increase on the ridership for most stops.
-![](C:/Upenn/Practicum/markdown_img/new_scenario3.png)
+![](C:/Upenn/Practicum/markdown_img/scenario3.png)
 
 
 
@@ -784,7 +751,7 @@ plot.all<-
   group_by(Month, YEAR_ID) %>% 
   summarize(BOARD_Count = sum(AVERAGE_ON), Time = as.factor(max(Before))) %>%
   ggplot(aes(x=Month,y=BOARD_Count,  colour = Time, linetype = YEAR_ID)) + 
-  geom_point() + stat_smooth(size=1) +
+  geom_point() + stat_smooth(size=1,se=F) +
   plotTheme() +
   ylim(70000,170000) +
   labs(title="System-wide Ridership on an average weekday among all the stops in Austin",
@@ -2155,7 +2122,32 @@ ggplot()+
 # write.csv(all_x4_normalize %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario0.csv", row.names = FALSE)
 ```
 
+###  Selecting the Best Buffer Size
 
+It is hard to arbitrarily decide what the best buffer size is in capturing most of the variations of the dataset. As the bus stops are relatively densely distributed in Austin, we used our knowledge for walkable distances and start testing from 1/2 mile and gradually reduce the size to 1/4 mile and 1/8 mile. By comparing the r square, RMSE, MAE and MAPE of each model with different buffer size, and further testing the generalizability of the models, we will get the best buffer size.
+
+#### 1/2 mile Buffer
+In each buffer size, four types of models are compared.For each buffer size, the model with the best performance will be picked and enter the final comparison.  In 1/2 mile buffer size test, the random forest model has the largest r-square of 0.81 and lowest MAE of 64 and MAPE of 30.4%. Among the four models, this rf model has the best performance. 
+
+![](C:/Upenn/Practicum/markdown_img/21_half.JPG){width=600px}
+
+#### 1/4 mile Buffer
+In 1/4 mile buffer size test, the random forest model has the largest r-square of 0.79 and lowest MAE of 69.3 and MAPE of 28.8%. This rf model has the best performance among the four models here. 
+
+![](C:/Upenn/Practicum/markdown_img/18_quarter.JPG){width=600px}
+
+#### 1/8 mile Buffer
+In 1/8 mile buffer size test, the random forest model has the largest r-square of 0.72 and lowest MAE of 77.8 and MAPE of 33.6%. This rf model has the best performance among the four models here.
+
+![](C:/Upenn/Practicum/markdown_img/19_eight.JPG){width=600px}
+
+After the above comparison, the largest r-square is from 1/2-mile buffer while the least MAPE is from 1/4-mile. The possible reason for the lose of 1/8-mile buffer is it cannot sucessfully capture enough variation within the limited radius of the stops. Especially for the areas where ridership is high, such as CBD or UT, there can be a lot of variances outside the 1/8 mile. 
+
+Then if we take a look at the generalizability of the three buffer sizes on their performance in CBD, UT and the rest areas, it is clear that 1/8 mile buffer fails to achieve generaliability as well as other two buffer sizes. the MAE in CBD and UT are very high. For the comparison between 1/2 mile buffer and 1/4 mile buffer, the MAE demonstrates a better generalizability for 1/2 mile buffer for its smaller value in UT. However, considering our use case where we allow planners to test different development at specific locations, a smaller buffer size would more accurately reflect real development in the world. Thus, the final buffer radius is settled to 1/4 mile.
+
+![](C:/Upenn/Practicum/markdown_img/22_half.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/20_quarter.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/23_eighth.JPG){width=500px}
 #### Building area SCENARIO 1:
 ```{r}
 # Bldg areas increase in West Campus
