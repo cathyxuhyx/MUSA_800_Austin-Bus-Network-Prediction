@@ -692,13 +692,45 @@ agg_UT_typology <- rbind(agg_sf19_UT,agg_sf19_oUT)
 
 
 ```{r}
+all_x4_normalize %>% 
+             left_join(typol, by="STOP_ID") %>% 
+             st_drop_geometry() %>% 
+             select(mean_on, typology) %>%
+             group_by(typology) %>%
+             summarise(mean_boarding = mean(na.omit(mean_on)))
+```
+
+
+```{r}
 ######### more typology code
-ggplot() +
-  geom_sf(data =st_union(nhood), fill = "steelblue1", color="transparent") +
-  geom_sf(data = CBD_bound, fill = "steelblue" , color="transparent") +
-  geom_sf(data = UTAustin_bound, fill = "steelblue4", color="transparent")+
-  mapTheme()
+typo_bar <- ggplot(data = all_x4_normalize %>% 
+             left_join(typol, by="STOP_ID") %>% 
+             st_drop_geometry() %>% 
+             select(mean_on, typology) %>%
+             group_by(typology) %>%
+             summarise(mean_boarding = mean(na.omit(mean_on))), aes(x=typology, y=mean_boarding, fill=typology)) +
+  geom_bar(stat="identity") + 
+  scale_fill_manual(values =  c("Rest" = "#bdd7e7", "UT" = "#6baed6", "CBD" = "#2171b5"))+
+  labs(title = "Average Number of Boardings by Typology")+
+  plotTheme()+ theme(legend.position="bottom")
 ``` 
+
+```{r}
+typo_map = ggplot() +
+  geom_sf(data =st_union(nhood), fill = "#bdd7e7", color="transparent") +
+  geom_sf(data = CBD_bound, fill = "#2171b5" , color="transparent") +
+  geom_sf(data = UTAustin_bound, fill = "#6baed6", color="transparent")+
+  mapTheme()
+```
+
+
+```{r}
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(2, 2)))
+vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+print(typo_bar, vp=viewport(0.34,0.5, 0.68,1))
+print(typo_map, vp=viewport(0.83,0.7,0.57,0.57))
+```
 
 
 ### How did ridership change before and after CapRemap (06/03, 2018)?
@@ -1044,27 +1076,44 @@ capmetro0 <-st_read("Data/Shapefiles_-_JANUARY_2018/Routes.shp")%>%
 
 ```{r}
 grid.arrange(
-
-  ggplot()+
-  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
+  
+ggplot()+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, fill = 'grey90',color = 'grey100')+
   geom_sf(data = capmetro0 %>%
-  filter(ROUTE_ID %in% c(7,300,801,803)),color = '#e7b800')+
-    labs(title='Hotlines Before:\nLine 7, 300, 801, 803')+ mapTheme(),
+  filter(ROUTE_ID %in% c(7,300,801,803)),color = '#e7b800', size=1)+
+  labs(title='Hotlines Before:\nLine 7, 300, 801, 803')+
+  coord_sf(xlim = c(2313727, 2410189), ylim = c(13964004, 14088914)) + 
+  mapTheme()+ 
+  theme(legend.position = "none"),
+
 
 ggplot()+
-  geom_sf(data = nhood, fill = 'black',color = 'grey30')+
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, fill = 'grey90',color = 'grey100')+
   geom_sf(data = capmetro %>%
-            filter(ROUTE_ID %in% c(7,10,20,300,801,803)),color = '#e7b800') +
+            filter(ROUTE_ID %in% c(7,10,20,300,801,803)),color = '#e7b800', size=1) +
   geom_sf(data = capmetro %>%
-            filter(ROUTE_ID == 20 | ROUTE_ID == 10), color='red')+
-    labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803')+mapTheme() ,ncol =2)
+            filter(ROUTE_ID == 20 | ROUTE_ID == 10), color='#0072B2', size=1)+
+  labs(title='Hotlines After:\nLine 7, 10, 20, 300, 801, 803')+
+  coord_sf(xlim = c(2313727, 2410189), ylim = c(13964004, 14088914)) + 
+  mapTheme()+ 
+  theme(legend.position = "none"),
+
+ncol =2)
 ```
+
+
 
 ```{r}
 routeplot1 <- function(n,p,p1,d) {
   # line n before map
   t1 = ggplot() +
-  geom_sf(data = nhood, color = 'grey30',fill = 'grey20') +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, color = 'grey100',fill = 'grey90') +
   geom_sf(data = disagn1j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN== p) %>%
             st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
             st_transform(2278) %>%
@@ -1073,6 +1122,7 @@ routeplot1 <- function(n,p,p1,d) {
           aes(color = mean_stop_load))+
   scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
                        breaks = c(0, 5, 10, 15, 20, 25)) +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) + 
   labs(title=paste("Line",n,"Direction 1, Before CapRemap"),
   subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
   
@@ -1105,7 +1155,9 @@ routeplot1 <- function(n,p,p1,d) {
   
   # line n after map
   t2 = ggplot() +
-  geom_sf(data = nhood, color = 'grey30',fill = 'grey20') +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(1,2)), color = "grey90")+
+  geom_sf(data = nhood, color = 'grey100',fill = 'grey90') +
   geom_sf(data = disagn2j %>% filter(ROUTE == n & DIRECTION ==d & PATTERN== p1) %>%
             st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
             st_transform(2278) %>%
@@ -1114,6 +1166,7 @@ routeplot1 <- function(n,p,p1,d) {
           aes(color = mean_stop_load))+
   scale_color_gradientn(colors = c("#0c2c84","#41b6c4", "#ffffcc"), limits = c(0,25), 
                        breaks = c(0, 5, 10, 15, 20, 25)) +
+  coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) + 
   labs(title=paste("Line",n,"Direction 1, After CapRemap"),
   subtitle = "Average Number of\nPassengers at Each Stop")+mapTheme()
   
@@ -1920,11 +1973,11 @@ ggplot(all_x4_normalize, aes(count, mean_on))+
   labs(title = paste("r =", cor(all_x4_normalize$count, all_x4_normalize$mean_on, use = "complete.obs")))
 ```
 
-```{r}
+```{r fig.width=15}
 # correlation matrix
 all1cor <- 
   all_x3 %>% 
-  select(-c(STOP_ID, label, TRUSTEE)) %>%
+  select(-c(STOP_ID, label, TRUSTEE,all_of(route_names))) %>%
   st_set_geometry(NULL)
 
 M <- cor(na.omit(all1cor))
@@ -1965,11 +2018,53 @@ ggplot()+
   mapTheme()
 ```
 
+```{r fig.height=3, fig.width= 15}
+# correlation plots
+correlation.long <-
+  st_set_geometry(all_x3, NULL) %>%
+    select(population, medInc, Crosstown, Feeder, Flyer, mean_on) %>%
+    gather(Variable, Value, -mean_on)
+
+correlation.cor <-
+  correlation.long %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+    
+ggplot(correlation.long, aes(Value, mean_on)) +
+  geom_point(size = 0.1) +
+  geom_text(data = correlation.cor, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
+  facet_wrap(~Variable, ncol = 5, scales = "free") +
+  labs(title = "Mean Ridership as A Function of Selected Negative Factors")
+```
+
+```{r fig.height=3, fig.width= 15}
+# correlation plots
+correlation.long <-
+  st_set_geometry(all_x3, NULL) %>%
+    select(`High Frequency`, hotline_1, count, SouthNorth, school_count, mean_on) %>%
+    gather(Variable, Value, -mean_on)
+
+correlation.cor <-
+  correlation.long %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(as.numeric(Value), mean_on, use = "complete.obs"))
+    
+ggplot(correlation.long, aes(Value, mean_on)) +
+  geom_point(size = 0.1) +
+  geom_text(data = correlation.cor, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1, hjust = -.1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#2C7BB6") +
+  facet_wrap(~Variable, ncol = 5, scales = "free") +
+  labs(title = "Mean Ridership as A Function of Selected Positive Factors")
+```
+
 ```{r fig.height=30, fig.width= 15}
 # correlation plots
 correlation.long <-
   st_set_geometry(all_x3, NULL) %>%
-    select(-c(STOP_ID, label, TRUSTEE)) %>%
+    select(-c(STOP_ID, label, TRUSTEE, all_of(route_names))) %>%
     gather(Variable, Value, -mean_on)
 
 correlation.cor <-
