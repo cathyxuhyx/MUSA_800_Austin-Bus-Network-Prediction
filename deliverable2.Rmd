@@ -63,7 +63,7 @@ From multiple open data platforms, we were also able to retrieve built environme
 Then, US census provides comprehensive demographics data, such as population, vehicle ownerships, and median income. 
 
 ![](C:/Upenn/Practicum/markdown_img/ds4.jpg)
-
+.
 
 # 2. Exploratory Analysis
 Before diving into the model building,  it is crucial to have a good grasp on the characteristics and anatomy of the bus ridership in Austin in order to construct a useful ridership prediction application for planners to utilize. This section aims to investigate Austin’s ridership data provided by APC and answer the following questions:
@@ -85,9 +85,9 @@ The x-axis represents months (June has been marked as 0 since redesign happened 
 
 ## 2.2 Ridership Pattern in Subdivisions
 
-After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which experienced decrease. To understand whether the changes are significant, we first looked at the existing riderhsip patterns according to the general typology and then use neighborhoods in Austin to see the ridership spatial distribution. 
+After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. We first look at the riderhsip patterns according to general typology to understand the general trend, and then use neighborhoods in Austin are used here to show the spatial trend here. 
 
-We defined the general typology according to the two major factors of the city in transportation planning: economic activity and user groups. In general, the downtown district has higher economic activity and provides lots of jobs and business opportunities; on the other hand, universities attract students or staff to commute everyday. Thus, we seperated the city into three major regions: Downtown Central Business District (CBD), UT Austin (UT), and the rest of the Austin (Rest). The map below shows the relative location of each typology. The bar plot below demonstrates the 2019 average ridership of each region. UT and CBD regions have higher ridership than the rest of the city. UT has a particularly high ridership, which means there are many transit users among students, faculties, and university staff.
+We first plotted thea average ridership by typology map. UT and CBD region have higher ridership than the rest of the city.
 
 ![](C:/Upenn/Practicum/markdown_img/typo.png){width=400px}![](C:/Upenn/Practicum/markdown_img/typo_map.png){width=400px}
 
@@ -136,7 +136,7 @@ Feeder: Capital Metro's Feeder routes are local services between a neighborhood 
 
 ![](C:/Upenn/Practicum/markdown_img/routetypePNG.png)
 
-### 2.3.2 Hotlines
+### 2.3.2 what is the space/time ridership trends for the most popular bus routes
 
 What makes a good bus system? What's so special about the 'hotlines'?
 
@@ -164,7 +164,7 @@ In conclusion, hotlines have the following characteristics:
   + Going across the a large portion of the city
 - In terms of temporal trend, we know that more Shifts were added in the day time and rush hours, which might increase ridership.
 
-## 2.4 Other features in Austin
+## 2.4 What other characteristics may be important for predicting ridership
 Besides the route features that are already in the bus system, clearly there are other features related to the built environment itself which determins whether an area will have high riderhsip or not. In this section, three different types of features will be explored to further reveal ridership pattern in Austin.
 ### 2.4.1 Amenities
 Amenities in a city normally are key nodes including schools, stadiums,supermarket, etc. These nodes are the destinations that travelers might head to. Thus, they can be an influencer to bus system ridership variation. The amenities we investigated here are offices and schools. Since the ridership data is the average daily ridership on a given weekday, offices and schools, as popular desinations for commuters worth investigation. As the following maps indicate, most offices gather in downtown area while schools are scattered in every neighborhood. Compared with the ridership map, offices are likely to have a large impact on ridership at the north side of Austin, across the Colorado River. As schools are pretty evenly distributed around the neighborhoods, it is hard to measure which area has been impacted more.
@@ -186,7 +186,9 @@ Since demographic data has the unit of census tract, it reveals more details tha
 
 ## 3.1 Strategies
 
-We will be creating a machine learning model that predicts the ridership at each stop. This model will allow planners to test diffrent scenarios in which large development, land use change or route frequency change could largely impact the system ridership. To make the prediction model more accurate and generalizable, we will look at how Linear, Lasso and Ridge regression, Random Forest, and Xgboost captures the variability in our dataset. We will start with feature engineering, which consists of 5 major categories: amenity, built environment, demographics, route network, stop characteristics (internal data). The hypothesis is that these five categories will influence the ridership at each stop in different ways. The dependent variable we used is the average ridership for each stop in 2019. We use 2019 data because we want to focus on the data after Cap Remap, and our feature engineering aligns with the year 2019 better. 
+We will be creating a machine learning model that predicts the ridership at each stop. This model will allow planners to test diffrent scenarios in which large development, land use change or route frequency change could largely impact the system ridership. In the modeling section, the ultimate goal is to build and choose an accurate and generalizable model. The accuracy is critical for the prediction since we want the model to generate results with as few error as possible so that it can effectively guide the planners to know the ridership change. The generalizability means the model's performance over different groups, such as spatial areas like downtown, UT and the rest. The ambition here is to get a generalizable model which has similar errors or percentage errors across different groups so that the prediction will not lead to severe mistakes in certain groups.
+
+To make the prediction model more accurate and generalizable, we will look at how Linear, Lasso and Ridge regression, Random Forest, and Xgboost captures the variability in our dataset. We will start with feature engineering, which consists of 5 major categories: amenity, built environment, demographics, route network, stop characteristics (internal data). The hypothesis is that these five categories will influence the ridership at each stop in different ways. The dependent variable we used is the average ridership for each stop in 2019. We use 2019 data because we want to focus on the data after Cap Remap, and our feature engineering aligns with the year 2019 better. In the modeling process, we will split 75% of the data into training set and the rest will be in the test set. The model will be trained on the training set with a cross-validation based on typology disivion. Then we will test the model on the test set data and get the model's performance.
 
 ## 3.2 Feature Engineering
 
@@ -200,7 +202,7 @@ In the built environment category, land use types, building area, neighborhood f
 
 In the demographics category, data about population, median income and car ownership is collected. For demographics, we used Areal Weighted Interpolation and joined the weighted census estimates within the buffer to each stop.
 
-For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts and number of buses going through each stop on a given week is also calculated. We also included the route fixed effect, i.e. each route number is marked as a new feature for all the stops (For example, for the "route10" column, all stops on route 10 will be marked as 1, all other stops are marked as 0).
+For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts going through each stop on a given week is also calculated.
 
 For the internal (stop characteristics) category, we first added a transit hub dummy defined by Capital Metro; we then calculated the spatial lag, which is the average ridership of the surrounding stops.
 
@@ -276,10 +278,7 @@ In order to further examine our model's generalizability, a poverty context has 
 According to the performance in the following chart, our model is pretty generalizable in terms of MAPE. In the comparison, xgboost model has a better generalizability across different poverty groups. The MAE and MAPE are smaller than random forest model. Although the MAPE for mojority poverty group is smaller than mojority non-poverty group, the higher MAE indicates the possibility to redesign the system with bias. 
 
 ![](C:/Upenn/Practicum/markdown_img/Poverty_va.png)
-
 # 4. Application
-
-As we mentioned in the beginning, the current workflow of redesigning a bus system lacks efficiency. Most of the analytical work and modeling on ridership was outsourced and for in-house planners, it is hard to test out different planning scenarios on the fly. This inspired us to create an application that helps planners to have a better understanding of the ridership change through different scenarios. Our model discussed above already can predict ridership based on given inputs including route frequency, building area, land use, etc. In order to see if our model can achieve our goal of scenario prediction, we have tested the model on three different planning scenarios and presented the predicted ridership change in ridership below.
 
 ## 4.1 Three different scenarios for ridership change
 ### 4.1.1 What is the change of transit ridership with route frequency update?
@@ -298,7 +297,7 @@ In this scenario, landuse percentage around certain stops are changed. Around th
 
 ## 4.2 Web Application
 
-We developed a web application according to our use case mentioned above: helping planners to understand the transit system and evision the potential change to transit ridership with respect to the change in frequency, building area, and land use. The following screenshots demonstrate the prototype. The first four screenshots below demonstrate how users can investigate the current ridership patterns, including ridership by typology, ridership by hot lines, and ridership by stops.
+We developed a web application according to our use case: helping planners to evision the potential change to transit ridership with respect to the change in real-estate. The following screenshots demonstrate the prototype. The first three screen shots demonstrate how users can investigate the current ridership patterns, and the last screen shows that the web app can give ridership projections according when the user selects any particular scenarios.
 
 ![](C:/Upenn/Practicum/markdown_img/web1.png)
 
@@ -307,8 +306,6 @@ We developed a web application according to our use case mentioned above: helpin
 ![](C:/Upenn/Practicum/markdown_img/web3.1.png)
 
 ![](C:/Upenn/Practicum/markdown_img/web3.png)
-
-The screenshot below demonstrates how the application predicts the ridership in a given scenario. Although the app only consists of the three scenarios discussed above, the model and the application could be further developed and have a lot of potentials to cope with many more other scenarios for planners to use.
 
 ![](C:/Upenn/Practicum/markdown_img/web4.png)
 
@@ -710,7 +707,6 @@ typo_bar <- ggplot(data = all_x4_normalize %>%
              group_by(typology) %>%
              summarise(mean_boarding = mean(na.omit(mean_on))), aes(x=typology, y=mean_boarding, fill=typology)) +
   geom_bar(stat="identity") + 
-  geom_text(aes(label=round(mean_boarding,1)), vjust=1.6, color="white", size=5)+
   scale_fill_manual(values =  c("Rest" = "#bdd7e7", "UT" = "#6baed6", "CBD" = "#2171b5"))+
   labs(title = "Average Number of Boardings by Typology")+
   plotTheme()+ theme(legend.position="bottom")
