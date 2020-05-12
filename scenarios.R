@@ -136,7 +136,7 @@ sce5$pred_rf <- exp(predict(full_fit_model_rf0, sce5))
 ####feeder scenario
 Palette5.1 <- c("#ca0020", "#f4a582","#e0e0e0","#92c5de", "#0571b0")
                 
-s6 <- c(2830,4923,2827,4927,4928,4926,2829,2825,4925,4924,4600,2831,2832,5220,5698,5881,5805,5854,
+s6 <- c(2830,4923,2827,4927,4928,4926,2829,2825,4925,4924,4600,2831,2832,5220,5698,5881,5805,
         5228,5778,4908,4909,5999,5380,5623,5310,5314,5313,550,551,553,5377,831,953,832,5736,3255,
         5466,4306,6432,6413,1363,4288,6428,4298,3527,1008,2273,2274,2275,4313,2276,5836,5882,6434,
         6085,5844,1619,1603,1604,3655,1606,1607,1608,4801,4613,6003,6004,6005,6006,6070,6183,5981,
@@ -171,15 +171,16 @@ sce6_diff_sf <- sce6_diff_sf%>%
 
 #bbox_new <- st_bbox(sce6_diff_sf)
 ggplot() +
-  geom_sf(data = subset(sce6_diff_sf, Differences == 0), aes(color = Differences), size =0.5)+
+  geom_sf(data = subset(sce6_diff_sf, Differences == 0), color = "#e0e0e0",size =0.5)+
   geom_sf(data = rivers, color = "grey90", fill = "grey90")+
   geom_sf(data = streets %>% filter(road_class %in% c(0,1,2)), color = "grey90")+
-  #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
-  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 0.5)+
-  geom_sf(data = subset(sce6_diff_sf, Differences != 0), aes(color = Differences), size =2)+
-  scale_color_gradient2(low = "#ca0020",
+ # geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1.2) +
+  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "khaki",alpha = 0.5, lwd = 1.2)+
+  geom_sf(data = subset(sce6_diff_sf, Differences != 0), aes(fill = Differences),shape = 21, color = "gray70",size =3)+
+  scale_fill_gradient2(low = "#ca0020",
                         mid = "#e0e0e0",
-                        high = "#0571b0")+
+                        high = "#0571b0",
+                       limits=range(sce6_diff_sf$Differences))+
   labs(title = "Scenario 1 - All Feeder Routes become High Frequency")+
   coord_sf(xlim = c(2313727, 2415189), ylim = c(13964004, 14128914)) + 
   #coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
@@ -225,7 +226,7 @@ ggplot() +
   geom_sf(data = rivers, color = "grey90", fill = "grey90")+
   geom_sf(data = streets %>% filter(road_class %in% c(0,1,2)), color = "grey90")+
   #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
-  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 0.5)+
+  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 1.2)+
   geom_sf(data = subset(sce8_diff_sf, Differences != 0), aes(color = Differences), size =2)+
   scale_color_gradient2(low = "#ca0020",
                         mid = "#e0e0e0",
@@ -267,11 +268,12 @@ ggplot() +
   #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
   geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 0.5)+
   geom_sf(data = subset(sce9_diff_sf, Differences != 0), aes(color = Differences), size =2)+
-  scale_color_gradientn(low = "#ca0020",
+  scale_color_gradient2(low = "#ca0020",
                         mid = "#e0e0e0",
                         high = "#0571b0")+
   labs(title = "Scenario 3 - Land Use Changes around Stops")+
-  coord_sf(xlim = c(2313727, 2415189), ylim = c(13964004, 14128914)) + 
+  coord_sf(xlim = c(2308000, 2421000), ylim = c(13964100, 14116000)) + 
+  #coord_sf(xlim = c(2313727, 2415189), ylim = c(13964004, 14128914)) + 
   mapTheme()
 
 
@@ -448,4 +450,19 @@ complete.Pov <-
 complete.Pov%>%
   kable(caption = "Mean Error, MAE & MAPE by neighborhood poverty context") %>%
   kable_styling("striped", full_width = F) 
+
+#####changed stops and routes######
+ggplot() +
+  geom_sf(data = rivers, color = "grey90", fill = "grey90")+
+  geom_sf(data = streets %>% filter(road_class %in% c(0,1,2)), color = "grey90")+
+  #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
+  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 0.5)+
+  geom_sf(data = stops %>% filter(STOP_ID %in% s6), color = "#3182bd", size = 1.2)+
+  labs(title = "Changed Stops for All Scenarios",
+       subtitle = "All Feeder Routes")+
+  coord_sf(xlim = c(2308000, 2421000), ylim = c(13964100, 14116000)) + 
+  #coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) + 
+  #coord_sf(xlim = c(2313727, 2415189), ylim = c(13964004, 14128914)) + 
+  #coord_sf(xlim = c(2310627, 2390089), ylim = c(13980004, 14059914)) +
+  mapTheme()
  
