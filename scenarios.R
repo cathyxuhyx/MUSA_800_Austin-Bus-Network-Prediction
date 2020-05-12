@@ -212,7 +212,7 @@ sce8_diff <- sce8_diff%>%
   dplyr::select(STOP_ID, pred_xgb,xgb)%>%
   mutate(Differences = pred_xgb - xgb)
 
-sce8_csv <- left_join(complete_route, sce8_diff, by = "STOP_ID")
+sce8_csv <- left_join(sce8, sce8_diff, by = "STOP_ID")
 sce8_csv <- left_join(sce8_csv, stops_js, by = "STOP_ID")
 
 write.csv(sce8_csv, "D:/Spring20/Practicum/MUSA801-Web-App/data/BA.csv")
@@ -222,15 +222,16 @@ sce8_diff_sf <- left_join(sce8_diff, stops, by = "STOP_ID")
 sce8_diff_sf <- sce8_diff_sf%>%
   st_as_sf()
 ggplot() +
-  geom_sf(data = subset(sce8_diff_sf, Differences == 0), aes(color = Differences), size =0.5)+
+  geom_sf(data = subset(sce8_diff_sf, Differences == 0), color = "#e0e0e0",size =0.5)+
   geom_sf(data = rivers, color = "grey90", fill = "grey90")+
   geom_sf(data = streets %>% filter(road_class %in% c(0,1,2)), color = "grey90")+
-  #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
-  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 1.2)+
-  geom_sf(data = subset(sce8_diff_sf, Differences != 0), aes(color = Differences), size =2)+
-  scale_color_gradient2(low = "#ca0020",
-                        mid = "#e0e0e0",
-                        high = "#0571b0")+
+  # geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1.2) +
+  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "khaki",alpha = 0.5, lwd = 1.2)+
+  geom_sf(data = subset(sce8_diff_sf, Differences != 0), aes(fill = Differences),shape = 21, color = "gray70",size =3)+
+  scale_fill_gradient2(low = "#ca0020",
+                       mid = "#e0e0e0",
+                       high = "#0571b0",
+                       limits=range(sce8_diff_sf$Differences))+
   labs(title = "Scenario 2 - Increased Building Areas around Stops")+
   coord_sf(xlim = c(2313727, 2415189), ylim = c(13964004, 14128914)) + 
   mapTheme()
@@ -262,15 +263,16 @@ sce9_diff_sf <- sce9_diff_sf%>%
   st_as_sf()
 
 ggplot() +
-  geom_sf(data = subset(sce9_diff_sf, Differences == 0), aes(color = Differences), size =0.5)+
+  geom_sf(data = subset(sce9_diff_sf, Differences == 0), color = "#e0e0e0",size =0.5)+
   geom_sf(data = rivers, color = "grey90", fill = "grey90")+
   geom_sf(data = streets %>% filter(road_class %in% c(0,1,2)), color = "grey90")+
-  #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
-  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 0.5)+
-  geom_sf(data = subset(sce9_diff_sf, Differences != 0), aes(color = Differences), size =2)+
-  scale_color_gradient2(low = "#ca0020",
-                        mid = "#e0e0e0",
-                        high = "#0571b0")+
+  # geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1.2) +
+  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "khaki",alpha = 0.5, lwd = 1.2)+
+  geom_sf(data = subset(sce9_diff_sf, Differences != 0), aes(fill = Differences),shape = 21, color = "gray70",size =3)+
+  scale_fill_gradient2(low = "#ca0020",
+                       mid = "#e0e0e0",
+                       high = "#0571b0",
+                       limits=range(sce9_diff_sf$Differences))+
   labs(title = "Scenario 3 - Land Use Changes around Stops")+
   coord_sf(xlim = c(2308000, 2421000), ylim = c(13964100, 14116000)) + 
   #coord_sf(xlim = c(2313727, 2415189), ylim = c(13964004, 14128914)) + 
@@ -455,9 +457,9 @@ complete.Pov%>%
 ggplot() +
   geom_sf(data = rivers, color = "grey90", fill = "grey90")+
   geom_sf(data = streets %>% filter(road_class %in% c(0,1,2)), color = "grey90")+
-  #geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1) +
-  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "#E7B800",alpha = 0.5, lwd = 0.5)+
-  geom_sf(data = stops %>% filter(STOP_ID %in% s6), color = "#3182bd", size = 1.2)+
+  # geom_sf(data = st_centroid(na.omit(sce0_)), aes(color = mean_on), size = 1.2) +
+  geom_sf(data = subset(route, ROUTE_ID == 201 | ROUTE_ID == 214 | ROUTE_ID == 228 | ROUTE_ID == 233 |ROUTE_ID == 237 | ROUTE_ID == 243 | ROUTE_ID == 271), color = "khaki",alpha = 0.5, lwd = 1.2)+
+  geom_sf(data = stops %>% filter(STOP_ID %in% s6), color = "#3182bd", size =2.2)+
   labs(title = "Changed Stops for All Scenarios",
        subtitle = "All Feeder Routes")+
   coord_sf(xlim = c(2308000, 2421000), ylim = c(13964100, 14116000)) + 
