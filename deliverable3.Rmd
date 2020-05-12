@@ -206,7 +206,7 @@ In the built environment category, land use types, building area, neighborhood f
 
 In the demographics category, data about population, median income and car ownership is collected. For demographics, we used Areal Weighted Interpolation and joined the weighted census estimates within the buffer to each stop.
 
-For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts going through each stop on a given week is also calculated.
+For route information, the percentage of each route type passing each bus stop is calculated. The number of shifts or buses going through each stop on a given week is also calculated. We also included route number as a feature, for example, for feature "r10", we labeled all stops on route 10 as 1 and all other stops as 0; we did this step for each route.
 
 For the internal (stop characteristics) category, we first added a transit hub dummy defined by Capital Metro; we then calculated the spatial lag, which is the average ridership of the surrounding stops.
 
@@ -233,17 +233,15 @@ Apart from the original 1/4 mile buffer, two more buffers sizes were created dur
 
 We tested the generalizability of the four models mentioned above by holding out each neighborhood each time, use the rest data to train the model, and compare and calculate the prediction error of the hold-out neighborhood. 
 
-The MAPE and MAE of the four models reveals that, genrally speaking, random forest model is the model with the best accuracy while lasso and ridge model gives prediction less accurately than other three. Lasso and ridge regression has the largest MAPE and MAE while random forest model has the least MAPE and MAE.
+The MAPE and MAE of the four models reveals that, genrally speaking, random forest model and the xgboost model have the best accuracy while lasso and ridge model gives prediction less accurately than other three. Lasso and ridge regression has the largest MAPE and MAE while random forest model has the least MAPE and MAE.
 
 ![](C:/Upenn/Practicum/markdown_img/MAPE_Comparison.png){width=400px}![](C:/Upenn/Practicum/markdown_img/MAE_Comparison.png){width=400px}
 
-In terms of predicted value and actual values, simple linear regression tends to underpredict ridership when the actual ridership is higher than 300.Lasso and ridge model generally overpredict ridership. Random forest model tends to overpredict ridership when the actual ridership is over 250. Xgboost model generally overpredict ridership but performs better than glmnet model when the actual ridership is low.
+In terms of predicted value and actual values, although simple linear regression predictions are close to the actual values, it has large variance. Lasso and ridge model generally overpredict ridership. Random forest model tends to overpredict ridership when the actual ridership is over 500. Xgboost model generally predicts ridership well and has relatively small variance.
 
 ![](C:/Upenn/Practicum/markdown_img/PredvsActual.png){width=350px}
 
-In order to test the the generaliability of the models on neighborhoods, the following bar chart reveals each model's MAE in the neighborhoods. The charts demonstrate most of the MAEs are below 100. There are several neighborhoods appear to have a higher MAE among which most of them gathered around UT.
-
-To take a closer look at the neighborhoods, maps of MAPE are plotted to show the generalizability. As mentioned before, the model's acuuracy is lower in the neighborhoods around University of Texas. 
+In order to test the the generaliability of the models on neighborhoods, maps of MAPE are plotted to show the generalizability. The model's accuracy is lower with high MAPE in the neighborhoods around University of Texas and a couple neighborhoods in the outskirts of Austin. By comparing the range and distribution of MAPE, we found that Xgboost model has the best performance with small in MAPE and variance.
 
 ![](C:/Upenn/Practicum/markdown_img/lm_MAPE_nb.png){width=400px}![](C:/Upenn/Practicum/markdown_img/glmnet_MAPE_nb.png){width=400px}
 ![](C:/Upenn/Practicum/markdown_img/rf_MAPE_nb.png){width=400px}![](C:/Upenn/Practicum/markdown_img/xgb_MAPE_nb.png){width=400px}
