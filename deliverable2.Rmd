@@ -282,18 +282,23 @@ According to the performance in the following chart, our model is pretty general
 
 # 4. Application
 
-As we mentioned in the beginning, the current workflow of redesigning a bus system lacks efficiency. Most of the analytical work and modeling on ridership was outsourced and for in-house planners, it is hard to test out different planning scenarios on the fly. This inspired us to create an application that helps planners to have a better understanding of the ridership change through different scenarios. Our model discussed above already can predict ridership based on given inputs including route frequency, building area, land use, etc. In order to see if our model can achieve our goal of scenario prediction, we have tested the model on three different planning scenarios and presented the predicted ridership change in ridership below.
+## 4.1 Why scenario planning?
+As we mentioned in the beginning, the current workflow of redesigning a bus system lacks efficiency. Most of the analytical work and modeling on ridership was outsourced and for in-house planners, it is hard to test out different planning scenarios on the fly. This inspired us to create an application that helps planners to have a better understanding of the ridership change through different scenarios.
+In addition, scenario planning provides planners a tool to think holistically into the future. It gives planners the opportunity to investigate a number of future possibilities without being bogged down by how likely these scenarios might actually happen. Such a procedure offers planners the system thinking that reduces future risks and capture potential opportunities.
+Our model discussed above already can predict ridership based on given inputs including route frequency, building area, land use, etc. In order to see if our model can achieve our goal of scenario prediction, we have tested the model on three different planning scenarios and presented the predicted ridership change in ridership below.
 
-## 4.1 Three different scenarios for ridership change
-### 4.1.1 What is the change of transit ridership with route frequency update?
+## 4.2 Three different scenarios for ridership change
+(TO BE UPDATED WITH TECH BOOM IN AUSTIN)
+![](Feeder route and stops img)
+### 4.2.1 Scenario 1 - Bus Frequency and Ridership
 In this scenario, we changed the route frequency for all the feeder routes to make them becomes high frequency routes (meaning less than 15 min headway). The impact is very obvious that many stops would experience ridership increase while only several stops close to downtown would experience ridership decrease.
 ![](C:/Upenn/Practicum/markdown_img/new_scenario1.png)
 
-### 4.1.2 What is the change of transit ridership with new real estate development?
+### 4.2.2 What is the change of transit ridership with new real estate development?
 In this scenario, we suppose real estate development on the outskirt area of Austin. With the impact of new development, there are basically no stop with declining ridership.
 ![](C:/Upenn/Practicum/markdown_img/new_scenarios2.png)
 
-### 4.1.3 What is the change of transit ridership with new landuse update?
+### 4.2.3 What is the change of transit ridership with new landuse update?
 In this scenario, landuse percentage around certain stops are changed. Around these stops, commercial landuse percentage has been increased while residential landuse percentage has been decreased. This change mainly leads to an increase on the ridership for most stops.
 ![](C:/Upenn/Practicum/markdown_img/new_scenario3.png)
 
