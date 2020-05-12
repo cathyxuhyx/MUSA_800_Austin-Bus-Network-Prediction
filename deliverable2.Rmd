@@ -291,14 +291,15 @@ Our model discussed above already can predict ridership based on given inputs in
 (TO BE UPDATED WITH TECH BOOM IN AUSTIN)
 ![](Feeder route and stops img)
 ### 4.2.1 Scenario 1 - Bus Frequency and Ridership
-In this scenario, we changed the route frequency for all the feeder routes to make them becomes high frequency routes (meaning less than 15 min headway). The impact is very obvious that many stops would experience ridership increase while only several stops close to downtown would experience ridership decrease.
+In this scenario, we investigated the relationship between change of bus frequency and ridership.  The frequency of all Feeder routes was increased to make them becomes high frequency routes (meaning with a headway that is less than 15 minutes). The overall ridership has increased after the increase of frequency. However, it is less expected that the majority of the stops would experience ridership increase while a few stops in the east side of the city demonstrate decrease in ridership.
 ![](C:/Upenn/Practicum/markdown_img/new_scenario1.png)
 
-### 4.2.2 What is the change of transit ridership with new real estate development?
-In this scenario, we suppose real estate development on the outskirt area of Austin. With the impact of new development, there are basically no stop with declining ridership.
+### 4.2.2 Scenario 2 - Building Areas and Ridership
+In this scenario, the areas around the stops of all Feeder routes are set to have 400,000 sqft more building areas. This scenario is designed to represent situation in which new developments with higher density come into the neighborhood. Based on the rapid growth in Austin and real estate projects in the pipeline, it is very likely that the outer skirt of the city becomes denser. 
+Similar to the increased frequency scenario, the change of the ridership doesn’t seem to follow a pattern with the consistent change of building area. It is worth further investigation that most terminal stops experience ridership increase.
 ![](C:/Upenn/Practicum/markdown_img/new_scenarios2.png)
 
-### 4.2.3 What is the change of transit ridership with new landuse update?
+### 4.2.3 Scenario 3 - Land use and Ridership
 In this scenario, landuse percentage around certain stops are changed. Around these stops, commercial landuse percentage has been increased while residential landuse percentage has been decreased. This change mainly leads to an increase on the ridership for most stops.
 ![](C:/Upenn/Practicum/markdown_img/new_scenario3.png)
 
