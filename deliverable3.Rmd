@@ -1,6 +1,6 @@
 ---
 title: "Bus Ridership Prediction in Austin, TX"
-author: "Hanyong Xu, Jia Yuan, Yibing Zheng"
+author: "Hanyong Xu (hanyongxu97@gmail.com), Jia Yuan (ivannayuan@gmail.com), Yibing Zheng(ybzupenn@gmail.com)"
 date: "01/2020-present"
 output:
   html_document:
@@ -33,6 +33,9 @@ knitr::opts_chunk$set(
 )
 options(scipen=99)
 ```
+This project is one part of MUSA 801 course in the Master of Urban and Spatial Analysis in University of Pennsylvania, with the supervision of Ken Steif, Michael Fichman, Matthew Harris. Many thanks to them for gracefully providing insightful suggestion for five months. Special thanks to Jonathan Hartman from Cap Metro who provided the ridership data this project is using. Thanks to Kimberly Feldbauer from AECOM’s Austin office who provided insights on transit planning in Austin.
+
+Visit MUSA 801 website for more projects: https://pennmusa.github.io/MUSA_801.io/
 
 # 1. Introduction
 
@@ -43,6 +46,7 @@ While evaluating the performance of a transit system, ridership has been an extr
 
 
 ## 1.2 Use Case
+Austin is a city full of development opportunity and a city growing vibrantly. The city's demand for bus system also keeps changing with the development. In Jun 2018, Austin rolled out a large-scale bus system redesign, CapRemap. Cap Remap adjusted the transit network according to internal analysis and community outreach and aims to provide a more frequent, more reliable, and better connected bus system. This project brings an opportunity to understand what factors influence bus ridership. 
 
 Given the renewed interest in bus transit in US cities, such as Austin, there is an opportunity to streamline the bus planning process using modern data science methods. Currently, cities have to gather all the information, such as land use, built environment, demographics etc., from different sources, to gain understanding of bus ridership change in the future. This method is usually time consuming and requires a lot of human resources. Oftentimes, cities have to outsource those analysis to third parties, which inevitably leads to higher project cost. The goal of this project, therefore, is to present a scenario planning tool for planners to test how changes in local land uses and characteristics of bus routes predict bus ridership. If such a predictive model proves robust, planners can use it to evaluate a series of possible pictures regarding the development of different land use and change of bus routes in the future and make strategic decisions efficiently in Austin. 
 
@@ -87,7 +91,7 @@ The x-axis represents months (June has been marked as 0 since redesign happened 
 
 After knowing the trend of city-wide ridership change, the next question is how the ridership changed across the city: which area experienced ridership increase and which area exprienced ridership decrease. We first look at the riderhsip patterns according to general typology to understand the general trend, and then use neighborhoods in Austin are used here to show the spatial trend here. 
 
-We first plotted thea average ridership by typology map. UT and CBD region have higher ridership than the rest of the city.
+We defined the general typology according to the two major factors of the city in transportation planning: economic activity and user groups. In general, the downtown district has higher economic activity and provides lots of jobs and business opportunities; on the other hand, universities attract students or staff to commute everyday. Thus, we seperated the city into three major regions: Downtown Central Business District (CBD), UT Austin (UT), and the rest of the Austin (Rest). The map below shows the relative location of each typology. The bar plot below demonstrates the 2019 average ridership of each region. UT and CBD regions have higher ridership than the rest of the city. UT has a particularly high ridership, which means there are many transit users among students, faculties, and university staff.
 
 ![](C:/Upenn/Practicum/markdown_img/typo.png){width=400px}
 
@@ -138,7 +142,7 @@ Feeder: Capital Metro's Feeder routes are local services between a neighborhood 
 
 ### 2.3.2 what is the space/time ridership trends for the most popular bus routes
 
-What makes a good bus system? What's so special about the 'hotlines'?
+What makes a good bus system? What's so special about the 'hotlines': the most popular bus routes?
 
 The following analysis aim to find out what routes are popular, why are they popular, and how they have changed in a micro perspective. Kmeans Cluster Analysis was used to separate the disaggregated data into groups. Kmeans is an unsupervised learning algorithm that automatically group the dataset based on the distribution of each feature. We intend to use this algorithm to see if the resulting grouping identifies the hotlines, i.e. the routes that have higher ridership.
 
@@ -253,7 +257,7 @@ Our model discussed above already can predict ridership based on given inputs in
 
 ## 4.2 Three different scenarios for ridership change
 (TO BE UPDATED WITH TECH BOOM IN AUSTIN)
-![](Feeder route and stops img)
+![](C:/Upenn/Practicum/markdown_img/Scenario_changes.png)
 
 ### 4.2.1 Scenario 1 - Bus Frequency and Ridership
 In this scenario, we investigated the relationship between change of bus frequency and ridership.  The frequency of all Feeder routes was increased to make them becomes high frequency routes (meaning with a headway that is less than 15 minutes). The majority of the stops would experience ridership increase while a few stops in the east side of the city demonstrate decrease in ridership.
@@ -275,16 +279,17 @@ The driven rationale behind this scenario is the relationship between land use p
 
 We developed a web application according to our use case: helping planners to evision the potential change to transit ridership with respect to the change in real-estate. The following screenshots demonstrate the prototype. The first three screen shots demonstrate how users can investigate the current ridership patterns, and the last screen shows that the web app can give ridership projections according when the user selects any particular scenarios.
 
-![](C:/Upenn/Practicum/markdown_img/web1.png)
+![](C:/Upenn/Practicum/markdown_img/s1.png)
 
-![](C:/Upenn/Practicum/markdown_img/web2.png)
+![](C:/Upenn/Practicum/markdown_img/s2.png)
 
-![](C:/Upenn/Practicum/markdown_img/web3.1.png)
+![](C:/Upenn/Practicum/markdown_img/s3.png)
 
-![](C:/Upenn/Practicum/markdown_img/web3.png)
+![](C:/Upenn/Practicum/markdown_img/s4.png)
 
-![](C:/Upenn/Practicum/markdown_img/web4.png)
+![](C:/Upenn/Practicum/markdown_img/s5.PNG)
 
+![](C:/Upenn/Practicum/markdown_img/s6.png)
 # 5. Appendix
 
 ## Setup
@@ -2084,7 +2089,10 @@ summary(lmreg)
 # plot original predictions
 lmreg <- lm(mean_on ~ .,data = all_x4_normalize %>% st_drop_geometry() %>% select(building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on))
 summary(lmreg)
+```
+![](C:/Upenn/Practicum/markdown_img/continuous_var.png)
 
+```{r fig.width=8}
 lm_model0 <-
   all_x4_normalize %>%
   mutate(ridership.Predict = predict(lmreg, all_x4_normalize)) %>%
@@ -2131,32 +2139,7 @@ ggplot()+
 # write.csv(all_x4_normalize %>% st_drop_geometry() %>% select(STOP_ID, building_area, civic, commercial, residential, industrial, SN_cat, Crosstown_cat, Express_cat, Local_cat, Flyer_cat, NightOwl_cat, HighFreq_cat, InOut_cat,Clockwise_cat, hotline_1,utshuttle_cat, Special_cat, school_count, stadium_count, medInc, nshifts, mean_on),"building_scenario0.csv", row.names = FALSE)
 ```
 
-###  Selecting the Best Buffer Size
 
-It is hard to arbitrarily decide what the best buffer size is in capturing most of the variations of the dataset. As the bus stops are relatively densely distributed in Austin, we used our knowledge for walkable distances and start testing from 1/2 mile and gradually reduce the size to 1/4 mile and 1/8 mile. By comparing the r square, RMSE, MAE and MAPE of each model with different buffer size, and further testing the generalizability of the models, we will get the best buffer size.
-
-#### 1/2 mile Buffer
-In each buffer size, four types of models are compared.For each buffer size, the model with the best performance will be picked and enter the final comparison.  In 1/2 mile buffer size test, the random forest model has the largest r-square of 0.81 and lowest MAE of 64 and MAPE of 30.4%. Among the four models, this rf model has the best performance. 
-
-![](C:/Upenn/Practicum/markdown_img/21_half.JPG){width=600px}
-
-#### 1/4 mile Buffer
-In 1/4 mile buffer size test, the random forest model has the largest r-square of 0.79 and lowest MAE of 69.3 and MAPE of 28.8%. This rf model has the best performance among the four models here. 
-
-![](C:/Upenn/Practicum/markdown_img/18_quarter.JPG){width=600px}
-
-#### 1/8 mile Buffer
-In 1/8 mile buffer size test, the random forest model has the largest r-square of 0.72 and lowest MAE of 77.8 and MAPE of 33.6%. This rf model has the best performance among the four models here.
-
-![](C:/Upenn/Practicum/markdown_img/19_eight.JPG){width=600px}
-
-After the above comparison, the largest r-square is from 1/2-mile buffer while the least MAPE is from 1/4-mile. The possible reason for the lose of 1/8-mile buffer is it cannot sucessfully capture enough variation within the limited radius of the stops. Especially for the areas where ridership is high, such as CBD or UT, there can be a lot of variances outside the 1/8 mile. 
-
-Then if we take a look at the generalizability of the three buffer sizes on their performance in CBD, UT and the rest areas, it is clear that 1/8 mile buffer fails to achieve generaliability as well as other two buffer sizes. the MAE in CBD and UT are very high. For the comparison between 1/2 mile buffer and 1/4 mile buffer, the MAE demonstrates a better generalizability for 1/2 mile buffer for its smaller value in UT. However, considering our use case where we allow planners to test different development at specific locations, a smaller buffer size would more accurately reflect real development in the world. Thus, the final buffer radius is settled to 1/4 mile.
-
-![](C:/Upenn/Practicum/markdown_img/22_half.JPG){width=500px}
-![](C:/Upenn/Practicum/markdown_img/20_quarter.JPG){width=500px}
-![](C:/Upenn/Practicum/markdown_img/23_eighth.JPG){width=500px}
 #### Building area SCENARIO 1:
 ```{r}
 # Bldg areas increase in West Campus
@@ -3780,7 +3763,32 @@ as.data.frame(val_MAPE_by_typology.eighth)%>%
   plotTheme()
 
 ```
+###  Selecting the Best Buffer Size
 
+It is hard to arbitrarily decide what the best buffer size is in capturing most of the variations of the dataset. As the bus stops are relatively densely distributed in Austin, we used our knowledge for walkable distances and start testing from 1/2 mile and gradually reduce the size to 1/4 mile and 1/8 mile. By comparing the r square, RMSE, MAE and MAPE of each model with different buffer size, and further testing the generalizability of the models, we will get the best buffer size.
+
+#### 1/2 mile Buffer
+In each buffer size, four types of models are compared.For each buffer size, the model with the best performance will be picked and enter the final comparison.  In 1/2 mile buffer size test, the random forest model has the largest r-square of 0.81 and lowest MAE of 64 and MAPE of 30.4%. Among the four models, this rf model has the best performance. 
+
+![](C:/Upenn/Practicum/markdown_img/21_half.JPG){width=600px}
+
+#### 1/4 mile Buffer
+In 1/4 mile buffer size test, the random forest model has the largest r-square of 0.79 and lowest MAE of 69.3 and MAPE of 28.8%. This rf model has the best performance among the four models here. 
+
+![](C:/Upenn/Practicum/markdown_img/18_quarter.JPG){width=600px}
+
+#### 1/8 mile Buffer
+In 1/8 mile buffer size test, the random forest model has the largest r-square of 0.72 and lowest MAE of 77.8 and MAPE of 33.6%. This rf model has the best performance among the four models here.
+
+![](C:/Upenn/Practicum/markdown_img/19_eight.JPG){width=600px}
+
+After the above comparison, the largest r-square is from 1/2-mile buffer while the least MAPE is from 1/4-mile. The possible reason for the lose of 1/8-mile buffer is it cannot sucessfully capture enough variation within the limited radius of the stops. Especially for the areas where ridership is high, such as CBD or UT, there can be a lot of variances outside the 1/8 mile. 
+
+Then if we take a look at the generalizability of the three buffer sizes on their performance in CBD, UT and the rest areas, it is clear that 1/8 mile buffer fails to achieve generaliability as well as other two buffer sizes. the MAE in CBD and UT are very high. For the comparison between 1/2 mile buffer and 1/4 mile buffer, the MAE demonstrates a better generalizability for 1/2 mile buffer for its smaller value in UT. However, considering our use case where we allow planners to test different development at specific locations, a smaller buffer size would more accurately reflect real development in the world. Thus, the final buffer radius is settled to 1/4 mile.
+
+![](C:/Upenn/Practicum/markdown_img/22_half.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/20_quarter.JPG){width=500px}
+![](C:/Upenn/Practicum/markdown_img/23_eighth.JPG){width=500px}
 ### Build the kitchen sink model using selected variables
 ```{r}
 sum(is.na(sce0))
