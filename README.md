@@ -21,3 +21,6 @@ For more details behind the scene of the app development, please check out the [
 The final markdown report can be found [here](https://pennmusa.github.io/MUSA_801.io/project_17/index.html), which contains all details of the projects including data wrangling, exploratory analysis, model development, and web application development. 
 
 For more projects from the practicum, check out the [MUSA/Smart Cities practicum project page](https://pennmusa.github.io/MUSA_801.io/).
+
+### Disclaimer
+Information displayed is not confirmed or authorized by CMTA and the results are solely the interpretation by the author for graphical purposes.
